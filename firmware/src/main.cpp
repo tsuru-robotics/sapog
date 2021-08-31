@@ -45,7 +45,9 @@
 #include <pwm_input.hpp>
 #include <temperature_sensor.hpp>
 #include <motor/motor.h>
-#include <uavcan_node/uavcan_node.hpp>
+#include <cstring>
+#include <sys/unistd.h>
+//#include <zubax_chibios/sys/sys.cpp>
 
 
 namespace
@@ -76,12 +78,6 @@ os::watchdog::Timer init()
 
 	// PWM input
 	pwm_input_init();
-
-	// UAVCAN node
-	res = uavcan_node::init();
-	if (res < 0) {
-		board::die(res);
-	}
 
 	// Self test
 	res = motor_test_hardware();
@@ -183,7 +179,6 @@ int main()
 
 	motor_confirm_initialization();
 
-	uavcan_node::set_node_status_ok();
 
 	/*
 	 * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.
@@ -197,10 +192,8 @@ int main()
 
 		if (motor_is_blocked() || !temperature_sensor::is_ok()) {
 			led_ctl.set(board::LEDColor::YELLOW);
-			uavcan_node::set_node_status_critical();
 		} else {
 			led_ctl.set(board::LEDColor::DARK_GREEN);
-			uavcan_node::set_node_status_ok();
 		}
 
 		bg_config_manager.poll();

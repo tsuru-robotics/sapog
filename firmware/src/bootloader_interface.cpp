@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2014 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2016 PX4 Development Team. All rights reserved.
  *   Author: Pavel Kirienko <pavel.kirienko@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,23 @@
  *
  ****************************************************************************/
 
-#pragma once
-
-#include <uavcan_stm32/uavcan_stm32.hpp>
-
+#include "bootloader_interface.hpp"
+#include <cstdint>
 namespace uavcan_node
 {
-
-int init_esc_controller(uavcan::INode& node);
+/**
+ * This is the Brickproof Bootloader's app descriptor.
+ * Details: https://github.com/PX4/Firmware/tree/nuttx_next/src/drivers/bootloaders/src/uavcan
+ */
+static const volatile struct __attribute__((packed))
+{
+    std::uint8_t signature[8] = {'A','P','D','e','s','c','0','0'};
+    std::uint64_t image_crc = 0;
+    std::uint32_t image_size = 0;
+    std::uint32_t vcs_commit = GIT_HASH;
+    std::uint8_t major_version = FW_VERSION_MAJOR;
+    std::uint8_t minor_version = FW_VERSION_MINOR;
+    std::uint8_t reserved[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+} _app_descriptor __attribute__((section(".app_descriptor")));
 
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2014 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2016 PX4 Development Team. All rights reserved.
  *   Author: Pavel Kirienko <pavel.kirienko@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,19 +34,6 @@
 
 #pragma once
 
-#include <uavcan_stm32/uavcan_stm32.hpp>
-
 namespace uavcan_node
 {
-
-void set_node_status_ok();
-void set_node_status_warning();
-void set_node_status_critical();
-
-bool is_passive_mode();
-
-void print_status();
-
-int init();
-
 }
