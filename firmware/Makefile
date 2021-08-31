@@ -39,7 +39,7 @@ FW_VERSION_MINOR = 3
 export SAPOG_BASE := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export SAPOG_SRC_DIR = $(abspath $(SAPOG_BASE)/src)
 
-PYTHON := python
+PYTHON := python3.6
 
 #
 # Sources
@@ -81,7 +81,7 @@ include libuavcan/libuavcan_drivers/stm32/driver/include.mk
 CPPSRC += $(LIBUAVCAN_STM32_SRC)
 UINCDIR += $(LIBUAVCAN_STM32_INC)
 
-$(info $(shell $(LIBUAVCAN_DSDLC) $(UAVCAN_DSDL_DIR)))
+$(info $(shell python3.6 $(LIBUAVCAN_DSDLC) $(UAVCAN_DSDL_DIR)))
 UINCDIR += dsdlc_generated
 
 #
