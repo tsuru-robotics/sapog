@@ -47,6 +47,7 @@
 #include <motor/motor.h>
 #include <cstring>
 #include <sys/unistd.h>
+#include "uavcan_node/uavcan_node_1_0.hpp"
 //#include <zubax_chibios/sys/sys.cpp>
 
 
@@ -186,7 +187,8 @@ int main()
 	 * TODO: Report status flags via vendor-specific status field.
 	 */
 	BackgroundConfigManager bg_config_manager;
-
+    uavcan_node_1_0::UAVCANNode node{};
+    node.init();
 	while (!os::isRebootRequested()) {
 		wdt.reset();
 

@@ -1,48 +1,6 @@
-///                         __   __   _______   __   __   _______   _______   __   __
-///                        |  | |  | /   _   ` |  | |  | /   ____| /   _   ` |  ` |  |
-///                        |  | |  | |  |_|  | |  | |  | |  |      |  |_|  | |   `|  |
-///                        |  |_|  | |   _   | `  `_/  / |  |____  |   _   | |  |`   |
-///                        `_______/ |__| |__|  `_____/  `_______| |__| |__| |__| `__|
-///                            |      |            |         |      |         |
-///                        ----o------o------------o---------o------o---------o-------
-///
-/// A generic low-level driver for the STM32 bxCAN macrocell. Designed to support any operating system and baremetal
-/// systems. This driver is not compatible with FDCAN controllers available in newer STM32 MCUs such as STM32H7.
-/// The driver has no external dependencies besides a tiny subset of the C standard library.
-///
-/// This driver exclusively supports extended-id frame format (29-bit) data frames. There is no support for the
-/// classic-id (11-bit) data frames, remote frames, overload frames, or error frames. The 29 bits of the extended
-/// identifier values used in this driver match the order of the CAN protocol, as described in the CAN 2.0B standard.
-///
-/// The driver does not use interrupts or critical sections internally, which makes it a good fit for certain hard
-/// real-time systems where interrupts may be impossible to leverage (e.g., some motor control applications).
-/// The application shall poll the RX queue with a sufficient frequency to prevent RX overrun. Given that the hardware
-/// RX FIFO is three frames deep, the polling interval shall not exceed (shortest frame transmission time) x3.
-/// At 1 Mbit/s for CAN 2.0B, this amounts to 192 microseconds. The application may be able to slightly extend
-/// the interval by configuring the acceptance filters appropriately.
-///
-/// If the application is unable to poll the driver with a sufficient frequency, it is possible to enable the
-/// interrupts and invoke the driver from there. It is safe since the driver is context-agnostic. Same holds for
-/// the transmission management: it can be done by polling or from an interrupt depending on the timing requirements.
-/// If interrupts are used, it is the responsibility of the caller to ensure adequate synchronization.
-///
-/// The driver automatically aborts all pending transmissions if the CAN controller enters the bus-off state.
-/// This behavior is introduced to support the plug-and-play node-ID allocation protocol defined by UAVCAN.
-///
-/// The driver does not support TX timestamping. This feature is only required for time synchronization masters.
-/// The suggested alternative is to implement the required logic at the driver layer directly, as is often done
-/// with some other precise time protocols such as IEEE 1588.
-///
-/// The clocks of the CAN peripheral shall be enabled by the application before the driver is initialized.
-/// The driver cannot do that because this logic is not uniform across the STM32 family.
-///
-/// The CAN interface index counts from zero, as per the C convention. ST numbers the CAN peripherals starting
-/// from 1. Thus: iface_index 0 = bxCAN1 and iface_index 1 = bxCAN2.
-///
-/// The recommended approach for integration is to copy-paste the source files into the project tree and modify
-/// as necessary. The .c file does not require any specific build options.
-///
-/// This software is distributed under the terms of the MIT License. Copyright (c) 2020 UAVCAN Development Team.
+// Copyright (c) 2021 Zubax, zubax.com
+// Distributed under the MIT License, available in the file LICENSE.
+// Author: Silver Valdvee <silver.valdvee@zubax.com>
 
 #pragma once
 
@@ -169,8 +127,8 @@ bool bxCANPop(const uint8_t   iface_index,
 /// Units are SI. Typically, CAN is clocked from PCLK1.
 /// Returns false if the requested bit rate cannot be set up at the current clock rate.
 /// Returns true on success.
-bool bxCANComputeTimings(const uint32_t      peripheral_clock_rate,
-                         const uint32_t      target_bitrate,
+bool bxCANComputeTimings(const uint32_t      peripheral_clock_rate, // 72MHz
+                         const uint32_t      target_bitrate, // 1MHz
                          BxCANTimings* const out_timings);
 
 #ifdef __cplusplus
