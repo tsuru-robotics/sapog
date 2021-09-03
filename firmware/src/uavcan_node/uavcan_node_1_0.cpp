@@ -11,7 +11,9 @@
 #include "zubax_chibios/platform/stm32/config_storage.hpp"
 #include <ch.h>
 #define NUNAVUT_ASSERT assert
-#include "reg/drone/service/common/Heartbeat_0_1.h"
+//#include "reg/drone/service/common/Heartbeat_0_1.h"
+#include "uavcan/node/Heartbeat_1_0.h"
+#include "uavcan/_register/Access_1_0.h"
 
 #include "libcanard/canard.h"
 namespace board{
