@@ -6,15 +6,14 @@
 
 #include "uavcan_node_1_0.hpp"
 #include "zubax_chibios/sys/sys.hpp"
-//#include "chthreads.h"
 #include <cstddef>
 #include "zubax_chibios/config/config.hpp"
 #include "zubax_chibios/platform/stm32/config_storage.hpp"
-/*#include "chcore.h"
-#include "chtypes.h"
-#include "chschd.h"*/
-
 #include <ch.h>
+#define NUNAVUT_ASSERT assert
+#include "reg/drone/service/common/Heartbeat_0_1.h"
+
+#include "libcanard/canard.h"
 namespace board{
     extern void die(int error);
     extern void* const ConfigStorageAddress;
