@@ -54,7 +54,8 @@ CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
 
 UINCDIR = src           \
           src/os_config \
-          src/nunavut_out
+          src/nunavut_out\
+          src/bxcan
 
 UDEFS = -DFW_VERSION_MAJOR=$(FW_VERSION_MAJOR)           \
         -DFW_VERSION_MINOR=$(FW_VERSION_MINOR)           \
@@ -84,7 +85,9 @@ BOOTLOADER_SIZE = 16384
 
 DDEFS += -DCORTEX_VTOR_INIT=$(BOOTLOADER_SIZE)            \
          -DCRT1_AREAS_NUMBER=0                            \
-         -DCONFIG_PARAMS_MAX=50
+         -DCONFIG_PARAMS_MAX=50	\
+         -DBXCAN_MAX_IFACE_INDEX=1\
+         -DBXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK=70000000
 
 LDSCRIPT= linker.ld
 

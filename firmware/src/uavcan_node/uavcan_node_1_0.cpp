@@ -12,6 +12,7 @@
 #include <ch.h>
 #include <sys/timespec.h>
 #include <cstdio>
+#include "bxcan/bxcan.h"
 
 #define NUNAVUT_ASSERT assert
 
@@ -66,34 +67,56 @@ using namespace board;
 static os::config::Param<unsigned> param_node_id("uavcan.node.id", 0, 0, 128);
 static THD_WORKING_AREA(_wa_control_thread, 1024 * 2); // This defines _wa_control_thread
 static CanardMicrosecond started_at;
+static uint64_t next_transfer_id_uavcan_node_heartbeat;
 
 static void control_thread(void *arg)
 {
     CanardInstance canard = canardInit(&canardAllocate, &canardFree);
     canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     canard.node_id = param_node_id.get();
-
     (void) canard;
     (void) arg;
     chRegSetThreadName("heartbeat_control_thread");
-    //event_listener_t listener;
-    //chEvtRegisterMask(&_setpoint_update_event, &listener, ALL_EVENTS);
+    CanardMicrosecond next_1_hz_iter_at = started_at + MEGA;
 
-    //uint64_t timestamp_hnsec = motor_rtctl_timestamp_hnsec();
+    // provide an implementation of a CAN driver for this node
     do {
         CanardMicrosecond monotonic_time = getMonotonicMicroseconds();
+        if (monotonic_time < next_1_hz_iter_at) { continue; }
+        next_1_hz_iter_at += MEGA;
         uavcan_node_Heartbeat_1_0 heartbeat{};
         heartbeat.uptime = (uint32_t) ((monotonic_time - started_at) / MEGA);
         heartbeat.mode.value = uavcan_node_Mode_1_0_OPERATIONAL;
-/*        if (heap_diag.oom_count > 0)
-        {
-            heartbeat.health.value = uavcan_node_Health_1_0_CAUTION;
-        }
-        else
-        {*/
         heartbeat.health.value = uavcan_node_Health_1_0_NOMINAL;
-        (void) heartbeat;
-//        }
+        uint8_t serialized[uavcan_node_Heartbeat_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
+        size_t serialized_size = sizeof(serialized);
+        const int8_t err = uavcan_node_Heartbeat_1_0_serialize_(&heartbeat, &serialized[0], &serialized_size);
+        assert(err >= 0);
+        if (err >= 0) {
+            const CanardTransfer transfer = {
+                    .timestamp_usec = monotonic_time + MEGA, // transmission deadline 1 second, optimal for heartbeat
+                    .priority       = CanardPriorityNominal,
+                    .transfer_kind  = CanardTransferKindMessage,
+                    .port_id        = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
+                    .remote_node_id = CANARD_NODE_ID_UNSET,
+                    .transfer_id    = (CanardTransferID) (next_transfer_id_uavcan_node_heartbeat++),
+                    .payload_size   = serialized_size,
+                    .payload        = &serialized[0],
+            };
+            (void) canardTxPush(&canard, &transfer);
+        }
+        for (const CanardFrame* txf = NULL; (txf = canardTxPeek(&canard)) != NULL;)  // Look at the top of the TX queue.
+        {
+            if ((0U == txf->timestamp_usec) || (txf->timestamp_usec > getMonotonicMicroseconds()))  // Check the deadline.
+            {
+                if (true) //!pleaseTransmit(txf))              // Send the frame. Redundant interfaces may be used here.
+                {
+                    break;                             // If the driver is busy, break and retry later.
+                }
+            }
+            canardTxPop(&canard);                         // Remove the frame from the queue after it's transmitted.
+            canard.memory_free(&canard, (CanardFrame*)txf);  // Deallocate the dynamic memory afterwards.
+        }
     } while (1);
 }
 
@@ -104,8 +127,7 @@ int UAVCANNode::init()
     if (config_init_res < 0) {
         die(config_init_res);
     }
-    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread,
-                           NULL)) { // HIGHPRIO from #include "chschd.h"
+    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread, NULL)) {
         return -1;
     }
     return 0;
