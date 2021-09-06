@@ -9,7 +9,31 @@ from os import getcwd
 import platform
 import re
 from pathlib import Path
+import builtins as __builtin__
 
+verbose = False
+
+tempFile = """target extended-remote $PORT
+mon swdp_scan
+attach 1
+load
+kill"""
+
+
+def say(*args, **kwargs):
+    __builtin__.print(*args, **kwargs)
+
+
+def print(*args, **kwargs):
+    if verbose:
+        __builtin__.print(*args, **kwargs)
+
+
+def yes_or_no(message):
+    answer = input(f"{message} (Y/n)")
+    if str.lower(answer) == "n":
+        return False
+    return True
 
 
 def follow_link(link):
@@ -44,24 +68,33 @@ def get_port():
     my_filter = lambda x: pattern.search(str(x))
     files = list(filter(my_filter, files))
     if len(files) > 1:
-        print("There are too many ports to choose from:")
+        say("There are too many ports to choose from:")
         for port in files:
             print(f"Port name: {port}")
     else:
         return follow_link(files[0])
 
 
-
 def upload_file(port_file, elf_file, gdb_name, size_name):
-    stream = os.popen(f"{size_name} {elf_file}") # arm-none-eabi-size $elf
+    stream = os.popen(f"{size_name} {elf_file}")  # arm-none-eabi-size $elf
     output = stream.read()
+    tempFile2 = tempFile.replace("$PORT", port_file)
+    arguments = []
+    for line in tempFile2.split("\n"):
+        arguments.append(f"-ex \"{line.rstrip()}\"")  # https://manned.org/arm-none-eabi-gdb/7308522e
+    argument_string = " ".join(arguments)
+    upload_command = f"{gdb_name} {argument_string}"
+    if yes_or_no(f"Should the upload command be run: {upload_command}"):
+        stream = os.popen(upload_command)  # arm-none-eabi-size $elf
+        output = stream.read()
+        print(output)
 
 
 def get_needed_elf_file():
     files = next(walk(getcwd()), [(None, None, [])])[2]
     files = filter(lambda x: str(x).endswith(".elf"), files)
     enumerated_files = list(enumerate(files))
-    print()
+    say()
     if len(enumerated_files) > 1:
         print("No input files were specified, now looking for elf files, would like to use any of them?")
         for index, file in enumerated_files:
@@ -69,14 +102,19 @@ def get_needed_elf_file():
         requested_nr = int(input("Enter the number of the file you would like to be uploaded: "))
         if len(enumerated_files) > requested_nr > -1:
             requested_file = enumerated_files[requested_nr][1]
-            print(f"Requested file {requested_file} will be uploaded.")
+            say(f"Requested file {requested_file} will be uploaded.")
+            return requested_file
     elif len(enumerated_files) == 1:
-        print("No input files were specified.")
-        print("Also, only one elf file is available.")
-        answer = input(f"Use {enumerated_files[0][1]}? (Y/n)")
-        if str.lower(answer) == "n":
-            return None
-        return enumerated_files[0]
+        say("No input files were specified.")
+        say("Also, only one elf file is available.")
+        if not yes_or_no(f"Use {enumerated_files[0][1]}?"):
+            say("You didn't select an elf file.")
+            exit(1)
+        else:
+            return enumerated_files[0][1]
+    else:
+        say("There are no elf files in the current working directory.")
+        exit(1)
 
 
 def no_given_file_scenario():
@@ -84,10 +122,12 @@ def no_given_file_scenario():
 
 
 def file_given_scenario(file):
-    return file, get_port
+    return file, get_port()
 
 
 def main():
+    global verbose
+    say("A flashing utility for Sapog.")
     print(platform.uname())
     get_port()
     if "Linux" not in platform.uname().system:
@@ -95,15 +135,23 @@ def main():
         raise Exception("Only linux distributions are supported")
     try:
         parser = argparse.ArgumentParser(description='Upload a new binary to the microcontroller through blackmagic.')
-        parser.add_argument('input_file', help='an elf file to read in')
-        parser.add_argument('-g', '--gdb-executable')
+        parser.add_argument('-i', '--input_file', help='an elf file to read in')
+        parser.add_argument('-g', '--gdb-executable', default="arm-none-eabi-gdb")
+        parser.add_argument('-s', '--size-executable', default="arm-none-eabi-size")
+        parser.add_argument('-v', '--verbose', default=False, action='store_true')
         args = parser.parse_args()
+        verbose = args.verbose
+        if args.input_file:
+            file, port = file_given_scenario(args.input_file)
+        else:
+            file, port = no_given_file_scenario()
+        if not Path(file).exists():
+            print("Your specified file doesn't exist.")
+            exit(1)
         print(args)
-    except:
-        try:
-            no_given_file_scenario()
-        except KeyboardInterrupt:
-            print(os.linesep + 'Okay, good luck!')
+        upload_file(port, file, args.gdb_executable, args.size_executable)
+    except KeyboardInterrupt:
+        print(os.linesep + 'Okay, good luck!')
 
 
 if __name__ == '__main__':
