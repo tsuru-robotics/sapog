@@ -17,7 +17,8 @@ tempFile = """target extended-remote $PORT
 mon swdp_scan
 attach 1
 load
-kill"""
+kill
+quit"""
 
 
 def say(*args, **kwargs):
@@ -38,7 +39,7 @@ def yes_or_no(message):
 
 def follow_link(link):
     print(f"The link is at: {str(link)}")
-    actual_location = os.readlink(os.path.join(r"/dev/serial/by-id/", str(link)))
+    actual_location = os.readlink(str(link))
     print(f"{actual_location} is the actual location of the port found.")
     new_actual_location = actual_location
     try:
@@ -52,17 +53,19 @@ def follow_link(link):
         print(f"{new_actual_location} was followed from links.")
     except FileNotFoundError:
         pass
-    return actual_location
+    print(f"Now {link} {actual_location}")
+    return os.path.join(os.path.dirname(link), actual_location)
 
 
 def get_port():
     if "Linux" in platform.uname().system:
         pattern = re.compile(r".*Black.*Magic.*Probe.*0$")
-        files = next(walk(Path(r"/dev/serial/by-id/")), [(None, None, [])])[2]
+        chosenPath = r"/dev/serial/by-id/"
+        files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
     elif "Darwin" in platform.uname().system:
-        # Converted from this PORT=$(ls /dev/cu.usb[sm][eo][rd][ie][am]* | head -n 1)
         pattern = re.compile(r"/dev/cu.usb[sm][eo][rd][ie][am]*")
-        files = next(walk(Path(r"/dev/")), [(None, None, [])])[2]
+        chosenpath = r"/dev/"
+        files = next(walk(Path(chosenpath)), [(None, None, [])])[2]
     else:
         raise NotImplemented(f"Platform {platform.uname().system} not supported yet.")
     my_filter = lambda x: pattern.search(str(x))
@@ -72,7 +75,7 @@ def get_port():
         for port in files:
             print(f"Port name: {port}")
     else:
-        return follow_link(files[0])
+        return follow_link(os.path.join(chosenPath, str(files[0])))
 
 
 def upload_file(port_file, elf_file, gdb_name, size_name):
@@ -83,11 +86,14 @@ def upload_file(port_file, elf_file, gdb_name, size_name):
     for line in tempFile2.split("\n"):
         arguments.append(f"-ex \"{line.rstrip()}\"")  # https://manned.org/arm-none-eabi-gdb/7308522e
     argument_string = " ".join(arguments)
-    upload_command = f"{gdb_name} {argument_string}"
+    upload_command = f"{gdb_name} {elf_file} {argument_string} --batch"
     if yes_or_no(f"Should the upload command be run: {upload_command}"):
         stream = os.popen(upload_command)  # arm-none-eabi-size $elf
         output = stream.read()
         print(output)
+    else:
+        print("You didn't want to execute the command")
+        exit(1)
 
 
 def get_needed_elf_file():
