@@ -87,8 +87,9 @@ SECTIONS
         BYTE(0xFF)         /* Without this, the linker will ignore aligmnent */
     } > flash
 
-    .text : ALIGN(16) SUBALIGN(16)
+    .text :
     {
+        FILL(0xFF);
         *(.text)
         *(.text.*)
         *(.rodata)
