@@ -9,6 +9,14 @@ import platform
 import re
 from pathlib import Path
 import builtins as __builtin__
+import importlib
+
+colored_spec = importlib.util.find_spec("termcolor")
+if colored_spec is not None:
+    from termcolor import colored
+else:
+    def colored(input_string, _):
+        return input_string
 
 verbose = False
 doDump = False
@@ -91,6 +99,8 @@ def upload_file(port_file, elf_file, gdb_name, size_name):
     stream = os.popen(f"{size_name} {elf_file}")  # arm-none-eabi-size $elf
     output = stream.read()
     if doDump:
+        say("The dump command has built in memory ranges for stm32f105r8 according to its memory mapping."
+            "\nIf you are using this script to dump any other memory range then please change the range in the script.")
         if len(dumpPath):
             tempFile2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dumpPath)
         else:
@@ -119,9 +129,11 @@ def get_needed_elf_file(directory):
     enumerated_files = list(enumerate(files))
     say()
     if len(enumerated_files) > 1:
-        print("No input files were specified, now looking for elf files, would like to use any of them?")
+        say("No input files were specified, now looking for elf files, would like to use any of them?")
         for index, file in enumerated_files:
-            print(f"nr {index}. file name: {file}")
+            colored_index = colored(str(index), "yellow")
+            colored_file_name = colored(file, "blue")
+            say(f"nr {colored_index}. file name: {colored_file_name}")
         requested_nr = int(input("Enter the number of the file you would like to be uploaded: "))
         if len(enumerated_files) > requested_nr > -1:
             requested_file = enumerated_files[requested_nr][1]
@@ -130,7 +142,8 @@ def get_needed_elf_file(directory):
     elif len(enumerated_files) == 1:
         say("No input files were specified.")
         say("Also, only one elf file is available.")
-        if not yes_or_no(f"Use {enumerated_files[0][1]}?"):
+        file_name = colored(enumerated_files[0][1], "blue")
+        if not yes_or_no(f"Use {file_name}?"):
             say("You didn't select an elf file.")
             exit(1)
         else:
