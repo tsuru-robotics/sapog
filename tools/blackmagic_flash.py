@@ -54,7 +54,7 @@ def follow_link(link):
     except FileNotFoundError:
         pass
     print(f"Now {link} {actual_location}")
-    return os.path.join(os.path.dirname(link), actual_location)
+    return os.path.normpath(os.path.join(os.path.dirname(link), actual_location))
 
 
 def get_port():
