@@ -166,7 +166,7 @@ def file_given_scenario(file):
 
 def main():
     global verbose, doDump, dumpPath
-    say("A flashing utility for Sapog.")
+    say("An utility for Droncode probe.")
     print(platform.uname())
     get_port()
     if "Linux" not in platform.uname().system:
@@ -182,8 +182,13 @@ def main():
         parser.add_argument('-s', '--size-executable', default="arm-none-eabi-size")
         parser.add_argument('-v', '--verbose', default=False, action='store_true')
         parser.add_argument('-d', '--dump', default=False, action='store_true')
+        parser.add_argument('-sp', '--select-port', default=False, action='store_true', help="not implemented yet")
+        parser.add_argument('-pp', '--print-port', default=False, action='store_true')
         parser.add_argument('--dump-path', default=os.path.join(os.path.expanduser('~'), "magicdump.bin"))
         args = parser.parse_args()
+        if args.print_port:
+            say(get_port())
+            exit(0)
         is_absolute = os.path.isabs(args.dir)
         if args.dir != os.getcwd() and not is_absolute:
             args.dir = os.path.join(os.getcwd(), args.dir)

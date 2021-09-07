@@ -130,7 +130,7 @@ static inline uint32_t read_msr_rx(void)
 
 static uint32_t read_msr(time_hrt_cycles_t  *now)
 {
-	__asm__ __volatile__("\tcpsid  i\n");
+	__asm__ __volatile__("\tcpsid  i\n"); // https://community.nxp.com/t5/Kinetis-Microcontrollers/How-does-CPSID-used-to-control-interrupts-work/m-p/466682
 	*now = timer_hrt_read();
 	uint32_t msr = read_msr_rx();
 	__asm__ __volatile__("\tcpsie  i\n");
