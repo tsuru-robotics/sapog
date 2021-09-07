@@ -5,18 +5,27 @@
 import argparse
 import os
 from os import walk
-from os import getcwd
 import platform
 import re
 from pathlib import Path
 import builtins as __builtin__
 
 verbose = False
+doDump = False
+dumpPath = ""
 
 tempFile = """target extended-remote $PORT
 mon swdp_scan
 attach 1
 load
+kill
+quit"""
+
+tempFileDump = """target extended-remote $PORT
+mon swdp_scan
+attach 1
+load
+dump bin mem $PATH_DUMP 0x08000000 0x08040000
 kill
 quit"""
 
@@ -81,10 +90,17 @@ def get_port():
 def upload_file(port_file, elf_file, gdb_name, size_name):
     stream = os.popen(f"{size_name} {elf_file}")  # arm-none-eabi-size $elf
     output = stream.read()
-    tempFile2 = tempFile.replace("$PORT", port_file)
+    if doDump:
+        if len(dumpPath):
+            tempFile2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dumpPath)
+        else:
+            print("You did not specify a dumpPath.")
+    else:
+        tempFile2 = tempFile.replace("$PORT", port_file)
     arguments = []
     for line in tempFile2.split("\n"):
         arguments.append(f"-ex \"{line.rstrip()}\"")  # https://manned.org/arm-none-eabi-gdb/7308522e
+
     argument_string = " ".join(arguments)
     upload_command = f"{gdb_name} {elf_file} {argument_string} --batch"
     if yes_or_no(f"Should the upload command be run: {upload_command}"):
@@ -96,8 +112,9 @@ def upload_file(port_file, elf_file, gdb_name, size_name):
         exit(1)
 
 
-def get_needed_elf_file():
-    files = next(walk(getcwd()), [(None, None, [])])[2]
+def get_needed_elf_file(directory):
+    files = next(walk(Path(directory)), (None, None, []))
+    files = files[2]
     files = filter(lambda x: str(x).endswith(".elf"), files)
     enumerated_files = list(enumerate(files))
     say()
@@ -119,12 +136,15 @@ def get_needed_elf_file():
         else:
             return enumerated_files[0][1]
     else:
-        say("There are no elf files in the current working directory.")
+        if directory == os.getcwd():
+            say("There are no elf files in the current working directory.")
+        else:
+            say(f"There are no elf files in: {directory}")
         exit(1)
 
 
-def no_given_file_scenario():
-    return get_needed_elf_file(), get_port()
+def no_given_file_scenario(directory):
+    return get_needed_elf_file(directory), get_port()
 
 
 def file_given_scenario(file):
@@ -132,7 +152,7 @@ def file_given_scenario(file):
 
 
 def main():
-    global verbose
+    global verbose, doDump, dumpPath
     say("A flashing utility for Sapog.")
     print(platform.uname())
     get_port()
@@ -141,16 +161,28 @@ def main():
         raise Exception("Only linux distributions are supported")
     try:
         parser = argparse.ArgumentParser(description='Upload a new binary to the microcontroller through blackmagic.')
+        parser.add_argument('dir', nargs='?', default=os.getcwd(),
+                            help="Searching for the elf file in this directory."
+                                 " Defaults to the current working directory.")
         parser.add_argument('-i', '--input_file', help='an elf file to read in')
         parser.add_argument('-g', '--gdb-executable', default="arm-none-eabi-gdb")
         parser.add_argument('-s', '--size-executable', default="arm-none-eabi-size")
         parser.add_argument('-v', '--verbose', default=False, action='store_true')
+        parser.add_argument('-d', '--dump', default=False, action='store_true')
+        parser.add_argument('--dump-path', default=os.path.join(os.path.expanduser('~'), "magicdump.bin"))
         args = parser.parse_args()
+        is_absolute = os.path.isabs(args.dir)
+        if args.dir != os.getcwd() and not is_absolute:
+            args.dir = os.path.join(os.getcwd(), args.dir)
+
         verbose = args.verbose
+        doDump = args.dump
+        dumpPath = args.dump_path
         if args.input_file:
             file, port = file_given_scenario(args.input_file)
         else:
-            file, port = no_given_file_scenario()
+            file, port = no_given_file_scenario(args.dir)
+            file = os.path.join(args.dir, file)
         if not Path(file).exists():
             print("Your specified file doesn't exist.")
             exit(1)
