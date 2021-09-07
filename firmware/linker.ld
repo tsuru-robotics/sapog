@@ -89,11 +89,13 @@ SECTIONS
 
     .text :
     {
-        FILL(0xFF);
+        FILL(0x99);
         *(.text)
         *(.text.*)
         *(.rodata)
         *(.rodata.*)
+        BYTE(0xFF)
+        . = ALIGN(16);
         *(.glue_7t)
         *(.glue_7)
         *(.gcc*)
