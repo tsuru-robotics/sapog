@@ -21,8 +21,8 @@
   * Based on a ChibiOS demo app.
   */
 
-__main_stack_size__     = 0x0400;
-__process_stack_size__  = 0x0400;
+__main_stack_size__     = 0x0800;
+__process_stack_size__  = 0x0800;
 
 MEMORY
 {
@@ -84,7 +84,7 @@ SECTIONS
         FILL(0xFF);
         . += 1;            /* This increment prevents moving location counter backwards if no alignment is needed */
         . = ALIGN(16) - 1;
-        BYTE(0xFF)         /* Without this, the linker will ignore aligmnent */
+        BYTE(0xFF)         /* Without this, the linker will ignore alignment */
     } > flash
 
     .text :

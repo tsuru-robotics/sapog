@@ -229,7 +229,7 @@ void motor_timer_init(void)
 	TIMSTP->CR1 = TIM_CR1_CEN;    // Start
 }
 
-__attribute__((optimize(1)))          // To prevent code reordering
+//__attribute__((optimize(1)))          // To prevent code reordering
 uint64_t motor_timer_hnsec(void)
 {
 	assert(_nanosec_per_tick > 0);  // Make sure the timer was initialized
@@ -258,9 +258,15 @@ uint64_t motor_timer_hnsec(void)
 			break;
 		}
 	}
+    static uint64_t history[5]={};
+    history[0] = history[1];
+    history[1] = history[2];
+    history[2] = history[3];
+    history[3] = history[4];
+
 
 	const uint64_t output = ((ticks + sample) * _nanosec_per_tick) / 100;
-
+    history[4] = output;
 #if !NDEBUG
 	irq_primask_disable();
 	// Make sure the prev output was not modified from another context.

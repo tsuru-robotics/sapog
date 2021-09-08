@@ -20,23 +20,23 @@
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"
 #include "libcanard/canard.h"
+#include "o1heap/o1heap.h"
 
 
 
 # define CLOCK_MONOTONIC        1
 #define KILO 1000L
 #define MEGA ((int64_t) KILO * KILO)
-
-static void *canardAllocate(CanardInstance *const ins, const size_t amount)
+static void* canardAllocate(CanardInstance* const ins, const size_t amount)
 {
     (void) ins;
-    return malloc(amount);
+    return o1heapAllocate(static_cast<O1HeapInstance*>(ins->user_reference), amount);
 }
 
-static void canardFree(CanardInstance *const ins, void *const pointer)
+static void canardFree(CanardInstance* const ins, void* const pointer)
 {
     (void) ins;
-    free(pointer);
+    o1heapFree(static_cast<O1HeapInstance*>(ins->user_reference), pointer);
 }
 
 /* Get current value of clock CLOCK_ID and store it in TP.  *//*
@@ -74,10 +74,11 @@ bool pleaseTransmit(const CanardFrame txf)
     return bxCANPush(0, getMonotonicMicroseconds(), txf.timestamp_usec, txf.extended_can_id, txf.payload_size,
                      txf.payload);
 }
-
+alignas(O1HEAP_ALIGNMENT) static uint8_t storage_o1[2000];
 static void control_thread(void *arg)
 {
     CanardInstance canard = canardInit(&canardAllocate, &canardFree);
+    canard.user_reference = o1heapInit(storage_o1, sizeof(storage_o1), nullptr, nullptr);
     canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     canard.node_id = param_node_id.get();
     (void) arg;
@@ -138,8 +139,12 @@ int UAVCANNode::init()
     if (config_init_res < 0) {
         die(config_init_res);
     }*/
+
+    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+    RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
+    RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
     BxCANTimings timings{};
-    bxCANComputeTimings(72'000'000, 1'000'000, &timings); // TODO: should be taken from macro
+    bxCANComputeTimings(36'000'000, 1'000'000, &timings); // TODO: should be taken from macro
     bxCANConfigure(0, timings, false);
     if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread, NULL)) {
         return -1;
