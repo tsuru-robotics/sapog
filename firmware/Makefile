@@ -138,4 +138,9 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
 
+dsdl:
+	nnvg public_regulated_data_types/reg -e h -O generated/nunavut_out -I public_regulated_data_types/uavcan
+	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
+
+
 include zubax_chibios/rules_stm32f105_107.mk

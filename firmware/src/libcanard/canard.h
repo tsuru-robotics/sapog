@@ -109,7 +109,7 @@ extern "C" {
 /// Semantic version of this library (not the UAVCAN specification).
 /// API will be backward compatible within the same major version.
 #define CANARD_VERSION_MAJOR 1
-#define CANARD_VERSION_MINOR 1
+#define CANARD_VERSION_MINOR 0
 
 /// The version number of the UAVCAN specification implemented by this library.
 #define CANARD_UAVCAN_SPECIFICATION_VERSION_MAJOR 1
@@ -144,6 +144,11 @@ extern "C" {
 /// This is the recommended transfer-ID timeout value given in the UAVCAN Specification. The application may choose
 /// different values per subscription (i.e., per data specifier) depending on its timing requirements.
 #define CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC 2000000UL
+
+/// The maximum number of independent TX queues supported by this library.
+/// The actual number is configured at runtime but it is clipped to never exceed this value.
+/// See canardTxPush() and its siblings.
+#define CANARD_TRANSPORT_REDUNDANCY_FACTOR_MAX 3U
 
 // Forward declarations.
 typedef struct CanardInstance CanardInstance;
@@ -262,13 +267,16 @@ typedef struct
 /// over the bus by creating such subscription objects. Frames that carry data for which there is no active
 /// subscription will be silently dropped by the library.
 ///
-/// WARNING: SUBSCRIPTION INSTANCES SHALL NOT BE COPIED OR MUTATED BY THE APPLICATION (except user_reference).
+/// WARNING: SUBSCRIPTION INSTANCES SHALL NOT BE COPIED OR MUTATED BY THE APPLICATION.
+///
+/// Every field is named starting with an underscore to emphasize that the application shall not modify it.
+/// Unfortunately, C, being such a limited language, does not allow us to construct a better API.
 ///
 /// The memory footprint of a subscription is large. On a 32-bit platform it slightly exceeds half a KiB.
 /// This is an intentional time-memory trade-off: use a large look-up table to ensure predictable temporal properties.
 typedef struct CanardRxSubscription
 {
-    struct CanardRxSubscription* next;  ///< Read-only DO NOT MODIFY THIS
+    struct CanardRxSubscription* _next;  ///< Internal use only.
 
     /// The current architecture is an acceptable middle ground between worst-case execution time and memory
     /// consumption. Instead of statically pre-allocating a dedicated RX session for each remote node-ID here in
@@ -285,12 +293,11 @@ typedef struct CanardRxSubscription
     /// but more memory-efficient approach.
     struct CanardInternalRxSession* _sessions[CANARD_NODE_ID_MAX + 1U];
 
-    CanardMicrosecond transfer_id_timeout_usec;  ///< Read-only DO NOT MODIFY THIS
-    size_t            extent;                    ///< Read-only DO NOT MODIFY THIS
-    CanardPortID      port_id;                   ///< Read-only DO NOT MODIFY THIS
+    CanardMicrosecond _transfer_id_timeout_usec;  ///< Internal use only.
+    size_t            _extent;                    ///< Internal use only.
+    CanardPortID      _port_id;                   ///< Internal use only.
 
-    /// This field can be arbitrarily mutated by the user. It is never accessed by the library.
-    /// Its purpose is to simplify integration with OOP interfaces.
+    /// This field can be arbitrarily mutated by the user. It is intended to simplify integration with OOP interfaces.
     void* user_reference;
 } CanardRxSubscription;
 
@@ -336,6 +343,12 @@ struct CanardInstance
     /// Invalid values are treated as CANARD_NODE_ID_UNSET. The default value is CANARD_NODE_ID_UNSET.
     CanardNodeID node_id;
 
+    /// When the application calls canardTxPush(), the resulting data is copied into this many separate TX queues.
+    /// Each TX queue is managed separately, allowing the application to transmit over multiple redundant interfaces.
+    /// The valid range is [1, CANARD_TRANSPORT_REDUNDANCY_FACTOR_MAX]. The default is 1 (no redundancy).
+    /// Invalid values are treated as the nearest valid value.
+    uint8_t transport_redundancy_factor;
+
     /// Dynamic memory management callbacks. See their type documentation for details.
     /// They SHALL be valid function pointers at all times.
     /// The time complexity models given in the API documentation are made on the assumption that the memory management
@@ -347,11 +360,9 @@ struct CanardInstance
     CanardMemoryAllocate memory_allocate;
     CanardMemoryFree     memory_free;
 
-    /// Read-only DO NOT MODIFY THIS
-    CanardRxSubscription* rx_subscriptions[CANARD_NUM_TRANSFER_KINDS];
-
-    /// This field is for internal use only. Do not access from the application.
-    struct CanardInternalTxQueueItem* _tx_queue;
+    /// These fields are for internal use only. Do not access from the application.
+    CanardRxSubscription*             _rx_subscriptions[CANARD_NUM_TRANSFER_KINDS];
+    struct CanardInternalTxQueueItem* _tx_queue[CANARD_TRANSPORT_REDUNDANCY_FACTOR_MAX];
 };
 
 /// Construct a new library instance.
@@ -417,8 +428,8 @@ int32_t canardTxPush(CanardInstance* const ins, const CanardTransfer* const tran
 /// (i.e., the accessed element is not removed). The application should invoke this function to collect the transport
 /// frames of serialized transfers pushed into the prioritized transmission queue by canardTxPush().
 ///
-/// Nodes with redundant transports should replicate every frame into each of the transport interfaces.
-/// Such replication may require additional buffering in the media I/O layer, depending on the implementation.
+/// Remember that there are transport_redundancy_factor separate transmission queues. The caller specifies which queue
+/// to work with in the second argument. The value shall not exceed CANARD_TRANSPORT_REDUNDANCY_FACTOR_MAX.
 ///
 /// The timestamp values of returned frames are initialized with the timestamp value of the transfer instance they
 /// originate from. Timestamps are used to specify the transmission deadline. It is up to the application and/or
@@ -438,7 +449,7 @@ int32_t canardTxPush(CanardInstance* const ins, const CanardTransfer* const tran
 /// not attempt to free it.
 ///
 /// The time complexity is constant. This function does not invoke the dynamic memory manager.
-const CanardFrame* canardTxPeek(const CanardInstance* const ins);
+const CanardFrame* canardTxPeek(const CanardInstance* const ins, const uint8_t redundant_transport_index);
 
 /// This function transfers the ownership of the top element of the prioritized transmission queue to the application.
 /// The application should invoke this function to remove the top element from the prioritized transmission queue.
@@ -453,7 +464,7 @@ const CanardFrame* canardTxPeek(const CanardInstance* const ins);
 /// If the input argument is NULL or if the transmission queue is empty, the function has no effect.
 ///
 /// The time complexity is constant. This function does not invoke the dynamic memory manager.
-void canardTxPop(CanardInstance* const ins);
+void canardTxPop(CanardInstance* const ins, const uint8_t redundant_transport_index);
 
 /// This function implements the transfer reassembly logic. It accepts a transport frame, locates the appropriate
 /// subscription state, and, if found, updates it. If the frame completed a transfer, the return value is 1 (one)
@@ -466,12 +477,6 @@ void canardTxPop(CanardInstance* const ins);
 /// Any value of redundant_transport_index is accepted; that is, up to 256 redundant transports are supported.
 /// The index of the transport from which the transfer is accepted is always the same as redundant_transport_index
 /// of the current invocation, so the application can always determine which transport has delivered the transfer.
-///
-/// Upon return, the out_subscription pointer will point to the instance of CanardRxSubscription that accepted this
-/// frame; if no matching subscription exists (i.e., frame discarded), the pointer will be NULL.
-/// If this information is not relevant, set out_subscription to NULL.
-/// The purpose of this argument is to allow integration with OOP adapters built on top of libcanard; see also the
-/// user_reference provided in CanardRxSubscription.
 ///
 /// The function invokes the dynamic memory manager in the following cases only:
 ///
@@ -553,18 +558,24 @@ void canardTxPop(CanardInstance* const ins);
 /// frame buffer is allocated once from the heap (which may be done from the interrupt handler if the heap is
 /// sufficiently deterministic), and in the case of single-frame transfer it is then carried over to the application
 /// without copying. This design somewhat complicates the media layer though.
-int8_t canardRxAccept2(CanardInstance* const        ins,
-                       const CanardFrame* const     frame,
-                       const uint8_t                redundant_transport_index,
-                       CanardTransfer* const        out_transfer,
-                       CanardRxSubscription** const out_subscription);
-
-/// This is a deprecated wrapper over canardRxAccept2() without the out_subscription.
-/// It is kept for backward compatibility and may be eventually removed in a future release.
 int8_t canardRxAccept(CanardInstance* const    ins,
                       const CanardFrame* const frame,
                       const uint8_t            redundant_transport_index,
                       CanardTransfer* const    out_transfer);
+
+/// This is an alternative to canardRxAccept() that provides one extra output argument --- `out_subscription`:
+/// the pointer to the matching CanardRxSubscription that is updated if the frame is accepted into the appropriate
+/// subscription. If `out_subscription` is NULL, it is ignored, and the function behaves like its simpler sibling.
+///
+/// The purpose of this API is to allow integration with OOP adapters built on top of libcanard. This can be done by
+/// leveraging the user_reference provided in CanardRxSubscription.
+///
+/// At the time of writing this, it is not available in the upstream: https://github.com/UAVCAN/libcanard/issues/163
+int8_t canardRxAcceptEx(CanardInstance* const        ins,
+                        const CanardFrame* const     frame,
+                        const uint8_t                redundant_transport_index,
+                        CanardTransfer* const        out_transfer,
+                        CanardRxSubscription** const out_subscription);
 
 /// This function creates a new subscription, allowing the application to register its interest in a particular
 /// category of transfers. The library will reject all transport frames for which there is no active subscription.

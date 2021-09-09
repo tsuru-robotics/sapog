@@ -18,7 +18,6 @@
 #include "libcanard/canard.h"
 #include "o1heap/o1heap.h"
 
-
 #define KILO 1000L
 #define MEGA ((int64_t) KILO * KILO)
 
@@ -52,6 +51,7 @@ static CanardMicrosecond getMonotonicMicroseconds()
 namespace board
 {
     extern void die(int error);
+
     extern void *const ConfigStorageAddress;
     constexpr unsigned ConfigStorageSize = 1024;
 }
@@ -69,20 +69,47 @@ bool pleaseTransmit(const CanardFrame txf)
                      txf.payload);
 }
 
-alignas(O1HEAP_ALIGNMENT) static uint8_t storage_o1[2000];
+extern "C"
+{
+    extern char __heap_base__;  // NOLINT
+    extern char __heap_end__;   // NOLINT
+}
+
+namespace platform
+{
+    syssts_t g_heap_irq_status_{};  // NOLINT
+
+    void heapLock()
+    {
+        g_heap_irq_status_ = chSysGetStatusAndLockX();
+    }
+
+    void heapUnlock()
+    {
+        chSysRestoreStatusX(g_heap_irq_status_);
+    }
+}
 
 static void control_thread(void *arg)
 {
+
     CanardInstance canard = canardInit(&canardAllocate, &canardFree);
-    canard.user_reference = o1heapInit(storage_o1, sizeof(storage_o1), nullptr, nullptr);
+    canard.user_reference =
+            o1heapInit(&__heap_base__,
+                       reinterpret_cast<std::size_t>(&__heap_end__) -
+                       reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
+                       &platform::heapLock,
+                       &platform::heapUnlock);
     canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     canard.node_id = param_node_id.get();
     (void) arg;
     chRegSetThreadName("heartbeat_control_thread");
     CanardMicrosecond next_1_hz_iter_at = started_at + MEGA;
-    do {
+    do
+    {
         CanardMicrosecond monotonic_time = getMonotonicMicroseconds();
-        if (monotonic_time < next_1_hz_iter_at) { continue; }
+        if (monotonic_time < next_1_hz_iter_at)
+        { continue; }
         next_1_hz_iter_at += MEGA;
         uavcan_node_Heartbeat_1_0 heartbeat{};
         heartbeat.uptime = (uint32_t) ((monotonic_time - started_at) / MEGA);
@@ -92,7 +119,8 @@ static void control_thread(void *arg)
         size_t serialized_size = sizeof(serialized);
         const int8_t err = uavcan_node_Heartbeat_1_0_serialize_(&heartbeat, &serialized[0], &serialized_size);
         assert(err >= 0);
-        if (err >= 0) {
+        if (err >= 0)
+        {
             const CanardTransfer transfer = {
                     .timestamp_usec = monotonic_time + MEGA, // transmission deadline 1 second, optimal for heartbeat
                     .priority       = CanardPriorityNominal,
@@ -105,21 +133,27 @@ static void control_thread(void *arg)
             };
             (void) canardTxPush(&canard, &transfer);
         }
-        for (const CanardFrame *txf = NULL; (txf = canardTxPeek(&canard)) != NULL;)  // Look at the top of the TX queue.
+        for (const CanardFrame *txf = NULL; (txf = canardTxPeek(&canard, 0)) != NULL;)  // Look at the top of the TX queue.
         {
             if ((0U == txf->timestamp_usec) ||
                 (txf->timestamp_usec > getMonotonicMicroseconds()))  // Check the deadline.
             {
-                if (!pleaseTransmit(*txf))              // Send the frame. Redundant interfaces may be used here.
+                // Send the frame. Redundant interfaces may be used here.
+                if (!pleaseTransmit(*txf))
                 {
-                    break;                             // If the driver is busy, break and retry later.
+                    // If the driver is busy, break and retry later.
+                    break;
                 }
             }
-            canardTxPop(&canard);                         // Remove the frame from the queue after it's transmitted.
-            canard.memory_free(&canard, (CanardFrame *) txf);  // Deallocate the dynamic memory afterwards.
+            // Remove the frame from the queue after it's transmitted.
+            canardTxPop(&canard, 0);
+            canardTxPop(&canard, 1);
+            // Deallocate the dynamic memory afterwards.
+            canard.memory_free(&canard, (CanardFrame *) txf);
         }
     } while (1);
 }
+
 int UAVCANNode::init()
 {
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
@@ -128,7 +162,8 @@ int UAVCANNode::init()
     BxCANTimings timings{};
     bxCANComputeTimings(36'000'000, 1'000'000, &timings); // TODO: should be taken from macro
     bxCANConfigure(0, timings, false);
-    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread, NULL)) {
+    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread, NULL))
+    {
         return -1;
     }
     return 0;

@@ -182,6 +182,11 @@ SECTIONS
         . = ALIGN(4);
         __ram_free__ = .;
     } > ram
+    . = ALIGN(16);  /* Heap allocators require large alignment (e.g., O1Heap). */
+    __heap_start = .;
+    __heap_end = __ram_end;
+    /* The bootloader shared struct may be occluded by heap by design. This is because it is not needed normally. */
+    __bootloader_io = (__ram_end - 512);
 }
 
 /* Heap default boundaries, it is defaulted to be the non-used part of ram region.*/
