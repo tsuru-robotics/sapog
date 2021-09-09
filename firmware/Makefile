@@ -143,4 +143,5 @@ dsdl:
 	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
 
 
+
 include zubax_chibios/rules_stm32f105_107.mk
