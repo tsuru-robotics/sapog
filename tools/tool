@@ -21,7 +21,6 @@ else:
 verbose = False
 doDump = False
 dumpPath = ""
-selectPort = False
 
 tempFile = """target extended-remote $PORT
 mon swdp_scan
@@ -54,6 +53,7 @@ def yes_or_no(message):
         return False
     return True
 
+
 def follow_link(link):
     print(f"The link is at: {str(link)}")
     actual_location = os.readlink(str(link))
@@ -76,49 +76,37 @@ def follow_link(link):
 
 def get_port():
     if "Linux" in platform.uname().system:
-        if selectPort:
-            pattern = re.compile(r".*Black.*Magic.*Probe.*$")
-            chosenPath = r"/dev/serial/by-id/"
-            files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
-            my_filter = lambda x: pattern.search(str(x))
-            files = list(filter(my_filter, files))
-            enumerated_files = list(enumerate(files))
-            say("No input files were specified, now looking for elf files, would like to use any of them?")
+        pattern = re.compile(r".*Black.*Magic.*Probe.*$")
+        chosenPath = r"/dev/serial/by-id/"
+        files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
+        my_filter = lambda x: pattern.search(str(x))
+        files = list(filter(my_filter, files))
+        if len(files) > 1:
+            enumerated_files = list(enumerate(files, 1))
+            say("Select a port:")
             for index, file in enumerated_files:
                 colored_index = colored(str(index), "yellow")
                 colored_file_name = colored(file, "blue")
                 say(f"nr {colored_index}. port name: {colored_file_name}")
-            requested_nr = int(input("Enter the number of the port you would like to be selected: "))
-            if len(enumerated_files) > requested_nr > -1:
-                requested_file = enumerated_files[requested_nr][1]
-                say(f"Requested file {requested_file} will be uploaded.")
-                files = [requested_file]
-                print("Here is the files " + " ".join(files))
-            else:
-                say("Number out of range.")
-                exit(1)
+            requested_nr = -10030
+            while not (len(enumerated_files) > requested_nr > -1):
+                requested_nr = int(input("Enter the number of the port you would like to be selected: "))
+                if requested_nr != -10030:
+                    say(f"Number out of range. Please choose a number between: 1 and {len(enumerated_files)}.")
+            requested_file = enumerated_files[requested_nr][1]
+        elif len(files) == 1:
+            requested_file = files[0]
         else:
-            pattern = re.compile(r".*Black.*Magic.*Probe.*0$")
-            chosenPath = r"/dev/serial/by-id/"
-            files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
-    elif "Darwin" in platform.uname().system:
-        if selectPort:
-            say("I really don't know how to provide you with port selection options on Darwin.")
+            say("No ports are available. Make sure the blackmagic device is connected.")
             exit(1)
-        pattern = re.compile(r"/dev/cu.usb[sm][eo][rd][ie][am]*")
-        chosenpath = r"/dev/"
-        files = next(walk(Path(chosenpath)), [(None, None, [])])[2]
-        my_filter = lambda x: pattern.search(str(x))
-        files = list(filter(my_filter, files))
+        say(f"Requested file {requested_file} will be uploaded.")
+        files = [requested_file]
+        print("Here are the files " + " ".join(files))
+    elif "Darwin" in platform.uname().system:
+        raise NotImplemented(f"Platform {platform.uname().system} not supported yet.")
     else:
         raise NotImplemented(f"Platform {platform.uname().system} not supported yet.")
-
-    if len(files) > 1:
-        say("There are too many ports to choose from:")
-        for port in files:
-            print(f"Port name: {port}")
-    else:
-        return follow_link(os.path.join(chosenPath, str(files[0])))
+    return follow_link(os.path.join(chosenPath, str(files[0])))
 
 
 def upload_file(port_file, elf_file, gdb_name, size_name):
@@ -169,8 +157,8 @@ def get_needed_elf_file(directory):
             say(f"Requested file {requested_file} will be uploaded.")
             return requested_file
     elif len(enumerated_files) == 1:
-        say("No input files were specified.")
-        say("Also, only one elf file is available.")
+        # say("No input files were specified.")
+        say("One elf file is available.")
         file_name = colored(enumerated_files[0][1], "blue")
         if not yes_or_no(f"Use {file_name}?"):
             say("You didn't select an elf file.")
@@ -197,7 +185,6 @@ def main():
     global verbose, doDump, dumpPath, selectPort
     say("A utility for Droncode probe.")
     print(platform.uname())
-    get_port()
     if "Linux" not in platform.uname().system:
         # TODO: The reference sh script had support for Darwin too
         raise Exception("Only linux distributions are supported")
@@ -211,7 +198,6 @@ def main():
         parser.add_argument('-s', '--size-executable', default="arm-none-eabi-size")
         parser.add_argument('-v', '--verbose', default=False, action='store_true')
         parser.add_argument('-d', '--dump', default=False, action='store_true')
-        parser.add_argument('-sp', '--select-port', default=False, action='store_true', help="not implemented yet")
         parser.add_argument('-pp', '--print-port', default=False, action='store_true')
         parser.add_argument('--dump-path', default=os.path.join(os.path.expanduser('~'), "magicdump.bin"))
         args = parser.parse_args()
@@ -221,7 +207,6 @@ def main():
         is_absolute = os.path.isabs(args.dir)
         if args.dir != os.getcwd() and not is_absolute:
             args.dir = os.path.join(os.getcwd(), args.dir)
-        selectPort = args.select_port
         verbose = args.verbose
         doDump = args.dump
         dumpPath = args.dump_path
