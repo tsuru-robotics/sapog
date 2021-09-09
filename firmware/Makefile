@@ -54,7 +54,7 @@ CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
 
 UINCDIR = src           \
           src/os_config \
-          src/nunavut_out\
+          generated/nunavut_out\
           src/bxcan
 
 UDEFS = -DFW_VERSION_MAJOR=$(FW_VERSION_MAJOR)           \

@@ -258,15 +258,8 @@ uint64_t motor_timer_hnsec(void)
 			break;
 		}
 	}
-    static uint64_t history[5]={};
-    history[0] = history[1];
-    history[1] = history[2];
-    history[2] = history[3];
-    history[3] = history[4];
-
 
 	const uint64_t output = ((ticks + sample) * _nanosec_per_tick) / 100;
-    history[4] = output;
 #if !NDEBUG
 	irq_primask_disable();
 	// Make sure the prev output was not modified from another context.

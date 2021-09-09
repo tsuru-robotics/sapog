@@ -5,16 +5,12 @@
  */
 
 #include "uavcan_node_1_0.hpp"
-#include "zubax_chibios/sys/sys.hpp"
 #include <cstddef>
 #include "zubax_chibios/config/config.hpp"
-#include "zubax_chibios/platform/stm32/config_storage.hpp"
 #include <ch.h>
-#include <sys/timespec.h>
-#include <cstdio>
 #include "bxcan/bxcan.h"
-#include <time.h>
 #include "motor/realtime/api.h"
+
 #define NUNAVUT_ASSERT assert
 
 #include "uavcan/node/Heartbeat_1_0.h"
@@ -23,20 +19,19 @@
 #include "o1heap/o1heap.h"
 
 
-
-# define CLOCK_MONOTONIC        1
 #define KILO 1000L
 #define MEGA ((int64_t) KILO * KILO)
-static void* canardAllocate(CanardInstance* const ins, const size_t amount)
+
+static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
     (void) ins;
-    return o1heapAllocate(static_cast<O1HeapInstance*>(ins->user_reference), amount);
+    return o1heapAllocate(static_cast<O1HeapInstance *>(ins->user_reference), amount);
 }
 
-static void canardFree(CanardInstance* const ins, void* const pointer)
+static void canardFree(CanardInstance *const ins, void *const pointer)
 {
     (void) ins;
-    o1heapFree(static_cast<O1HeapInstance*>(ins->user_reference), pointer);
+    o1heapFree(static_cast<O1HeapInstance *>(ins->user_reference), pointer);
 }
 
 /* Get current value of clock CLOCK_ID and store it in TP.  *//*
@@ -57,7 +52,6 @@ static CanardMicrosecond getMonotonicMicroseconds()
 namespace board
 {
     extern void die(int error);
-
     extern void *const ConfigStorageAddress;
     constexpr unsigned ConfigStorageSize = 1024;
 }
@@ -74,7 +68,9 @@ bool pleaseTransmit(const CanardFrame txf)
     return bxCANPush(0, getMonotonicMicroseconds(), txf.timestamp_usec, txf.extended_can_id, txf.payload_size,
                      txf.payload);
 }
+
 alignas(O1HEAP_ALIGNMENT) static uint8_t storage_o1[2000];
+
 static void control_thread(void *arg)
 {
     CanardInstance canard = canardInit(&canardAllocate, &canardFree);
@@ -84,8 +80,6 @@ static void control_thread(void *arg)
     (void) arg;
     chRegSetThreadName("heartbeat_control_thread");
     CanardMicrosecond next_1_hz_iter_at = started_at + MEGA;
-
-    // provide an implementation of a CAN driver for this node
     do {
         CanardMicrosecond monotonic_time = getMonotonicMicroseconds();
         if (monotonic_time < next_1_hz_iter_at) { continue; }
@@ -126,20 +120,8 @@ static void control_thread(void *arg)
         }
     } while (1);
 }
-/*struct BxCANTimings {
-    uint16_t bit_rate_prescaler;     /// [1, 1024]
-    uint8_t  bit_segment_1;          /// [1, 16]
-    uint8_t  bit_segment_2;          /// [1, 8]
-    uint8_t  max_resync_jump_width;  /// [1, 4] (recommended value is 1)
-};*/
 int UAVCANNode::init()
 {
-//    static os::stm32::ConfigStorageBackend config_storage_backend(ConfigStorageAddress, ConfigStorageSize);
-    /*const int config_init_res = os::config::init(&config_storage_backend);
-    if (config_init_res < 0) {
-        die(config_init_res);
-    }*/
-
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
     RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
     RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;

@@ -21,6 +21,7 @@ else:
 verbose = False
 doDump = False
 dumpPath = ""
+selectPort = False
 
 tempFile = """target extended-remote $PORT
 mon swdp_scan
@@ -53,7 +54,6 @@ def yes_or_no(message):
         return False
     return True
 
-
 def follow_link(link):
     print(f"The link is at: {str(link)}")
     actual_location = os.readlink(str(link))
@@ -76,17 +76,43 @@ def follow_link(link):
 
 def get_port():
     if "Linux" in platform.uname().system:
-        pattern = re.compile(r".*Black.*Magic.*Probe.*0$")
-        chosenPath = r"/dev/serial/by-id/"
-        files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
+        if selectPort:
+            pattern = re.compile(r".*Black.*Magic.*Probe.*$")
+            chosenPath = r"/dev/serial/by-id/"
+            files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
+            my_filter = lambda x: pattern.search(str(x))
+            files = list(filter(my_filter, files))
+            enumerated_files = list(enumerate(files))
+            say("No input files were specified, now looking for elf files, would like to use any of them?")
+            for index, file in enumerated_files:
+                colored_index = colored(str(index), "yellow")
+                colored_file_name = colored(file, "blue")
+                say(f"nr {colored_index}. port name: {colored_file_name}")
+            requested_nr = int(input("Enter the number of the port you would like to be selected: "))
+            if len(enumerated_files) > requested_nr > -1:
+                requested_file = enumerated_files[requested_nr][1]
+                say(f"Requested file {requested_file} will be uploaded.")
+                files = [requested_file]
+                print("Here is the files " + " ".join(files))
+            else:
+                say("Number out of range.")
+                exit(1)
+        else:
+            pattern = re.compile(r".*Black.*Magic.*Probe.*0$")
+            chosenPath = r"/dev/serial/by-id/"
+            files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
     elif "Darwin" in platform.uname().system:
+        if selectPort:
+            say("I really don't know how to provide you with port selection options on Darwin.")
+            exit(1)
         pattern = re.compile(r"/dev/cu.usb[sm][eo][rd][ie][am]*")
         chosenpath = r"/dev/"
         files = next(walk(Path(chosenpath)), [(None, None, [])])[2]
+        my_filter = lambda x: pattern.search(str(x))
+        files = list(filter(my_filter, files))
     else:
         raise NotImplemented(f"Platform {platform.uname().system} not supported yet.")
-    my_filter = lambda x: pattern.search(str(x))
-    files = list(filter(my_filter, files))
+
     if len(files) > 1:
         say("There are too many ports to choose from:")
         for port in files:
@@ -96,19 +122,22 @@ def get_port():
 
 
 def upload_file(port_file, elf_file, gdb_name, size_name):
+    if port_file is None:
+        say("Use option -sp to select a port. Cannot continue without.")
+        exit(1)
     stream = os.popen(f"{size_name} {elf_file}")  # arm-none-eabi-size $elf
     output = stream.read()
     if doDump:
         say("The dump command has built in memory ranges for stm32f105r8 according to its memory mapping."
             "\nIf you are using this script to dump any other memory range then please change the range in the script.")
         if len(dumpPath):
-            tempFile2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dumpPath)
+            temp_file2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dumpPath)
         else:
             print("You did not specify a dumpPath.")
     else:
-        tempFile2 = tempFile.replace("$PORT", port_file)
+        temp_file2 = tempFile.replace("$PORT", port_file)
     arguments = []
-    for line in tempFile2.split("\n"):
+    for line in temp_file2.split("\n"):
         arguments.append(f"-ex \"{line.rstrip()}\"")  # https://manned.org/arm-none-eabi-gdb/7308522e
 
     argument_string = " ".join(arguments)
@@ -165,8 +194,8 @@ def file_given_scenario(file):
 
 
 def main():
-    global verbose, doDump, dumpPath
-    say("An utility for Droncode probe.")
+    global verbose, doDump, dumpPath, selectPort
+    say("A utility for Droncode probe.")
     print(platform.uname())
     get_port()
     if "Linux" not in platform.uname().system:
@@ -192,7 +221,7 @@ def main():
         is_absolute = os.path.isabs(args.dir)
         if args.dir != os.getcwd() and not is_absolute:
             args.dir = os.path.join(os.getcwd(), args.dir)
-
+        selectPort = args.select_port
         verbose = args.verbose
         doDump = args.dump
         dumpPath = args.dump_path
