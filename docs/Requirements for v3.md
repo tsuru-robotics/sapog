@@ -1,6 +1,5 @@
 # Interfaces
 
-
 ## Standard ESC interface
 
 Ensure conformance with:
