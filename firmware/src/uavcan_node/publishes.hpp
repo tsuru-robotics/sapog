@@ -87,7 +87,7 @@ namespace node
                 };
                 (void) canardTxPush(&canard, &transfer);
             }
-            make_available_transmissions()
+            transmit(state);
         }
     }
 }
