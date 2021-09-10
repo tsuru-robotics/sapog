@@ -9,7 +9,7 @@
 namespace uavcan_node_1_0 {
     class UAVCANNode {
     public:
-        int init();
+        static int init();
     };
 }
 
