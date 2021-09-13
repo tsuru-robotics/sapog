@@ -2,9 +2,9 @@
 #define FIRMWARE_RECEPTION_H
 
 static const int max_frames_to_process_per_iteration = 1000;
-
+#define NUNAVUT_ASSERT assert
 #include <libcanard/canard.h>
-#include <nunavut_out/uavcan/node/GetInfo_1_0.h>
+#include <uavcan/node/GetInfo_1_0.h>
 #include <board/board.hpp>
 #include "node_state.h"
 #include "units.hpp"
@@ -13,11 +13,12 @@ using namespace node::state;
 
 void processReceivedMessage(const State &state, const CanardTransfer *const transfer)
 {
-
+    (void) state;
+    (void) transfer;
 }
 static uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
 {
-    uavcan_node_GetInfo_Response_1_0 resp = {0};
+    uavcan_node_GetInfo_Response_1_0 resp{};
     resp.protocol_version.major = CANARD_UAVCAN_SPECIFICATION_VERSION_MAJOR;
     resp.protocol_version.minor = CANARD_UAVCAN_SPECIFICATION_VERSION_MINOR;
 
@@ -81,8 +82,9 @@ __attribute__((unused)) void receiveTransfer(State &state, int if_index)
     CanardFrame frame{};
     for (uint16_t i = 0; i < max_frames_to_process_per_iteration; ++i)
     {
-        bool result = bxCANPop(if_index, reinterpret_cast<uint32_t *const>(frame.extended_can_id),
-                               reinterpret_cast<size_t *const>(frame.payload_size), (void *) frame.payload);
+        __attribute__((unused)) volatile bool result = bxCANPop(if_index,
+                                                                reinterpret_cast<uint32_t *>(frame.extended_can_id),
+                                                                reinterpret_cast<size_t *>(frame.payload_size), (void *) frame.payload);
         // The transfer is actually not stored here in this narrow scoped variable
         // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will

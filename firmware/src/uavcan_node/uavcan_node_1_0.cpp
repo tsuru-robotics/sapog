@@ -3,7 +3,7 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
-
+#define NUNAVUT_ASSERT assert
 #include "uavcan_node_1_0.hpp"
 #include <cstddef>
 #include "zubax_chibios/config/config.hpp"
@@ -12,7 +12,7 @@
 #include "bxcan/bxcan.h"
 #include "reception.h"
 
-#define NUNAVUT_ASSERT assert
+
 
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"

@@ -1,6 +1,8 @@
 #ifndef FIRMWARE_NODE_STATE_H
 #define FIRMWARE_NODE_STATE_H
 
+#include <zubax_chibios/config/config.hpp>
+
 namespace node { namespace state {
         struct Timing {
             CanardMicrosecond fast_loop_period;
