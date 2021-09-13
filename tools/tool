@@ -19,8 +19,11 @@ else:
         return input_string
 
 verbose = False
-doDump = False
-dumpPath = ""
+do_dump = False
+dump_path = ""
+path_from_arguments = ""
+use_compound_named_file = False
+use_command_without_verification = False
 
 tempFile = """target extended-remote $PORT
 mon swdp_scan
@@ -76,6 +79,11 @@ def follow_link(link):
 
 def get_port():
     if "Linux" in platform.uname().system:
+        if path_from_arguments:
+            if should_be_resolved(path_from_arguments):
+                return follow_link(path_from_arguments)
+            else:
+                return path_from_arguments
         pattern = re.compile(r".*Black.*Magic.*Probe.*$")
         chosenPath = r"/dev/serial/by-id/"
         files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
@@ -90,7 +98,7 @@ def get_port():
                 say(f"nr {colored_index}. port name: {colored_file_name}")
             requested_nr = -10030
             while not (len(enumerated_files) > requested_nr > -1):
-                requested_nr = int(input("Enter the number of the port you would like to be selected: "))
+                requested_nr = int(input("Enter the number of the port you would like to be selected: ")) - 1
                 if requested_nr != -10030:
                     say(f"Number out of range. Please choose a number between: 1 and {len(enumerated_files)}.")
             requested_file = enumerated_files[requested_nr][1]
@@ -115,11 +123,11 @@ def upload_file(port_file, elf_file, gdb_name, size_name):
         exit(1)
     stream = os.popen(f"{size_name} {elf_file}")  # arm-none-eabi-size $elf
     output = stream.read()
-    if doDump:
+    if do_dump:
         say("The dump command has built in memory ranges for stm32f105r8 according to its memory mapping."
             "\nIf you are using this script to dump any other memory range then please change the range in the script.")
-        if len(dumpPath):
-            temp_file2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dumpPath)
+        if len(dump_path):
+            temp_file2 = tempFileDump.replace("$PORT", port_file).replace("$PATH_DUMP", dump_path)
         else:
             print("You did not specify a dumpPath.")
     else:
@@ -129,8 +137,8 @@ def upload_file(port_file, elf_file, gdb_name, size_name):
         arguments.append(f"-ex \"{line.rstrip()}\"")  # https://manned.org/arm-none-eabi-gdb/7308522e
 
     argument_string = " ".join(arguments)
-    upload_command = f"{gdb_name} {elf_file} {argument_string} --batch"
-    if yes_or_no(f"Should the upload command be run: {upload_command}"):
+    upload_command = f"{gdb_name} {elf_file} {argument_string} -nh --batch"
+    if use_command_without_verification or yes_or_no(f"Should the upload command be run: {upload_command}"):
         stream = os.popen(upload_command)  # arm-none-eabi-size $elf
         output = stream.read()
         print(output)
@@ -149,9 +157,14 @@ def get_needed_elf_file(directory):
         say("No input files were specified, now looking for elf files, would like to use any of them?")
         for index, file in enumerated_files:
             colored_index = colored(str(index), "yellow")
+            print(f"use_compound_named_file = {use_compound_named_file}")
+            if use_compound_named_file and "compound" in file:
+                say("This is the file!")
+                requested_nr = index
             colored_file_name = colored(file, "blue")
             say(f"nr {colored_index}. file name: {colored_file_name}")
-        requested_nr = int(input("Enter the number of the file you would like to be uploaded: "))
+        if requested_nr is None:
+            requested_nr = int(input("Enter the number of the file you would like to be uploaded: "))
         if len(enumerated_files) > requested_nr > -1:
             requested_file = enumerated_files[requested_nr][1]
             say(f"Requested file {requested_file} will be uploaded.")
@@ -181,8 +194,12 @@ def file_given_scenario(file):
     return file, get_port()
 
 
+def should_be_resolved(path):
+    return "by-" in str(path)
+
+
 def main():
-    global verbose, doDump, dumpPath, selectPort
+    global verbose, do_dump, dump_path, select_port, path_from_arguments, use_compound_named_file, use_command_without_verification
     say("A utility for Droncode probe.")
     print(platform.uname())
     if "Linux" not in platform.uname().system:
@@ -198,9 +215,16 @@ def main():
         parser.add_argument('-s', '--size-executable', default="arm-none-eabi-size")
         parser.add_argument('-v', '--verbose', default=False, action='store_true')
         parser.add_argument('-d', '--dump', default=False, action='store_true')
+        parser.add_argument('-uc', '--use-compound', default=False, action='store_true',
+                            help="use compound.elf without asking")
+        parser.add_argument('-up', '--use-port', help="The port or link to the port to use.")
         parser.add_argument('-pp', '--print-port', default=False, action='store_true')
         parser.add_argument('--dump-path', default=os.path.join(os.path.expanduser('~'), "magicdump.bin"))
+        parser.add_argument('-y', '--yes', default=False, action='store_true')
         args = parser.parse_args()
+        use_command_without_verification = args.yes
+        use_compound_named_file = args.use_compound
+        path_from_arguments = args.use_port
         if args.print_port:
             say(get_port())
             exit(0)
@@ -208,8 +232,8 @@ def main():
         if args.dir != os.getcwd() and not is_absolute:
             args.dir = os.path.join(os.getcwd(), args.dir)
         verbose = args.verbose
-        doDump = args.dump
-        dumpPath = args.dump_path
+        do_dump = args.dump
+        dump_path = args.dump_path
         if args.input_file:
             file, port = file_given_scenario(args.input_file)
         else:
