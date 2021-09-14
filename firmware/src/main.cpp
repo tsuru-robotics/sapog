@@ -49,7 +49,7 @@
 #include <sys/unistd.h>
 #include "uavcan_node/uavcan_node_1_0.hpp"
 //#include <zubax_chibios/sys/sys.cpp>
-
+#include <stdio.h>
 
 namespace
 {
@@ -97,7 +97,7 @@ os::watchdog::Timer init()
 	return wdt;
 }
 
-void do_startup_beep()
+[[maybe_unused]] void do_startup_beep()
 {
 	motor_beep(1000, 100);
 	::usleep(200 * 1000);
@@ -179,7 +179,7 @@ int main()
 	do_startup_beep();
 
 	motor_confirm_initialization();
-
+    printf("Here I state that I have finished motor initialization, hurraaaaay!");
 
 	/*
 	 * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.

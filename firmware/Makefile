@@ -94,7 +94,7 @@ LDSCRIPT= linker.ld
 USE_LTO = yes
 # Warning: GCC 4.9 with O3 and LTO breaks the code mysteriously! GCC 5.x segfaults during linking. Why GCC, why!?
 RELEASE_OPT = -O2 -fomit-frame-pointer
-DEBUG_OPT = -O1 -g3 -DDISABLE_WATCHDOG=1
+DEBUG_OPT = -Og -g3 -DDISABLE_WATCHDOG=1
 
 # More warnings are enabled in the included makefile
 CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow #-Werror

@@ -3,11 +3,13 @@
 
 static const int max_frames_to_process_per_iteration = 1000;
 #define NUNAVUT_ASSERT assert
+
 #include <libcanard/canard.h>
 #include <uavcan/node/GetInfo_1_0.h>
 #include <board/board.hpp>
 #include "node_state.h"
 #include "units.hpp"
+#include <cstddef>
 
 using namespace node::state;
 
@@ -16,6 +18,7 @@ void processReceivedMessage(const State &state, const CanardTransfer *const tran
     (void) state;
     (void) transfer;
 }
+
 static uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
 {
     uavcan_node_GetInfo_Response_1_0 resp{};
@@ -38,32 +41,32 @@ static uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
     // The software image CRC and the Certificate of Authenticity are optional so not populated in this demo.
     return resp;
 }
+
 void processReceivedRequest(const State &state, const CanardTransfer *const transfer)
 {
     if (transfer->port_id == uavcan_node_GetInfo_1_0_FIXED_PORT_ID_)
+    {
+        // The request object is empty so we don't bother deserializing it. Just send the response.
+        const uavcan_node_GetInfo_Response_1_0 resp = processRequestNodeGetInfo();
+        uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
+        size_t serialized_size = sizeof(serialized);
+        const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
+        if (res >= 0)
         {
-            // The request object is empty so we don't bother deserializing it. Just send the response.
-            const uavcan_node_GetInfo_Response_1_0 resp = processRequestNodeGetInfo();
-            uint8_t      serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
-            size_t       serialized_size = sizeof(serialized);
-            const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
-            if (res >= 0)
-            {
-                CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
-                rt.timestamp_usec = transfer->timestamp_usec + MEGA;
-                rt.transfer_kind  = CanardTransferKindResponse;
-                rt.payload_size   = serialized_size;
-                rt.payload        = &serialized[0];
-                (void) canardTxPush(const_cast<CanardInstance*>(&state.canard), &rt);
-            }
-            else
-            {
-                assert(false);
-            }
+            CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
+            rt.timestamp_usec = transfer->timestamp_usec + MEGA;
+            rt.transfer_kind = CanardTransferKindResponse;
+            rt.payload_size = serialized_size;
+            rt.payload = &serialized[0];
+            (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
+        } else
+        {
+            assert(false);
         }
+    }
 }
 
-__attribute__((unused)) void processReceivedTransfer(const State &state, const CanardTransfer *const transfer)
+void processReceivedTransfer(const State &state, const CanardTransfer *const transfer)
 {
     if (transfer->transfer_kind == CanardTransferKindMessage)
     {
@@ -77,14 +80,20 @@ __attribute__((unused)) void processReceivedTransfer(const State &state, const C
     }
 }
 
-__attribute__((unused)) void receiveTransfer(State &state, int if_index)
+void receiveTransfer(State &state, int if_index)
 {
     CanardFrame frame{};
+    //TODO: Make sure that the timestamp is initialized
+    //TODO: Also make sure that I check for the deadline of a request using my definition of ONE_SECOND_DEADLINE in units.hpp
+    std::array<std::uint8_t, 8> payload_array;
+    frame.payload = &payload_array;
     for (uint16_t i = 0; i < max_frames_to_process_per_iteration; ++i)
     {
-        __attribute__((unused)) volatile bool result = bxCANPop(if_index,
-                                                                reinterpret_cast<uint32_t *>(frame.extended_can_id),
-                                                                reinterpret_cast<size_t *>(frame.payload_size), (void *) frame.payload);
+        bool bxCanQueueHadSomething = bxCANPop(if_index,
+                                               &frame.extended_can_id,
+                                               &frame.payload_size, const_cast<void *>(frame.payload));
+        if (!bxCanQueueHadSomething)
+        { return; }
         // The transfer is actually not stored here in this narrow scoped variable
         // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
@@ -94,7 +103,7 @@ __attribute__((unused)) void receiveTransfer(State &state, int if_index)
         if (canard_result > 0)
         {
             processReceivedTransfer(state, &transfer);
-            state.canard.memory_free(&state.canard, (void *) transfer.payload); // If this was a C++ library then ...
+            state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
         { ;  // Zero means that the frame did not complete a transfer so there is nothing to do.
             // OOM should never occur if the heap is sized correctly. We track OOM errors via heap API.

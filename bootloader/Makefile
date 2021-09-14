@@ -86,7 +86,7 @@ BL_SRC            = $(BL)/src/
 BL_BUILD          = $(BUILD)$(BL)/
 BL_OPTIMIZE_FOR   = #SIZE
 BL_DEBUG_LEVEL    = 3
-BL_OPTIM_FLAGS    = -Os #-flto
+BL_OPTIM_FLAGS    = -O0 #-flto
 BL_LINKER_SCRIPT  = $(BL)/bootloader.ld
 BL_OBJECTS        = $(addprefix $(BL_BUILD), \
 					  main.o can.o crc.o flash.o random.o shared.o timer.o \

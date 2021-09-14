@@ -229,7 +229,7 @@ void motor_timer_init(void)
 	TIMSTP->CR1 = TIM_CR1_CEN;    // Start
 }
 
-//__attribute__((optimize(1)))          // To prevent code reordering
+__attribute__((optimize(3)))          // To prevent code reordering
 uint64_t motor_timer_hnsec(void)
 {
 	assert(_nanosec_per_tick > 0);  // Make sure the timer was initialized

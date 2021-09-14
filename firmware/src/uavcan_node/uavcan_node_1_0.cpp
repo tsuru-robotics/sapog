@@ -81,6 +81,7 @@ namespace platform
     using namespace node::loops;
     (void) arg;
     initCanard();
+
     chRegSetThreadName("heartbeat_control_thread");
     state.timing.next_1_hz_iter_at = state.timing.started_at + MEGA;
     state.timing.next_01_hz_iter_at = state.timing.started_at + MEGA * 10;
@@ -130,6 +131,18 @@ static void initCanard()
                        &platform::heapUnlock);
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     state.canard.node_id = state.param_node_id.get();
+    // Service servers:
+    {
+        static CanardRxSubscription rx;
+        const int8_t res =  //
+                canardRxSubscribe(&state.canard,
+                                  CanardTransferKindRequest,
+                                  uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
+                                  uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
+                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
+                                  &rx);
+        assert(res > 0); // This is to make sure that the subscription was successful.
+    }
 }
 
 
