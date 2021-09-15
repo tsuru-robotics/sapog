@@ -10,18 +10,19 @@ namespace node
 {
     namespace loops
     {
-        void handle1HzLoop(State& state)
+        void handle1HzLoop(__attribute__((unused)) State& state)
         {
-            node::communications::publish_heartbeat(state.canard, state);
-            receiveTransfer(state, 0);
-            //receiveTransfer(state, 1);
+
         }
         void handle01HzLoop(__attribute__((unused)) State& state)
         {
         }
         void handleFastLoop(__attribute__((unused)) State& state)
         {
-
+            //node::communications::publish_heartbeat(state.canard, state);
+            receiveTransfer(state, 0);
+            //receiveTransfer(state, 1);
+            transmit(state);
         }
     }
 }

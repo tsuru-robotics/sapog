@@ -37,7 +37,9 @@ void transmit(State &state)
                 remove_frame(state, if_index, txf);
                 continue;
             }
-            bool isDriverBusy = !please_transmit(*txf, state.timing.current_time, if_index);
+            bool isDriverBusy = !bxCANPush(if_index, state.timing.current_time, (*txf).timestamp_usec,
+                                           (*txf).extended_can_id, (*txf).payload_size,
+                                           (*txf).payload);
             if (!isDriverBusy)
             {
                 // txf was first used by canardTxPeek,

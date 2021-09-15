@@ -10,6 +10,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include "node_state.h"
 #include "units.hpp"
 #include <cstddef>
+#include "node_time.h"
 
 using namespace node::state;
 
@@ -54,7 +55,9 @@ void processReceivedRequest(const State &state, const CanardTransfer *const tran
         if (res >= 0)
         {
             CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
-            rt.timestamp_usec = transfer->timestamp_usec + MEGA;
+            if(transfer->timestamp_usec > 0){
+                rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE;
+            }
             rt.transfer_kind = CanardTransferKindResponse;
             rt.payload_size = serialized_size;
             rt.payload = &serialized[0];
@@ -83,9 +86,10 @@ void processReceivedTransfer(const State &state, const CanardTransfer *const tra
 void receiveTransfer(State &state, int if_index)
 {
     CanardFrame frame{};
+    frame.timestamp_usec = getMonotonicMicroseconds();
     //TODO: Make sure that the timestamp is initialized
     //TODO: Also make sure that I check for the deadline of a request using my definition of ONE_SECOND_DEADLINE in units.hpp
-    std::array<std::uint8_t, 8> payload_array;
+    std::array<std::uint8_t, 8> payload_array{};
     frame.payload = &payload_array;
     for (uint16_t i = 0; i < max_frames_to_process_per_iteration; ++i)
     {

@@ -22,7 +22,8 @@
 #include "units.hpp"
 #include "node_time.h"
 #include "loops.h"
-
+#include <thread>
+#include <sys/unistd.h>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -81,8 +82,8 @@ namespace platform
     using namespace node::loops;
     (void) arg;
     initCanard();
-
-    chRegSetThreadName("heartbeat_control_thread");
+    chRegSetThreadName("uavcan_thread");
+    state.timing.next_fast_iter_at = state.timing.started_at + QUEUE_TIME_FRAME;
     state.timing.next_1_hz_iter_at = state.timing.started_at + MEGA;
     state.timing.next_01_hz_iter_at = state.timing.started_at + MEGA * 10;
     do
@@ -91,7 +92,7 @@ namespace platform
         state.timing.current_time = getMonotonicMicroseconds();
         if (state.timing.current_time >= state.timing.next_fast_iter_at)
         {
-            state.timing.next_fast_iter_at += state.timing.fast_loop_period;
+            state.timing.next_fast_iter_at += QUEUE_TIME_FRAME;;
             node::loops::handleFastLoop(state);
         }
         if (state.timing.current_time >= state.timing.next_1_hz_iter_at)
@@ -104,8 +105,8 @@ namespace platform
             state.timing.next_01_hz_iter_at += MEGA * 10;
             handle01HzLoop(state);
         }
+        chThdSleep(1);
         //publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
-
     } while (true);
 }
 
