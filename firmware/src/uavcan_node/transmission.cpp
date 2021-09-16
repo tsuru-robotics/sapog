@@ -1,4 +1,5 @@
 #include <bxcan.h>
+#include <cstdio>
 #include "transmission.h"
 #include "node_state.h"
 #include "libcanard/canard.h"
@@ -24,31 +25,25 @@ void remove_frame(State &state, int if_index, const CanardFrame *txf)
 
 void transmit(State &state)
 {
-    int array_size = sizeof(state.reduntant_interfaces) / sizeof(state.reduntant_interfaces[0]);
-    for (int if_index = 0; if_index < array_size; ++if_index)
+    for (const CanardFrame *txf = NULL;
+         (txf = canardTxPeek(&state.canard, 0)) != NULL;)  // Look at the top of the TX queue.
     {
-        for (const CanardFrame *txf = NULL;
-             (txf = canardTxPeek(&state.canard, if_index)) != NULL;)  // Look at the top of the TX queue.
+        bool isDriverBusy = !bxCANPush(0, state.timing.current_time, (*txf).timestamp_usec,
+                                       (*txf).extended_can_id, (*txf).payload_size,
+                                       (*txf).payload);
+        if (!isDriverBusy)
         {
-            bool isTimelyTransmission = (0U == txf->timestamp_usec) ||
-                                        (txf->timestamp_usec > state.timing.current_time);
-            if (!isTimelyTransmission)
-            {
-                remove_frame(state, if_index, txf);
-                continue;
-            }
-            bool isDriverBusy = !bxCANPush(if_index, state.timing.current_time, (*txf).timestamp_usec,
-                                           (*txf).extended_can_id, (*txf).payload_size,
-                                           (*txf).payload);
-            if (!isDriverBusy)
-            {
-                // txf was first used by canardTxPeek,
-                // then by please_transmit, which is bxCanPush.
-                // Now, txf is a pointer that needs to be deallocated in this scope.
-                remove_frame(state, if_index, txf);
-            } else
-            { goto out_of_loop; }
-        }
+            printf("Hello");
+            // txf was first used by canardTxPeek,
+            // then by please_transmit, which is bxCanPush.
+            // Now, txf is a pointer that needs to be deallocated in this scope.
+            remove_frame(state, 0, txf);
+        } else
+        { break; }
     }
-    out_of_loop:;
+    //int array_size = sizeof(state.reduntant_interfaces) / sizeof(state.reduntant_interfaces[0]);
+//    for (int if_index = 0; if_index < 1; ++if_index)
+//    {
+//
+//    }
 }
