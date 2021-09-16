@@ -70,7 +70,7 @@ static void* const ConfigStorageAddress = reinterpret_cast<void*>(0x08000000 + (
 constexpr unsigned ConfigStorageSize = 1024;
 
 extern void init_led();
-
+std::optional<os::stm32::ConfigStorageBackend> config_storage_backend;
 os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 {
 	// OS
@@ -89,8 +89,8 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 	init_led();
 
 	// Config
-	static os::stm32::ConfigStorageBackend config_storage_backend(ConfigStorageAddress, ConfigStorageSize);
-	const int config_init_res = os::config::init(&config_storage_backend);
+	config_storage_backend.emplace(os::stm32::ConfigStorageBackend(ConfigStorageAddress, ConfigStorageSize));
+	const int config_init_res = os::config::init(&config_storage_backend.value());
 	if (config_init_res < 0)
 	{
 		die(config_init_res);
