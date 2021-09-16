@@ -12,6 +12,7 @@
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
+#include "zubax_chibios/sys/sys.hpp"
 
 #if !defined(FLASH_SR_WRPRTERR) // Compatibility
 # define FLASH_SR_WRPRTERR      FLASH_SR_WRPERR

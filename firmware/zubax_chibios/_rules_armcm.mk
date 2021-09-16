@@ -91,7 +91,7 @@ USE_OPT += -u_port_lock -u_port_unlock -u_exit -u_kill -u_getpid -uchThdExit -u_
 UDEFS += -fno-single-precision-constant
 
 USE_COPT += -std=c99
-USE_CPPOPT += -std=c++14 -fno-rtti -fno-exceptions -fno-threadsafe-statics
+USE_CPPOPT += -std=c++17 -fno-rtti -fno-exceptions -fno-threadsafe-statics
 
 USE_OPT += -nodefaultlibs -lc -lgcc -lm
 
