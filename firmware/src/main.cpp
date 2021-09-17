@@ -206,7 +206,6 @@ int main()
 	::usleep(100 * 1000);
 	motor_stop();
 	board::reboot();
-
 	return 0;
 }
 

@@ -1,0 +1,86 @@
+#include <uavcan/_register/Value_1_0.h>
+#include "registers.hpp"
+#include <optional>
+#include <cstdio>
+#include "zubax_chibios/zubax_chibios/config/config.h"
+#include "type_conversion/uavcan_type_conversion.h"
+
+namespace board
+{
+extern std::optional<os::stm32::ConfigStorageBackend> config_storage_backend;
+}
+static void *const ConfigStorageAddress = reinterpret_cast<void *>(0x08000000 + (256 * 1024) - 1024);
+constexpr unsigned ConfigStorageSize = 1024;
+
+namespace config::registers
+{
+
+StorageManager::StorageManager() noexcept:
+        config_storage_backend{ConfigStorageAddress, ConfigStorageSize}
+{
+
+};
+
+
+void StorageManager::registerWrite([[maybe_unused]] const char *const register_name,
+                                   const uavcan_register_Value_1_0 *const input_value)
+{
+    if (input_value == nullptr)
+    { return; }
+
+}
+
+std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char *const register_name)
+{
+    printf("Reading register: %s\n", register_name);
+    ConfigParam in{};
+    int result = configGetDescr(register_name, &in);
+    if (result <= 0)
+    { return {}; }
+    switch (in.type)
+    {
+        case CONFIG_TYPE_FLOAT:
+        {
+            std::optional<uavcan_primitive_array_Real64_1_0> conversion = pack<uavcan_primitive_array_Real64_1_0>(
+                    configGet(register_name));
+            if (conversion.has_value())
+            {
+                uavcan_register_Value_1_0 value{};
+                value.real64 = conversion.value();
+                return value;
+            }
+            break;
+        }
+
+        case CONFIG_TYPE_INT:
+        {
+            std::optional<uavcan_primitive_array_Integer64_1_0> conversion = pack<uavcan_primitive_array_Integer64_1_0>(
+                    configGet(register_name));
+            if (conversion.has_value())
+            {
+                uavcan_register_Value_1_0 value{};
+                value.integer64 = conversion.value();
+                return value;
+            }
+            break;
+        }
+        case CONFIG_TYPE_BOOL:
+        {
+            std::optional<uavcan_primitive_array_Bit_1_0> conversion = pack<uavcan_primitive_array_Bit_1_0>(
+                    configGet(register_name));
+            if (conversion.has_value())
+            {
+                uavcan_register_Value_1_0 value{};
+                value.bit = conversion.value();
+                return value;
+            }
+            break;
+        }
+        default:
+            return {};
+    }
+    return std::optional<uavcan_register_Value_1_0>();
+}
+
+StorageManager storage_manager{};
+}

@@ -50,7 +50,7 @@ CSRC = $(wildcard $(SAPOG_SRC_DIR)/*.c)     \
        $(wildcard $(SAPOG_SRC_DIR)/*/*/*.c)
 
 CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
-         $(wildcard $(SAPOG_SRC_DIR)/*/*.cpp)
+         $(wildcard $(SAPOG_SRC_DIR)/**/*.cpp)
 
 UINCDIR = src           \
           src/os_config \

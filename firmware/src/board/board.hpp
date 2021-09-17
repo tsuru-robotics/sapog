@@ -38,7 +38,7 @@
 #include <cstdint>
 #include <array>
 #include <board/led.hpp>
-
+#include <unique_id/unique_id.h>
 namespace board
 {
 
@@ -69,7 +69,7 @@ void die(int error);
 void reboot();
 
 typedef std::array<std::uint8_t, 12> UniqueID;
-UniqueID read_unique_id();
+
 
 struct HardwareVersion
 {

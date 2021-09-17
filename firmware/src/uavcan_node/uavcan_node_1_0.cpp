@@ -4,6 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #define NUNAVUT_ASSERT assert
+
 #include "uavcan_node_1_0.hpp"
 #include <cstddef>
 #include "zubax_chibios/config/config.hpp"
@@ -11,7 +12,6 @@
 #include <uavcan/node/port/List_0_1.h>
 #include "bxcan/bxcan.h"
 #include "reception.h"
-
 
 
 #include "uavcan/node/Heartbeat_1_0.h"
@@ -40,10 +40,10 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
 
 namespace board
 {
-    extern void die(int error);
+extern void die(int error);
 
-    extern void *const ConfigStorageAddress;
-    constexpr unsigned ConfigStorageSize = 1024;
+extern void *const ConfigStorageAddress;
+constexpr unsigned ConfigStorageSize = 1024;
 }
 
 using namespace uavcan_node_1_0;
@@ -64,17 +64,17 @@ using node::state::State;
 static State state{};
 namespace platform
 {
-    syssts_t g_heap_irq_status_{};  // NOLINT
+syssts_t g_heap_irq_status_{};  // NOLINT
 
-    void heapLock()
-    {
-        g_heap_irq_status_ = chSysGetStatusAndLockX();
-    }
+void heapLock()
+{
+    g_heap_irq_status_ = chSysGetStatusAndLockX();
+}
 
-    void heapUnlock()
-    {
-        chSysRestoreStatusX(g_heap_irq_status_);
-    }
+void heapUnlock()
+{
+    chSysRestoreStatusX(g_heap_irq_status_);
+}
 }
 
 [[noreturn]] static void control_thread(void *arg)

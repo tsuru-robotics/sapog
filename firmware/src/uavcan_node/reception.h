@@ -10,7 +10,9 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include "node_state.h"
 #include "units.hpp"
 #include <cstddef>
+#include <cstdio>
 #include "node_time.h"
+#include <unique_id/unique_id.h>
 
 using namespace node::state;
 
@@ -106,6 +108,7 @@ void receiveTransfer(State &state, int if_index)
         const int8_t canard_result = canardRxAccept(&state.canard, &frame, if_index, &transfer);
         if (canard_result > 0)
         {
+            printf("I have received a transfer");
             processReceivedTransfer(state, &transfer);
             state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))

@@ -38,6 +38,7 @@
 #include <zubax_chibios/util/software_i2c.hpp>
 #include <zubax_chibios/platform/stm32/flash_writer.hpp>
 #include <zubax_chibios/platform/stm32/config_storage.hpp>
+#include <unique_id/unique_id.h>
 
 // Clock config validation
 #if STM32_PREDIV1_VALUE != 2
@@ -133,13 +134,6 @@ void reboot()
 	NVIC_SystemReset();
 }
 
-UniqueID read_unique_id()
-{
-	UniqueID out;
-	std::memcpy(out.data(), reinterpret_cast<const void*>(0x1FFFF7E8), std::tuple_size<UniqueID>::value);
-	return out;
-}
-
 HardwareVersion detect_hardware_version()
 {
 	auto v = HardwareVersion();
@@ -175,12 +169,7 @@ bool try_read_device_signature(DeviceSignature& out_sign)
 {
 	std::memcpy(out_sign.data(), &DeviceSignatureStorage[0], std::tuple_size<DeviceSignature>::value);
 
-	for (auto x : out_sign) {
-		if (x != 0xFF && x != 0x00) { // All 0xFF/0x00 is not a valid signature, it's empty storage
-			return true;
-		}
-	}
-	return false;
+    return std::any_of(out_sign.begin(), out_sign.end(), [](auto x){return x != 0xFF && x != 0x00;});
 }
 
 bool try_write_device_signature(const DeviceSignature& sign)
