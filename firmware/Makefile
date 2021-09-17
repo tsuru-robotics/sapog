@@ -50,7 +50,8 @@ CSRC = $(wildcard $(SAPOG_SRC_DIR)/*.c)     \
        $(wildcard $(SAPOG_SRC_DIR)/*/*/*.c)
 
 CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
-         $(wildcard $(SAPOG_SRC_DIR)/**/*.cpp)
+         $(wildcard $(SAPOG_SRC_DIR)/**/*.cpp)\
+         $(wildcard $(SAPOG_SRC_DIR)/*/*/*.cpp)
 
 UINCDIR = src           \
           src/os_config \
@@ -98,7 +99,7 @@ DEBUG_OPT = -Og -g3 -DDISABLE_WATCHDOG=1
 
 # More warnings are enabled in the included makefile
 CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow #-Werror
-CWARN += -Wno-error=implicit-fallthrough
+CWARN += -Wno-error=implicit-fallthrough -Wno-deprecated
 CPPWARN = $(CWARN)
 
 # This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
