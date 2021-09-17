@@ -11,17 +11,17 @@
 #include <ch.h>
 #include <uavcan/node/port/List_0_1.h>
 #include "bxcan/bxcan.h"
-#include "reception.h"
+#include "reception.hpp"
 
 
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"
 #include "libcanard/canard.h"
 #include "o1heap/o1heap.h"
-#include "node_state.h"
+#include "state.hpp"
 #include "units.hpp"
-#include "node_time.h"
-#include "loops.h"
+#include "time.h"
+#include "loops.hpp"
 #include <thread>
 #include <sys/unistd.h>
 

@@ -2,8 +2,8 @@
 #define FIRMWARE_PUBLISHES_HPP
 
 #include "units.hpp"
-#include "node_state.h"
-#include "transmission.h"
+#include "state.hpp"
+#include "transmission.hpp"
 #include <iterator>
 
 namespace node

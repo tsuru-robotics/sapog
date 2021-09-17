@@ -1,7 +1,7 @@
 #include <bxcan.h>
 #include <cstdio>
-#include "transmission.h"
-#include "node_state.h"
+#include "transmission.hpp"
+#include "state.hpp"
 #include "libcanard/canard.h"
 
 // This project differs from ds015_demo

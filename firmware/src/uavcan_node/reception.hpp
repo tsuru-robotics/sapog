@@ -1,5 +1,5 @@
-#ifndef FIRMWARE_RECEPTION_H
-#define FIRMWARE_RECEPTION_H
+#ifndef FIRMWARE_RECEPTION_HPP
+#define FIRMWARE_RECEPTION_HPP
 
 static const int max_frames_to_process_per_iteration = 1000;
 #define NUNAVUT_ASSERT assert
@@ -7,11 +7,11 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include <libcanard/canard.h>
 #include <uavcan/node/GetInfo_1_0.h>
 #include <board/board.hpp>
-#include "node_state.h"
+#include "state.hpp"
 #include "units.hpp"
 #include <cstddef>
 #include <cstdio>
-#include "node_time.h"
+#include "time.h"
 #include <unique_id/unique_id.h>
 
 using namespace node::state;
@@ -121,4 +121,4 @@ void receiveTransfer(State &state, int if_index)
     }
 }
 
-#endif //FIRMWARE_RECEPTION_H
+#endif //FIRMWARE_RECEPTION_HPP
