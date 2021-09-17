@@ -86,7 +86,15 @@ void heapUnlock()
     state.timing.next_fast_iter_at = state.timing.started_at + QUEUE_TIME_FRAME;
     state.timing.next_1_hz_iter_at = state.timing.started_at + MEGA;
     state.timing.next_01_hz_iter_at = state.timing.started_at + MEGA * 10;
-    do
+    // Plug and play feature
+    while (state.flags.anonymous)
+    {
+        state.flags.anonymous = !node::config::plug_and_play(state);
+        int sleep_time = 500 + rand() % 2000;
+        printf("Plug and play is sleeping for %d", sleep_time);
+        chThdSleep(sleep_time);  // 1 tick is 100 microseconds in our case, so 1000 is one second
+    }
+    while(true)
     {
         // Run a trivial scheduler polling the loops that run the business logic.
         state.timing.current_time = getMonotonicMicroseconds();
@@ -107,7 +115,7 @@ void heapUnlock()
         }
         chThdSleep(1);
         //publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
-    } while (true);
+    }
 }
 
 static void initCanard()
