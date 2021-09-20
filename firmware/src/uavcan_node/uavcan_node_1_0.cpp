@@ -87,14 +87,62 @@ void heapUnlock()
     state.timing.next_1_hz_iter_at = state.timing.started_at + MEGA;
     state.timing.next_01_hz_iter_at = state.timing.started_at + MEGA * 10;
     // Plug and play feature
-    while (state.flags.anonymous)
+    state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
+    while (state.plug_and_play.anonymous)
     {
-        state.flags.anonymous = !node::config::plug_and_play(state);
-        int sleep_time = 500 + rand() % 2000;
-        printf("Plug and play is sleeping for %d", sleep_time);
-        chThdSleep(sleep_time);  // 1 tick is 100 microseconds in our case, so 1000 is one second
+        state.timing.current_time = getMonotonicMicroseconds();
+        switch(state.plug_and_play.status){
+            case node::state::PNPStatus::Subscribing:
+                break;
+            case node::state::PNPStatus::TryingToSend:
+                break;
+            case node::state::PNPStatus::SentRequest:
+                break;
+            case node::state::PNPStatus::ReceivedResponse:
+                break;
+            case node::state::PNPStatus::Done:
+                break;
+        }
+        if (state.plug_and_play.waitingForReply)
+        {
+            bool hasTimeToWait = state.timing.current_time < state.timing.next_pnp_request;
+            if (hasTimeToWait)
+            {
+
+            } else
+            {
+                state.plug_and_play.waitingForReply = false;
+            }
+        }
+        if (!state.plug_and_play.waitingForReply)
+        {
+            // 1 tick is 100 microseconds in our case, so 1000 is one second
+            // at least 500 milliseconds of waiting for reply, then additional 0 to 1999 milliseconds of waiting
+            int sleep_time = 500 + rand() % 2000;
+            state.timing.next_pnp_request = state.timing.current_time + sleep_time;
+            printf("Plug and play is sleeping for %d", sleep_time);
+            //chThdSleep(sleep_time); // Cannot do this, have to be polling for the response
+            bool didSendRequest = node::config::SendPlugAndPlayRequest(state);
+            if (didSendRequest)
+            {
+                node::config::subscribeToPlugAndPlayResponse(state, sleep_time);
+                state.plug_and_play.request_count += 1;
+            } else
+            {
+                continue;
+            }
+        }
+        if (state.plug_and_play.request_count == 0)
+        {
+
+        } else
+        {
+
+
+        }
+        chThdSleep(1);
     }
-    while(true)
+    while (true)
     {
         // Run a trivial scheduler polling the loops that run the business logic.
         state.timing.current_time = getMonotonicMicroseconds();

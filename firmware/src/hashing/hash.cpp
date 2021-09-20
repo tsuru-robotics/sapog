@@ -28,7 +28,7 @@ void CRC64::update(const std::uint8_t *const data, const std::size_t len)
     }
 }
 
-auto CRC64::get() const
+std::uint64_t CRC64::get() const
 { return crc_ ^ Xor; }
 
 auto CRC64::getBytes() const -> std::array <uint8_t, Size>

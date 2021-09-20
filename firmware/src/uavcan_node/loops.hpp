@@ -13,14 +13,7 @@ namespace node::loops
 {
 void handle1HzLoop(__attribute__((unused)) State &state)
 {
-    const bool anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
-    if (!anonymous)
-    {
-        node::communications::publish_heartbeat(state.canard, state);
-    } else
-    {
-        node::config::plug_and_play(state);
-    }
+    node::communications::publish_heartbeat(state.canard, state);
 }
 
 void handle01HzLoop(__attribute__((unused)) State &state)

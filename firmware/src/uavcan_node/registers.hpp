@@ -10,7 +10,7 @@ public:
     os::stm32::ConfigStorageBackend config_storage_backend;
     StorageManager() noexcept;
     std::optional<uavcan_register_Value_1_0> registerRead(const char *const register_name);
-    void registerWrite(const char *const register_name, const uavcan_register_Value_1_0 *const input_value);
+    bool registerWrite(const char *const register_name, const uavcan_register_Value_1_0 *const input_value);
 };
 }
 

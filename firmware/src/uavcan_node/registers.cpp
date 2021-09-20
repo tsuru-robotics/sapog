@@ -22,12 +22,48 @@ StorageManager::StorageManager() noexcept:
 };
 
 
-void StorageManager::registerWrite([[maybe_unused]] const char *const register_name,
+bool StorageManager::registerWrite([[maybe_unused]] const char *const register_name,
                                    const uavcan_register_Value_1_0 *const input_value)
 {
     if (input_value == nullptr)
-    { return; }
-
+    { return false; }
+    if (uavcan_register_Value_1_0_is_bit_(input_value))
+    {
+        std::optional<float> value;
+        value = conversion::extract(input_value->bit);
+        if (value.has_value())
+        {
+            configSet(register_name, value.value());
+        } else
+        {
+            return false;
+        }
+    } else if (uavcan_register_Value_1_0_is_integer64_(input_value))
+    {
+        std::optional<float> value;
+        value = conversion::extract(input_value->integer64);
+        if (value.has_value())
+        {
+            configSet(register_name, value.value());
+        } else
+        {
+            return false;
+        }
+    } else if (uavcan_register_Value_1_0_is_real64_(input_value))
+    {
+        std::optional<float> value;
+        value = conversion::extract(input_value->real64);
+        if (value.has_value())
+        {
+            configSet(register_name, value.value());
+        } else
+        {
+            return false;
+        }
+    } else
+    {
+        return false;
+    }
 }
 
 std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char *const register_name)
@@ -41,7 +77,7 @@ std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char
     {
         case CONFIG_TYPE_FLOAT:
         {
-            std::optional<uavcan_primitive_array_Real64_1_0> conversion = pack<uavcan_primitive_array_Real64_1_0>(
+            std::optional<uavcan_primitive_array_Real64_1_0> conversion = conversion::pack<uavcan_primitive_array_Real64_1_0>(
                     configGet(register_name));
             if (conversion.has_value())
             {
@@ -54,7 +90,7 @@ std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char
 
         case CONFIG_TYPE_INT:
         {
-            std::optional<uavcan_primitive_array_Integer64_1_0> conversion = pack<uavcan_primitive_array_Integer64_1_0>(
+            std::optional<uavcan_primitive_array_Integer64_1_0> conversion = conversion::pack<uavcan_primitive_array_Integer64_1_0>(
                     configGet(register_name));
             if (conversion.has_value())
             {
@@ -66,7 +102,7 @@ std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char
         }
         case CONFIG_TYPE_BOOL:
         {
-            std::optional<uavcan_primitive_array_Bit_1_0> conversion = pack<uavcan_primitive_array_Bit_1_0>(
+            std::optional<uavcan_primitive_array_Bit_1_0> conversion = conversion::pack<uavcan_primitive_array_Bit_1_0>(
                     configGet(register_name));
             if (conversion.has_value())
             {

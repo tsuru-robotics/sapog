@@ -20,7 +20,7 @@ public:
     void update(const std::uint8_t *const data, const std::size_t len);
 
     /// The current CRC value.
-    [[nodiscard]] auto get() const;
+    [[nodiscard]] std::uint64_t get() const;
 
     /// The current CRC value represented as a big-endian sequence of bytes.
     /// This method is designed for inserting the computed CRC value after the data.
