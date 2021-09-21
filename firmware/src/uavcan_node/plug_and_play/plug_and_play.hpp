@@ -10,6 +10,8 @@ bool SendPlugAndPlayRequest(State &state);
 
 bool receivePlugAndPlayResponse(State &state);
 
-bool subscribeToPlugAndPlayResponse(State &state, int timeOut);
+bool subscribeToPlugAndPlayResponse(State &state);
+
+bool saveNodeID(State &state);
 }
 #endif //FIRMWARE_PLUG_AND_PLAY_HPP

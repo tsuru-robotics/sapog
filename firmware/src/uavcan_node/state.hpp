@@ -30,9 +30,9 @@ enum PNPStatus {
 };
 struct PlugAndPlay {
     int request_count = 0;
+    uint8_t node_id;
     PNPStatus status = Subscribing;
     bool anonymous = true;
-    bool waitingForReply = false;
 };
 struct State
 {

@@ -13,6 +13,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include <cstdio>
 #include "time.h"
 #include <unique_id/unique_id.h>
+#include <bxcan.h>
 
 using namespace node::state;
 
@@ -21,7 +22,6 @@ void processReceivedMessage(const State &state, const CanardTransfer *const tran
     (void) state;
     (void) transfer;
 }
-
 static uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
 {
     uavcan_node_GetInfo_Response_1_0 resp{};
@@ -85,7 +85,7 @@ void processReceivedTransfer(const State &state, const CanardTransfer *const tra
     }
 }
 
-void receiveTransfer(State &state, int if_index)
+std::optional<CanardTransfer> receiveTransfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = getMonotonicMicroseconds();
@@ -99,7 +99,7 @@ void receiveTransfer(State &state, int if_index)
                                                &frame.extended_can_id,
                                                &frame.payload_size, const_cast<void *>(frame.payload));
         if (!bxCanQueueHadSomething)
-        { return; }
+        { return {}; }
         // The transfer is actually not stored here in this narrow scoped variable
         // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
@@ -109,8 +109,8 @@ void receiveTransfer(State &state, int if_index)
         if (canard_result > 0)
         {
             printf("I have received a transfer");
-            processReceivedTransfer(state, &transfer);
-            state.canard.memory_free(&state.canard, (void *) transfer.payload);
+            return transfer;
+            //state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
         { ;  // Zero means that the frame did not complete a transfer so there is nothing to do.
             // OOM should never occur if the heap is sized correctly. We track OOM errors via heap API.

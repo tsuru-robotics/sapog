@@ -91,54 +91,39 @@ void heapUnlock()
     while (state.plug_and_play.anonymous)
     {
         state.timing.current_time = getMonotonicMicroseconds();
-        switch(state.plug_and_play.status){
+        switch (state.plug_and_play.status)
+        {
             case node::state::PNPStatus::Subscribing:
+                node::config::subscribeToPlugAndPlayResponse(state);
+                state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
                 break;
             case node::state::PNPStatus::TryingToSend:
+                if (node::config::SendPlugAndPlayRequest(state))
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::SentRequest;
+                }
                 break;
             case node::state::PNPStatus::SentRequest:
+                // The following should write the received NodeID into the state object
+                if (node::config::receivePlugAndPlayResponse(state))
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::ReceivedResponse;
+                }
+                if (state.timing.current_time >= state.timing.next_pnp_request)
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
+                    state.plug_and_play.request_count += 1;
+                    continue;
+                }
                 break;
             case node::state::PNPStatus::ReceivedResponse:
+                if(node::config::saveNodeID(state)){
+                    state.plug_and_play.status = node::state::PNPStatus::Done;
+                }
                 break;
             case node::state::PNPStatus::Done:
+                state.plug_and_play.anonymous = false;
                 break;
-        }
-        if (state.plug_and_play.waitingForReply)
-        {
-            bool hasTimeToWait = state.timing.current_time < state.timing.next_pnp_request;
-            if (hasTimeToWait)
-            {
-
-            } else
-            {
-                state.plug_and_play.waitingForReply = false;
-            }
-        }
-        if (!state.plug_and_play.waitingForReply)
-        {
-            // 1 tick is 100 microseconds in our case, so 1000 is one second
-            // at least 500 milliseconds of waiting for reply, then additional 0 to 1999 milliseconds of waiting
-            int sleep_time = 500 + rand() % 2000;
-            state.timing.next_pnp_request = state.timing.current_time + sleep_time;
-            printf("Plug and play is sleeping for %d", sleep_time);
-            //chThdSleep(sleep_time); // Cannot do this, have to be polling for the response
-            bool didSendRequest = node::config::SendPlugAndPlayRequest(state);
-            if (didSendRequest)
-            {
-                node::config::subscribeToPlugAndPlayResponse(state, sleep_time);
-                state.plug_and_play.request_count += 1;
-            } else
-            {
-                continue;
-            }
-        }
-        if (state.plug_and_play.request_count == 0)
-        {
-
-        } else
-        {
-
-
         }
         chThdSleep(1);
     }

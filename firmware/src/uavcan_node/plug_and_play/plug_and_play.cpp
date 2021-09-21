@@ -5,8 +5,12 @@
 #include "hashing/hash.hpp"
 #include "uavcan/pnp/NodeIDAllocationData_1_0.h"
 #include "plug_and_play.hpp"
+#include "uavcan_node/reception.hpp"
 #include <cstring>
+#include "uavcan_node/registers.hpp"
+
 static CanardRxSubscription AllocationMessageSubscription;
+
 bool node::config::SendPlugAndPlayRequest(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.
@@ -38,14 +42,38 @@ bool node::config::SendPlugAndPlayRequest(State &state)
     }
     return false;
 }
-bool node::config::subscribeToPlugAndPlayResponse(State& state, int timeOut){
+
+bool node::config::subscribeToPlugAndPlayResponse(State &state)
+{
     const int8_t res = canardRxSubscribe(&state.canard,
                                          CanardTransferKindMessage,
                                          uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                          uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
-                                         timeOut, &AllocationMessageSubscription);
+                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, &AllocationMessageSubscription);
     return res;
 }
-bool node::config::receivePlugAndPlayResponse(State& state){
-    return true;
+
+bool node::config::receivePlugAndPlayResponse(State &state)
+{
+    std::optional<CanardTransfer> transfer = receiveTransfer(state, 0);
+    if (transfer->port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
+    {
+        uavcan_pnp_NodeIDAllocationData_1_0 msg{};
+        int result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
+                                                                      (const uint8_t *const) (transfer->payload),
+                                                                      &transfer->payload_size);
+        if (result >= 0)
+        {
+            state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
+        }
+    }
+}
+bool node::config::saveNodeID(State &state){
+    uavcan_register_Value_1_0 data2{};
+    uavcan_primitive_array_Integer64_1_0 data{};
+    data.value.elements[0]=state.plug_and_play.node_id;
+    data.value.count = 1;
+    data2.integer64 = data;
+    uavcan_register_Value_1_0_select_integer64_(&data2);//4U;
+    ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
 }

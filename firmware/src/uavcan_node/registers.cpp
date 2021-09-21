@@ -14,7 +14,11 @@ constexpr unsigned ConfigStorageSize = 1024;
 
 namespace config::registers
 {
-
+StorageManager &getInstance()
+{
+    static StorageManager storage_manager;
+    return storage_manager;
+}
 StorageManager::StorageManager() noexcept:
         config_storage_backend{ConfigStorageAddress, ConfigStorageSize}
 {
@@ -117,6 +121,4 @@ std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char
     }
     return std::optional<uavcan_register_Value_1_0>();
 }
-
-StorageManager storage_manager{};
 }
