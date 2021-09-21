@@ -19,6 +19,7 @@ StorageManager &getInstance()
     static StorageManager storage_manager;
     return storage_manager;
 }
+
 StorageManager::StorageManager() noexcept:
         config_storage_backend{ConfigStorageAddress, ConfigStorageSize}
 {
@@ -64,10 +65,8 @@ bool StorageManager::registerWrite([[maybe_unused]] const char *const register_n
         {
             return false;
         }
-    } else
-    {
-        return false;
     }
+    return false;
 }
 
 std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char *const register_name)

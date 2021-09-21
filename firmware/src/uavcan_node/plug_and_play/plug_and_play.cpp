@@ -57,13 +57,15 @@ bool node::config::receivePlugAndPlayResponse(State &state)
     {
         uavcan_pnp_NodeIDAllocationData_1_0 msg{};
         int result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
-                                                                      (const uint8_t *const) (transfer->payload),
-                                                                      &transfer->payload_size);
+                                                                      reinterpret_cast<uint8_t *>(&(transfer->payload)),
+                                                                      &(transfer->payload_size));
         if (result >= 0)
         {
             state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
+            return true;
         }
     }
+    return false;
 }
 bool node::config::saveNodeID(State &state){
     uavcan_register_Value_1_0 data2{};
@@ -71,6 +73,6 @@ bool node::config::saveNodeID(State &state){
     data.value.elements[0]=state.plug_and_play.node_id;
     data.value.count = 1;
     data2.integer64 = data;
-    uavcan_register_Value_1_0_select_integer64_(&data2);//4U;
-    ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
+    uavcan_register_Value_1_0_select_integer64_(&data2);
+    return ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
 }
