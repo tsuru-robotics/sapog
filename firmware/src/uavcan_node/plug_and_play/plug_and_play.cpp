@@ -6,7 +6,6 @@
 #include "uavcan/pnp/NodeIDAllocationData_1_0.h"
 #include "plug_and_play.hpp"
 #include "uavcan_node/reception.hpp"
-#include <cstring>
 #include "uavcan_node/registers.hpp"
 
 static CanardRxSubscription AllocationMessageSubscription;
@@ -19,8 +18,6 @@ bool node::config::SendPlugAndPlayRequest(State &state)
     auto crc_object = CRC64{};
     crc_object.update(unique_id.data(), sizeof(unique_id));
     msg.unique_id_hash = crc_object.get();
-    //std::memcpy(&msg.unique_id_hash, &crc_object.getBytes()[0], sizeof(uint8_t) * 6);
-
     uint8_t serialized[uavcan_pnp_NodeIDAllocationData_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     const int8_t err = uavcan_pnp_NodeIDAllocationData_1_0_serialize_(&msg, &serialized[0], &serialized_size);

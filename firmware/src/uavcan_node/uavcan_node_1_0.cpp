@@ -24,6 +24,7 @@
 #include "loops.hpp"
 #include <thread>
 #include <sys/unistd.h>
+#include <uavcan_node/loops/loop.hpp>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -122,29 +123,25 @@ void heapUnlock()
                 }
                 break;
             case node::state::PNPStatus::Done:
+                state.canard.node_id = state.plug_and_play.node_id;
                 state.plug_and_play.anonymous = false;
                 break;
         }
         chThdSleep(1);
     }
+    static Loop loops[3]{Loop{&handle1HzLoop, MEGA},
+                         Loop{&handleFastLoop, QUEUE_TIME_FRAME},
+                         Loop{&handle01HzLoop, MEGA * 10}};
+
     while (true)
     {
         // Run a trivial scheduler polling the loops that run the business logic.
         state.timing.current_time = getMonotonicMicroseconds();
-        if (state.timing.current_time >= state.timing.next_fast_iter_at)
-        {
-            state.timing.next_fast_iter_at += QUEUE_TIME_FRAME;;
-            node::loops::handleFastLoop(state);
-        }
-        if (state.timing.current_time >= state.timing.next_1_hz_iter_at)
-        {
-            state.timing.next_1_hz_iter_at += MEGA;
-            handle1HzLoop(state);
-        }
-        if (state.timing.current_time >= state.timing.next_01_hz_iter_at)
-        {
-            state.timing.next_01_hz_iter_at += MEGA * 10;
-            handle01HzLoop(state);
+        for(Loop loop : loops){
+            if(loop.shouldExecute(state.timing.current_time)){
+                loop.execution_function(state);
+                loop.incrementNextExecution();
+            }
         }
         chThdSleep(1);
         //publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
