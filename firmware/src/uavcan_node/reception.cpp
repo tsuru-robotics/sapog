@@ -62,7 +62,7 @@ void processReceivedRequest(const State &state, const CanardTransfer *const tran
             CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
             if (transfer->timestamp_usec > 0)
             {
-                rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE;
+                rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
             }
             rt.transfer_kind = CanardTransferKindResponse;
             rt.payload_size = serialized_size;

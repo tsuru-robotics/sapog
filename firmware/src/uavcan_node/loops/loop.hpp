@@ -7,11 +7,9 @@
 
 class Loop
 {
-
-
 public:
     Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay);
-
+    int ID;
     CanardMicrosecond next_execution_at;
 
     bool shouldExecute(CanardMicrosecond current_time);

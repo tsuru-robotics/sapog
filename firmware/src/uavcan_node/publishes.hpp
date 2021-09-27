@@ -76,7 +76,7 @@ namespace node
             {
                 const CanardTransfer transfer = {
                         .timestamp_usec = state.timing.current_time +
-                                          ONE_SECOND_DEADLINE, // transmission deadline 1 second, optimal for heartbeat
+                                          ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
                         .priority       = CanardPriorityNominal,
                         .transfer_kind  = CanardTransferKindMessage,
                         .port_id        = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
