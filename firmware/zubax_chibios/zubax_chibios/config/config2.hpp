@@ -10,21 +10,26 @@ static constexpr int InitCodeCRCMismatch    = 3;
 static constexpr int OFFSET_LAYOUT_HASH     = 0;
 static constexpr int OFFSET_CRC             = 4;
 static constexpr int OFFSET_VALUES          = 8;
+static constexpr size_t storage_size = 100;
 using namespace ::os::config;
 namespace config::registers{
 class Storage {
 protected:
     IStorageBackend& _storage_backend;
-    std::StaticMap<uavcan_register_Name_1_0, uavcan_register_Value_1_0, 100> _storage;
+
+    mtl::StaticMap<uavcan_register_Name_1_0, uavcan_register_Value_1_0, storage_size> _storage;
     int _modification_count;
     std::uint32_t _layout_hash = 0;
     bool _frozen;
+    int _num_params;
 public:
     explicit Storage(IStorageBackend& _storage_backend);
     void init();
-    uavcan_register_Access_Response_1_0 getValue(uavcan_register_Access_Request_1_0 access_request);
-    int writeValue(uavcan_register_Access_Request_1_0 access_request);
+    std::optional<uavcan_register_Access_Response_1_0> getValue(uavcan_register_Access_Request_1_0 access_request);
+    bool writeValue(uavcan_register_Access_Request_1_0 access_request);
     bool save();
+
+    bool load();
 };
 }
 

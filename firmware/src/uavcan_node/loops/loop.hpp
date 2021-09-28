@@ -4,11 +4,11 @@
 #include <libcanard/canard.h>
 #include <functional>
 #include "uavcan_node/state.hpp"
-
+#include <etl/delegate.h>
 class Loop
 {
 public:
-    Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay);
+    Loop(etl::delegate<void(node::state::State &state)>, CanardMicrosecond next_loop_delay);
     int ID;
     CanardMicrosecond next_execution_at;
 

@@ -127,8 +127,8 @@ void heapUnlock()
         }
         chThdSleep(1);
     }
-    static Loop loops[4]{Loop{&handle1HzLoop, SECOND_IN_MICROSECONDS},
-                         Loop{&handleFastLoop, QUEUE_TIME_FRAME},
+    static Loop loops[4]{Loop{etl::delegate<void(State& state)>::create<handle1HzLoop>(), SECOND_IN_MICROSECONDS},
+                         Loop{etl::delegate<void(State& state)>::create<handleFastLoop>(), QUEUE_TIME_FRAME},
                          Loop{[](State &state_local) {
                              (void) state_local;
                              }, SECOND_IN_MICROSECONDS * 10},

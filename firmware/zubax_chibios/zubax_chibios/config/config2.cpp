@@ -2,46 +2,35 @@
 #include <zubax_chibios/sys/sys.hpp>
 #include "config2.hpp"
 #include <cerrno>
-
+#include "uavcan_node/time.h"
+#include <etl/crc32.h>
 
 namespace config::registers
 {
 static chibios_rt::Mutex _mutex;
 
-uavcan_register_Access_Response_1_0 Storage::getValue(uavcan_register_Access_Request_1_0 access_request)
+std::optional<uavcan_register_Access_Response_1_0> Storage::getValue(uavcan_register_Access_Request_1_0 access_request)
 {
-    (void) access_request;
-
-    return uavcan_register_Access_Response_1_0{};
-}
-
-int Storage::writeValue(uavcan_register_Access_Request_1_0 access_request)
-{
-    (void) access_request;
-    auto& name = access_request.name;
-    int retval = 0;
+    auto &name = access_request.name;
     ASSERT_ALWAYS(_frozen);
     os::MutexLocker locker(_mutex);
 
-    const int index = _storage.getIndexFromName(name);
-    if (index < 0)
+    if (auto value = _storage.getValue(name); value.has_value())
     {
-        retval = -ENOENT;
-        goto leave;
+        uavcan_register_Access_Response_1_0 response{};
+        response.value = value.value();
+        uavcan_time_SynchronizedTimestamp_1_0 timestamp{};
+        timestamp.microsecond = getMonotonicMicroseconds();
+        response.timestamp = timestamp;
+        return response;
     }
+    return {};
+}
 
-    if (!isValid(_descr_pool[index], value))
-    {
-        retval = -EINVAL;
-        goto leave;
-    }
-
+bool Storage::writeValue(uavcan_register_Access_Request_1_0 access_request)
+{
     _modification_count += 1;
-    _value_pool[index] = value;
-
-    leave:
-    return retval;
-    return false;
+    return _storage.setValue(access_request.name, access_request.value);
 }
 
 Storage::Storage(IStorageBackend &_storage_backend) :
@@ -73,9 +62,23 @@ bool Storage::save()
     }
 
     {
+        // Serialize storage
+        constexpr size_t pool_len = storage_size * uavcan_register_Value_1_0_EXTENT_BYTES_;
+        uint8_t valuesSerialized[pool_len]{};
+        auto start_serialized = etl::cbegin(valuesSerialized);
+        for (int i = 0; i < _num_params; ++i)
+        {
+            uint8_t buffer[uavcan_register_Value_1_0_EXTENT_BYTES_];
+            size_t size_of_buffer;
+            uavcan_register_Value_1_0_serialize_(&_storage.value_array[i], buffer, &size_of_buffer);
+            etl::copy(etl::cbegin(buffer), etl::cend(buffer), start_serialized++);
+        }
+
         // Write CRC
-        const int pool_len = _num_params * sizeof(_value_pool[0]);
-        const std::uint32_t true_crc = crc32(_value_pool, pool_len);
+        etl::crc32_t256 crc_value;
+        crc_value = ::etl::crc32{};
+        crc_value.add(etl::cbegin(valuesSerialized), etl::cend(valuesSerialized));
+        const std::uint32_t true_crc = crc_value.value();// _storage.value_array, pool_len
         flash_res = _storage_backend.write(OFFSET_CRC, &true_crc, 4);
         if (flash_res)
         {
@@ -83,17 +86,21 @@ bool Storage::save()
         }
 
         // Write Values
-        flash_res = _storage_backend.write(OFFSET_VALUES, _value_pool, pool_len);
+        flash_res = _storage_backend.write(OFFSET_VALUES, valuesSerialized, pool_len);
         if (flash_res)
         {
             goto flash_error;
         }
     }
 
-    return 0;
 
     flash_error:
     assert(flash_res);
     return flash_res;
+}
+
+bool Storage::load()
+{
+    return false;
 }
 };
