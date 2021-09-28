@@ -43,7 +43,7 @@
 #include <chprintf.h>
 #include <unistd.h>
 #include <board/board.hpp>
-#include <motor/motor.h>
+#include <motor/motor.hpp>
 
 #include <zubax_chibios/util/base64.hpp>
 #include "console.hpp"

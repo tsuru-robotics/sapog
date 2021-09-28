@@ -6,7 +6,7 @@
 #include "uavcan/pnp/NodeIDAllocationData_1_0.h"
 #include "plug_and_play.hpp"
 #include "uavcan_node/reception.hpp"
-#include "uavcan_node/registers.hpp"
+#include "src/settings/registers.hpp"
 
 static CanardRxSubscription AllocationMessageSubscription;
 
@@ -25,7 +25,7 @@ bool node::config::SendPlugAndPlayRequest(State &state)
     if (err >= 0)
     {
         const CanardTransfer transfer = {
-                .timestamp_usec = getMonotonicMicroseconds() + MEGA,
+                .timestamp_usec = getMonotonicMicroseconds() + SECOND_IN_MICROSECONDS,
                 .priority       = CanardPrioritySlow,
                 .transfer_kind  = CanardTransferKindMessage,
                 .port_id        = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,

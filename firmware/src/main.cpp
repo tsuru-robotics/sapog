@@ -44,7 +44,7 @@
 #include <console.hpp>
 #include <pwm_input.hpp>
 #include <temperature_sensor.hpp>
-#include <motor/motor.h>
+#include <motor/motor.hpp>
 #include <cstring>
 #include <sys/unistd.h>
 #include "uavcan_node/uavcan_node_1_0.hpp"

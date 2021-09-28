@@ -35,7 +35,7 @@
 #include <temperature_sensor.hpp>
 #include <zubax_chibios/os.hpp>
 #include <board/board.hpp>
-#include <motor/motor.h>
+#include <motor/motor.hpp>
 #include <unistd.h>
 #include <limits>
 #include <algorithm>

@@ -10,6 +10,7 @@
 #include <functional>
 #include <zubax_chibios/util/float_eq.hpp>
 #include "config.h"
+#include "IStorageBackend.hpp"
 
 namespace os
 {
@@ -113,18 +114,7 @@ struct Param<bool> : public ::ConfigParam
 template <typename T>
 using Param = const typename _internal::Param<T>;
 
-/**
- * This interface abstracts the configuration storage.
- */
-class IStorageBackend
-{
-public:
-    virtual ~IStorageBackend() { }
 
-    virtual int read(std::size_t offset, void* data, std::size_t len) = 0;
-    virtual int write(std::size_t offset, const void* data, std::size_t len) = 0;
-    virtual int erase() = 0;
-};
 
 /**
  * Returns 0 if everything is OK, even if the configuration could not be restored (this is not an error).

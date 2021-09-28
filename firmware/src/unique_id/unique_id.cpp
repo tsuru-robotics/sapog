@@ -1,5 +1,5 @@
 #include <uavcan/node/GetInfo_1_0.h>
-#include <uavcan_node/registers.hpp>
+#include <src/settings/registers.hpp>
 #include "unique_id.h"
 
 namespace board

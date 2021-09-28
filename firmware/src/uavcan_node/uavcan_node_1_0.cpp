@@ -84,9 +84,6 @@ void heapUnlock()
     (void) arg;
     initCanard();
     chRegSetThreadName("uavcan_thread");
-    state.timing.next_fast_iter_at = state.timing.started_at + QUEUE_TIME_FRAME;
-    state.timing.next_1_hz_iter_at = state.timing.started_at + MEGA;
-    state.timing.next_01_hz_iter_at = state.timing.started_at + MEGA * 10;
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     while (state.plug_and_play.anonymous)
@@ -118,7 +115,8 @@ void heapUnlock()
                 }
                 break;
             case node::state::PNPStatus::ReceivedResponse:
-                if(node::config::saveNodeID(state)){
+                if (node::config::saveNodeID(state))
+                {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
                 }
                 break;
@@ -129,22 +127,31 @@ void heapUnlock()
         }
         chThdSleep(1);
     }
-    static Loop loops[3]{Loop{&handle1HzLoop, MEGA},
+    static Loop loops[4]{Loop{&handle1HzLoop, SECOND_IN_MICROSECONDS},
                          Loop{&handleFastLoop, QUEUE_TIME_FRAME},
-                         Loop{&handle01HzLoop, MEGA * 10}};
+                         Loop{[](State &state_local) {
+                             (void) state_local;
+                             }, SECOND_IN_MICROSECONDS * 10},
+                         Loop{
+                                 [](State &state_local) {
+                                     (void) state_local;
+                                 }, QUEUE_TIME_FRAME
+                         },
+    };
 
     while (true)
     {
-        // Run a trivial scheduler polling the loops that run the business logic.
         state.timing.current_time = getMonotonicMicroseconds();
-        for(Loop loop : loops){
-            if(loop.shouldExecute(state.timing.current_time)){
+        for (Loop loop: loops)
+        {
+            if (loop.shouldExecute(state.timing.current_time))
+            {
                 loop.execution_function(state);
                 loop.incrementNextExecution();
             }
         }
         chThdSleep(1);
-        //publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
+//publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
     }
 }
 

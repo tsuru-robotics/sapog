@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zubax_chibios/os.hpp>
-#include <motor/motor.h>
+#include <motor/motor.hpp>
 #include <assert.h>
 
 static const unsigned MIN_VALID_PULSE_WIDTH_USEC = 500;

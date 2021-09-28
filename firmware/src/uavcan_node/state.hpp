@@ -2,15 +2,12 @@
 #define FIRMWARE_STATE_HPP
 
 #include <zubax_chibios/config/config.hpp>
+#include <libcanard/canard.h>
 
 namespace node::state
 {
 struct Timing
 {
-    CanardMicrosecond fast_loop_period;
-    CanardMicrosecond next_fast_iter_at;
-    CanardMicrosecond next_1_hz_iter_at;
-    CanardMicrosecond next_01_hz_iter_at;
     CanardMicrosecond next_pnp_request;
     CanardMicrosecond started_at;
     CanardMicrosecond current_time;
@@ -21,14 +18,16 @@ struct TransferIds
     uint64_t uavcan_node_port_list;
     uint64_t uavcan_pnp_allocation;
 };
-enum PNPStatus {
+enum PNPStatus
+{
     Subscribing,
     TryingToSend,
     SentRequest,
     ReceivedResponse,
     Done
 };
-struct PlugAndPlay {
+struct PlugAndPlay
+{
     int request_count = 0;
     uint8_t node_id;
     PNPStatus status = Subscribing;

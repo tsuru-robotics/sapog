@@ -16,11 +16,7 @@ void handle1HzLoop(__attribute__((unused)) State &state)
     node::communications::publish_heartbeat(state.canard, state);
 }
 
-void handle01HzLoop(__attribute__((unused)) State &state)
-{
-}
-
-void handleFastLoop(__attribute__((unused)) State &state)
+inline void handleFastLoop(__attribute__((unused)) State &state)
 {
     receiveTransfer(state, 0);
     std::optional<CanardTransfer> transfer = receiveTransfer(state, 0);

@@ -24,6 +24,8 @@ ifneq ($(BUILD_CONFIG),0)
               $(ZUBAX_CHIBIOS_DIR)/zubax_chibios/config/config_cli.cpp
 endif
 
+CPPSRC += $(ZUBAX_CHIBIOS_DIR)/zubax_chibios/config/config2.cpp
+
 BUILD_BOOTLOADER ?= 0
 ifneq ($(BUILD_BOOTLOADER),0)
     CPPSRC += $(ZUBAX_CHIBIOS_DIR)/zubax_chibios/bootloader/bootloader.cpp      \
