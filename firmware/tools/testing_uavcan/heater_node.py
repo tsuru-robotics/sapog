@@ -40,8 +40,18 @@ import uavcan.si.unit.temperature  # noqa
 import uavcan.si.unit.voltage  # noqa
 
 
-class DemoApp:
-    REGISTER_FILE = "demo_app.db"
+def configure_environment_variables():
+    os.environ["UAVCAN__NODE__ID"] = "42"
+    os.environ["UAVCAN__UDP__IFACE"] = "127.9.0.0"
+    os.environ["UAVCAN__SUB__TEMPERATURE_SETPOINT__ID"] = "2345"
+    os.environ["UAVCAN__SUB__TEMPERATURE_MEASUREMENT__ID"] = "2346"
+    os.environ["UAVCAN__PUB__HEATER_VOLTAGE__ID"] = "2347"
+    os.environ["UAVCAN__DIAGNOSTIC__SEVERITY"] = "2"
+    # os.environ["UAVCAN__LOOPBACK"] = "1"
+
+
+class HeaterNode:
+    REGISTER_FILE = "HeaterNode.db"
     """
     The register file stores configuration parameters of the local application/node. The registers can be modified
     at launch via environment variables and at runtime via RPC-service "uavcan.register.Access".
@@ -49,39 +59,26 @@ class DemoApp:
     """
 
     def __init__(self) -> None:
-        os.environ["UAVCAN__NODE__ID"] = "42"
-        os.environ["UAVCAN__UDP__IFACE"] = "127.9.0.0"
-        os.environ["UAVCAN__SUB__TEMPERATURE_SETPOINT__ID"] = "2345"
-        os.environ["UAVCAN__SUB__TEMPERATURE_MEASUREMENT__ID"] = "2346"
-        os.environ["UAVCAN__PUB__HEATER_VOLTAGE__ID"] = "2347"
-        os.environ["UAVCAN__DIAGNOSTIC__SEVERITY"] = "2"
-        #os.environ["UAVCAN__LOOPBACK"] = "1"
+        configure_environment_variables()
         node_info = uavcan.node.GetInfo_1_0.Response(
-            software_version=uavcan.node.Version_1_0(major=1, minor=0),
+            software_version=uavcan.node.Version_1_0(major=0, minor=1),
             name="org.uavcan.pyuavcan.demo.demo_app",
         )
         # The Node class is basically the central part of the library -- it is the bridge between the application and
         # the UAVCAN network. Also, it implements certain standard application-layer functions, such as publishing
         # heartbeats and port introspection messages, responding to GetInfo, serving the register API, etc.
         # The register file stores the configuration parameters of our node (you can inspect it using SQLite Browser).
-        self._node = pyuavcan.application.make_node(node_info, DemoApp.REGISTER_FILE)
+        self._node = pyuavcan.application.make_node(node_info, HeaterNode.REGISTER_FILE)
 
         # Published heartbeat fields can be configured as follows.
         self._node.heartbeat_publisher.mode = uavcan.node.Mode_1_0.OPERATIONAL  # type: ignore
         self._node.heartbeat_publisher.vendor_specific_status_code = os.getpid() % 100
 
-        # Now we can create ports to interact with the network.
-        # They can also be created or destroyed later at any point after initialization.
-        # A port is created by specifying its data type and its name (similar to topic names in ROS or DDS).
-        # The subject-ID is obtained from the standard register named "uavcan.sub.temperature_setpoint.id".
-        # It can also be modified via environment variable "UAVCAN__SUB__TEMPERATURE_SETPOINT__ID".
-        self._sub_t_sp = self._node.make_subscriber(uavcan.si.unit.temperature.Scalar_1_0, "temperature_setpoint")
-
-        # As you may probably guess by looking at the port names, we are building a basic thermostat here.
-        # We subscribe to the temperature setpoint, temperature measurement (process variable), and publish voltage.
-        # The corresponding registers are "uavcan.sub.temperature_measurement.id" and "uavcan.pub.heater_voltage.id".
-        self._sub_t_pv = self._node.make_subscriber(uavcan.si.sample.temperature.Scalar_1_0, "temperature_measurement")
-        self._pub_v_cmd = self._node.make_publisher(uavcan.si.unit.voltage.Scalar_1_0, "heater_voltage")
+        self._sub_temperature_setpoint = self._node.make_subscriber(uavcan.si.unit.temperature.Scalar_1_0,
+                                                                    "temperature_setpoint")
+        self._sub_temperature_measurement = self._node.make_subscriber(uavcan.si.sample.temperature.Scalar_1_0,
+                                                                     "temperature_measurement")
+        self._pub_heater_voltage = self._node.make_publisher(uavcan.si.unit.voltage.Scalar_1_0, "heater_voltage")
 
         # Create another RPC-server using a standard service type for which a fixed service-ID is defined.
         # We don't specify the port name so the service-ID defaults to the fixed port-ID.
@@ -98,7 +95,7 @@ class DemoApp:
         logging.info("Execute command request %s from node %d", request, metadata.client_node_id)
         if request.command == uavcan.node.ExecuteCommand_1_1.Request.COMMAND_FACTORY_RESET:
             try:
-                os.unlink(DemoApp.REGISTER_FILE)  # Reset to defaults by removing the register file.
+                os.unlink(HeaterNode.REGISTER_FILE)  # Reset to defaults by removing the register file.
             except OSError:  # Do nothing if already removed.
                 pass
             return uavcan.node.ExecuteCommand_1_1.Response(uavcan.node.ExecuteCommand_1_1.Response.STATUS_SUCCESS)
@@ -116,7 +113,7 @@ class DemoApp:
             nonlocal temperature_setpoint
             temperature_setpoint = msg.kelvin
 
-        self._sub_t_sp.receive_in_background(on_setpoint)  # IoC-style handler.
+        self._sub_temperature_setpoint.receive_in_background(on_setpoint)  # IoC-style handler.
 
         # Expose internal states to external observers for diagnostic purposes. Here, we define read-only registers.
         # Since they are computed at every invocation, they are never stored in the register file.
@@ -130,11 +127,11 @@ class DemoApp:
         print("Running. Press Ctrl+C to stop.", file=sys.stderr)
 
         # This loop will exit automatically when the node is close()d. It is also possible to use receive() instead.
-        async for m, _metadata in self._sub_t_pv:
+        async for m, _metadata in self._sub_temperature_measurement:
             assert isinstance(m, uavcan.si.sample.temperature.Scalar_1_0)
             temperature_error = temperature_setpoint - m.kelvin
             voltage_output = temperature_error * gain_p  # Suppose this is a basic P-controller.
-            await self._pub_v_cmd.publish(uavcan.si.unit.voltage.Scalar_1_0(voltage_output))
+            await self._pub_heater_voltage.publish(uavcan.si.unit.voltage.Scalar_1_0(voltage_output))
 
     def close(self) -> None:
         """
@@ -145,7 +142,7 @@ class DemoApp:
 
 
 if __name__ == "__main__":
-    app = DemoApp()
+    app = HeaterNode()
     logging.root.setLevel(logging.INFO)
     try:
         asyncio.get_event_loop().run_until_complete(app.run())
