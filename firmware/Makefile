@@ -47,17 +47,19 @@ PYTHON := python3.6
 
 CSRC = $(wildcard $(SAPOG_SRC_DIR)/*.c)     \
        $(wildcard $(SAPOG_SRC_DIR)/*/*.c)   \
-       $(wildcard $(SAPOG_SRC_DIR)/*/*/*.c)
+       $(wildcard $(SAPOG_SRC_DIR)/*/*/*.c) \
+       $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.c)
 
 CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
          $(wildcard $(SAPOG_SRC_DIR)/**/*.cpp)\
-         $(wildcard $(SAPOG_SRC_DIR)/*/*/*.cpp)
+         $(wildcard $(SAPOG_SRC_DIR)/*/*/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.cpp)
 
 UINCDIR = src           \
           src/os_config \
           generated/nunavut_out\
           src/bxcan \
-          etl/include
+          "include" \
 
 UDEFS = -DFW_VERSION_MAJOR=$(FW_VERSION_MAJOR)           \
         -DFW_VERSION_MINOR=$(FW_VERSION_MINOR)           \

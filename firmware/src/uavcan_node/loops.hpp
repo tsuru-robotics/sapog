@@ -23,7 +23,6 @@ inline void handleFastLoop(__attribute__((unused)) State &state)
     if(transfer.has_value()){
         processReceivedTransfer(state, &transfer.value());
     }
-    //receiveTransfer(state, 1);
     transmit(state);
 }
 }

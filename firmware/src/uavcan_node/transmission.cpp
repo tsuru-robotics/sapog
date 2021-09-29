@@ -33,7 +33,6 @@ void transmit(State &state)
                                        (*txf).payload);
         if (!isDriverBusy)
         {
-            printf("Hello");
             // txf was first used by canardTxPeek,
             // then by please_transmit, which is bxCanPush.
             // Now, txf is a pointer that needs to be deallocated in this scope.
@@ -41,9 +40,4 @@ void transmit(State &state)
         } else
         { break; }
     }
-    //int array_size = sizeof(state.reduntant_interfaces) / sizeof(state.reduntant_interfaces[0]);
-//    for (int if_index = 0; if_index < 1; ++if_index)
-//    {
-//
-//    }
 }

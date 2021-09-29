@@ -13,7 +13,7 @@ std::optional<float> extract(const uavcan_primitive_array_Integer64_1_0 &integer
 std::optional<float> extract(const uavcan_primitive_array_Real64_1_0 &real);
 
 template<typename T = uavcan_primitive_array_Real64_1_0>
-std::optional<T> pack(const float input);
+std::optional<T> pack(float input);
 
 //std::optional<uavcan_primitive_array_Bit_1_0> pack(const float input);
 }
