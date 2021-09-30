@@ -11,13 +11,18 @@ from pathlib import Path
 import builtins as __builtin__
 import importlib
 
-colored_spec = importlib.util.find_spec("termcolor")
-if colored_spec is not None:
-    from termcolor import colored
-else:
+try:
+    colored_spec = importlib.util.find_spec("termcolor")
+    if colored_spec is not None:
+        from termcolor import colored
+    else:
+        def colored(input_string, _):
+            return input_string
+except AttributeError:
+    print("Your \"importlib\" module does not have the attribute \"util\",")
+    print("this only affects colors in this application.")
     def colored(input_string, _):
-        return input_string
-
+            return input_string
 verbose = False
 do_dump = False
 dump_path = ""
