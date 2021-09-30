@@ -10,6 +10,51 @@
 
 static CanardRxSubscription AllocationMessageSubscription;
 
+void node::config::plug_and_play_loop(State& state)
+{
+    while (state.plug_and_play.anonymous)
+    {
+        state.timing.current_time = getMonotonicMicroseconds();
+        switch (state.plug_and_play.status)
+        {
+            case node::state::PNPStatus::Subscribing:
+                node::config::subscribeToPlugAndPlayResponse(state);
+                state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
+                break;
+            case node::state::PNPStatus::TryingToSend:
+                if (node::config::SendPlugAndPlayRequest(state))
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::SentRequest;
+                }
+                break;
+            case node::state::PNPStatus::SentRequest:
+                // The following should write the received NodeID into the state object
+                if (node::config::receivePlugAndPlayResponse(state))
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::ReceivedResponse;
+                }
+                if (state.timing.current_time >= state.timing.next_pnp_request)
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
+                    state.plug_and_play.request_count += 1;
+                    continue;
+                }
+                break;
+            case node::state::PNPStatus::ReceivedResponse:
+                if (node::config::saveNodeID(state))
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::Done;
+                }
+                break;
+            case node::state::PNPStatus::Done:
+                state.canard.node_id = state.plug_and_play.node_id;
+                state.plug_and_play.anonymous = false;
+                break;
+        }
+        chThdSleep(1);
+    }
+}
+
 bool node::config::SendPlugAndPlayRequest(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.

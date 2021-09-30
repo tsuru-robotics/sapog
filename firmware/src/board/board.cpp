@@ -65,7 +65,22 @@ const extern std::uint8_t DeviceSignatureStorage[];
 
 namespace board
 {
+extern "C"
+{
+extern char __heap_base__;  // NOLINT
+extern char __heap_end__;   // NOLINT
+}
+syssts_t g_heap_irq_status_{};  // NOLINT
 
+void heapLock()
+{
+    g_heap_irq_status_ = chSysGetStatusAndLockX();
+}
+
+void heapUnlock()
+{
+    chSysRestoreStatusX(g_heap_irq_status_);
+}
 // This can't be constexpr because of reinterpret_cast<>
 static void* const ConfigStorageAddress = reinterpret_cast<void*>(0x08000000 + (256 * 1024) - 1024);
 constexpr unsigned ConfigStorageSize = 1024;

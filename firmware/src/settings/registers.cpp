@@ -122,6 +122,6 @@ std::optional<uavcan_register_Value_1_0> StorageManager::registerRead(const char
         default:
             return {};
     }
-    return std::optional<uavcan_register_Value_1_0>();
+    return {};
 }
 }

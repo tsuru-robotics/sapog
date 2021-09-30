@@ -13,5 +13,7 @@ bool receivePlugAndPlayResponse(State &state);
 bool subscribeToPlugAndPlayResponse(State &state);
 
 bool saveNodeID(State &state);
+
+void plug_and_play_loop(State &state);
 }
 #endif //FIRMWARE_PLUG_AND_PLAY_HPP

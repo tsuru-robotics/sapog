@@ -25,6 +25,7 @@
 #include <thread>
 #include <sys/unistd.h>
 #include <uavcan_node/loops/loop.hpp>
+#include "board/board.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -54,29 +55,13 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 2); // This defines _wa_contr
 
 static void initCanard();
 
-extern "C"
-{
-extern char __heap_base__;  // NOLINT
-extern char __heap_end__;   // NOLINT
-}
+
 using node::state::State;
 
 
 static State state{};
 namespace platform
 {
-syssts_t g_heap_irq_status_{};  // NOLINT
-
-void heapLock()
-{
-    g_heap_irq_status_ = chSysGetStatusAndLockX();
-}
-
-void heapUnlock()
-{
-    chSysRestoreStatusX(g_heap_irq_status_);
-}
-}
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -86,47 +71,7 @@ void heapUnlock()
     chRegSetThreadName("uavcan_thread");
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
-    while (state.plug_and_play.anonymous)
-    {
-        state.timing.current_time = getMonotonicMicroseconds();
-        switch (state.plug_and_play.status)
-        {
-            case node::state::PNPStatus::Subscribing:
-                node::config::subscribeToPlugAndPlayResponse(state);
-                state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
-                break;
-            case node::state::PNPStatus::TryingToSend:
-                if (node::config::SendPlugAndPlayRequest(state))
-                {
-                    state.plug_and_play.status = node::state::PNPStatus::SentRequest;
-                }
-                break;
-            case node::state::PNPStatus::SentRequest:
-                // The following should write the received NodeID into the state object
-                if (node::config::receivePlugAndPlayResponse(state))
-                {
-                    state.plug_and_play.status = node::state::PNPStatus::ReceivedResponse;
-                }
-                if (state.timing.current_time >= state.timing.next_pnp_request)
-                {
-                    state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
-                    state.plug_and_play.request_count += 1;
-                    continue;
-                }
-                break;
-            case node::state::PNPStatus::ReceivedResponse:
-                if (node::config::saveNodeID(state))
-                {
-                    state.plug_and_play.status = node::state::PNPStatus::Done;
-                }
-                break;
-            case node::state::PNPStatus::Done:
-                state.canard.node_id = state.plug_and_play.node_id;
-                state.plug_and_play.anonymous = false;
-                break;
-        }
-        chThdSleep(1);
-    }
+    node::config::plug_and_play_loop(state);
     static Loop loops[4]{Loop{&handle1HzLoop, SECOND_IN_MICROSECONDS},
                          Loop{&handleFastLoop, QUEUE_TIME_FRAME},
                          Loop{[](State &state_local) {
@@ -166,15 +111,19 @@ static void initCanard()
         RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
     }
     BxCANTimings timings{};
-    bxCANComputeTimings(36'000'000, 1'000'000, &timings); // TODO: should be taken from macro
+    bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
     bxCANConfigure(0, timings, false);
     state.canard = canardInit(&canardAllocate, &canardFree);
     state.canard.user_reference =
-            o1heapInit(&__heap_base__,
+            o1heapInit(&::board::__heap_base__,
                        reinterpret_cast<std::size_t>(&__heap_end__) -
                        reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
                        &platform::heapLock,
                        &platform::heapUnlock);
+    if (state.canard.user_reference == nullptr)
+    {
+        chibios_rt::System::halt("o1heap");
+    }
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     state.canard.node_id = state.param_node_id.get();
     // Service servers:

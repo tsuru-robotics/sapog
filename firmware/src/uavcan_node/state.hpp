@@ -18,7 +18,7 @@ struct TransferIds
     uint64_t uavcan_node_port_list;
     uint64_t uavcan_pnp_allocation;
 };
-enum PNPStatus
+enum class PNPStatus
 {
     Subscribing,
     TryingToSend,
@@ -30,7 +30,7 @@ struct PlugAndPlay
 {
     int request_count = 0;
     uint8_t node_id;
-    PNPStatus status = Subscribing;
+    PNPStatus status = PNPStatus::Subscribing;
     bool anonymous = true;
 };
 struct State

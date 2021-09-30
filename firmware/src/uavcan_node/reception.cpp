@@ -1,5 +1,12 @@
 #include "uavcan_node/reception.hpp"
-std::optional <CanardTransfer> receiveTransfer(State &state, int if_index)
+#include "uavcan/_register/Access_1_0.h"
+#include "uavcan/_register/List_1_0.h"
+#include "uavcan/_register/Name_1_0.h"
+#include "uavcan/_register/Value_1_0.h"
+#include "uavcan_node/config_wrapper/config_wrapper.hpp"
+#include "zubax_chibios/zubax_chibios/config/config.h"
+
+std::optional<CanardTransfer> receiveTransfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = getMonotonicMicroseconds();
@@ -72,8 +79,58 @@ void processReceivedRequest(const State &state, const CanardTransfer *const tran
         {
             assert(false);
         }
+    } else if (transfer->port_id == uavcan_register_Access_1_0_FIXED_PORT_ID_)
+    {
+        uavcan_register_Access_Request_1_0 request{};
+        size_t temp_payload_size{transfer->payload_size};
+        auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
+                                                                     (const uint8_t *) transfer->payload,
+                                                                     &temp_payload_size);
+        if (result >= 0)
+        {
+            if (request.name.name.count == 0)
+            {
+                printf("Discarding empty name register access request.\n");
+                return;
+            }
+            auto request_name = (const char *) request.name.name.elements;
+            assert(request_name != nullptr);
+            auto converter = find_converter(request_name);
+            float register_value = configGet(request_name);
+            auto value = converter(register_value);
+            if (uavcan_register_Value_1_0_is_empty_(&value))
+            {
+                std::printf("Didn't find a converter for %s\n", request_name);
+                return;
+            }
+            uavcan_register_Access_Response_1_0 response{};
+            uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
+            size_t serialized_size = sizeof(serialized);
+            const int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response,
+                                                                                &serialized[0],
+                                                                                &serialized_size);
+            assert(error >= 0);
+            if (error >= 0)
+            {
+                const CanardTransfer response_transfer = {
+                        .timestamp_usec = getMonotonicMicroseconds() + SECOND_IN_MICROSECONDS,
+                        .priority = CanardPriorityNominal,
+                        .transfer_kind = CanardTransferKindMessage,
+                        .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
+                        .remote_node_id = transfer->remote_node_id,
+                        .transfer_id = transfer->transfer_id,
+                        .payload_size = serialized_size,
+                        .payload = &serialized[0],
+                };
+                (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &response_transfer);
+            }
+        }
+    } else if (transfer->port_id == uavcan_register_List_1_0_FIXED_PORT_ID_)
+    {
+
     }
 }
+
 
 uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
 {
@@ -100,6 +157,10 @@ uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
 
 void processReceivedMessage(const State &state, const CanardTransfer *const transfer)
 {
+    if (transfer->port_id == uavcan_register_Access_1_0_FIXED_PORT_ID_)
+    {
+        // The transfer could be deserialized to a uavcan_register_Access_Response_1_0
+    }
     (void) state;
     (void) transfer;
 }
