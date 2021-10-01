@@ -65,11 +65,7 @@ const extern std::uint8_t DeviceSignatureStorage[];
 
 namespace board
 {
-extern "C"
-{
-extern char __heap_base__;  // NOLINT
-extern char __heap_end__;   // NOLINT
-}
+
 syssts_t g_heap_irq_status_{};  // NOLINT
 
 void heapLock()

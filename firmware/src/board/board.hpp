@@ -41,6 +41,13 @@
 #include <unique_id/unique_id.h>
 namespace board
 {
+void heapLock();
+void heapUnlock();
+extern "C"
+{
+extern char __heap_base__;  // NOLINT
+extern char __heap_end__;   // NOLINT
+}
 
 os::watchdog::Timer init(unsigned watchdog_timeout_ms);
 
