@@ -1,5 +1,9 @@
-#ifndef FIRMWARE_LOOP_HPP
-#define FIRMWARE_LOOP_HPP
+/*
+ * Copyright (c) 2021 Zubax, zubax.com
+ * Distributed under the MIT License, available in the file LICENSE.
+ * Author: Silver Valdvee <silver.valdvee@zubax.com>
+ */
+#pragma once
 
 #include <libcanard/canard.h>
 #include <functional>
@@ -19,6 +23,3 @@ public:
     std::function<void(node::state::State &state)> execution_function;
     CanardMicrosecond next_loop_delay;
 };
-
-
-#endif //FIRMWARE_LOOP_HPP

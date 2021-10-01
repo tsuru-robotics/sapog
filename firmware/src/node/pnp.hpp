@@ -1,5 +1,9 @@
-#ifndef FIRMWARE_PNP_HPP
-#define FIRMWARE_PNP_HPP
+/*
+ * Copyright (c) 2021 Zubax, zubax.com
+ * Distributed under the MIT License, available in the file LICENSE.
+ * Author: Silver Valdvee <silver.valdvee@zubax.com>
+ */
+#pragma once
 
 #include "node/state.hpp"
 
@@ -16,4 +20,3 @@ bool save_node_id(State &state);
 
 void plug_and_play_loop(State &state);
 }
-#endif //FIRMWARE_PNP_HPP
