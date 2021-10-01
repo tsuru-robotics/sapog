@@ -14,22 +14,22 @@ void node::config::plug_and_play_loop(State& state)
 {
     while (state.plug_and_play.anonymous)
     {
-        state.timing.current_time = getMonotonicMicroseconds();
+        state.timing.current_time = get_monotonic_microseconds();
         switch (state.plug_and_play.status)
         {
             case node::state::PNPStatus::Subscribing:
-                node::config::subscribeToPlugAndPlayResponse(state);
+                node::config::subscribe_to_plug_and_play_response(state);
                 state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
                 break;
             case node::state::PNPStatus::TryingToSend:
-                if (node::config::SendPlugAndPlayRequest(state))
+                if (node::config::send_plug_and_play_request(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::SentRequest;
                 }
                 break;
             case node::state::PNPStatus::SentRequest:
                 // The following should write the received NodeID into the state object
-                if (node::config::receivePlugAndPlayResponse(state))
+                if (node::config::receive_plug_and_play_response(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::ReceivedResponse;
                 }
@@ -41,7 +41,7 @@ void node::config::plug_and_play_loop(State& state)
                 }
                 break;
             case node::state::PNPStatus::ReceivedResponse:
-                if (node::config::saveNodeID(state))
+                if (node::config::save_node_id(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
                 }
@@ -55,7 +55,7 @@ void node::config::plug_and_play_loop(State& state)
     }
 }
 
-bool node::config::SendPlugAndPlayRequest(State &state)
+bool node::config::send_plug_and_play_request(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.
     uavcan_pnp_NodeIDAllocationData_1_0 msg{};
@@ -70,7 +70,7 @@ bool node::config::SendPlugAndPlayRequest(State &state)
     if (err >= 0)
     {
         const CanardTransfer transfer = {
-                .timestamp_usec = getMonotonicMicroseconds() + SECOND_IN_MICROSECONDS,
+                .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
                 .priority       = CanardPrioritySlow,
                 .transfer_kind  = CanardTransferKindMessage,
                 .port_id        = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
@@ -85,7 +85,7 @@ bool node::config::SendPlugAndPlayRequest(State &state)
     return false;
 }
 
-bool node::config::subscribeToPlugAndPlayResponse(State &state)
+bool node::config::subscribe_to_plug_and_play_response(State &state)
 {
     const int8_t res = canardRxSubscribe(&state.canard,
                                          CanardTransferKindMessage,
@@ -95,13 +95,13 @@ bool node::config::subscribeToPlugAndPlayResponse(State &state)
     return res;
 }
 
-bool node::config::receivePlugAndPlayResponse(State &state)
+bool node::config::receive_plug_and_play_response(State &state)
 {
-    std::optional<CanardTransfer> transfer = receiveTransfer(state, 0);
+    std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
     if (transfer->port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
     {
         uavcan_pnp_NodeIDAllocationData_1_0 msg{};
-        int result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
+        auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
                                                                       reinterpret_cast<uint8_t *>(&(transfer->payload)),
                                                                       &(transfer->payload_size));
         if (result >= 0)
@@ -112,7 +112,7 @@ bool node::config::receivePlugAndPlayResponse(State &state)
     }
     return false;
 }
-bool node::config::saveNodeID(State &state){
+bool node::config::save_node_id(State &state){
     uavcan_register_Value_1_0 data2{};
     uavcan_primitive_array_Integer64_1_0 data{};
     data.value.elements[0]=state.plug_and_play.node_id;

@@ -46,25 +46,27 @@ constexpr unsigned ConfigStorageSize = 1024;
 
 using namespace uavcan_node_1_0;
 using namespace board;
-static void initCanard();
+
+static void init_canard();
 
 static State state{};
 // This defines _wa_control_thread
 static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
+
 [[noreturn]] static void control_thread(void *arg)
 {
     using namespace node::loops;
     (void) arg;
-    initCanard();
+    init_canard();
     chRegSetThreadName("uavcan_thread");
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
-    static Loop loops[4]{Loop{&handle1HzLoop, SECOND_IN_MICROSECONDS},
-                         Loop{&handleFastLoop, QUEUE_TIME_FRAME},
+    static Loop loops[4]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS},
+                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME},
                          Loop{[](State &state_local) {
                              (void) state_local;
-                             }, SECOND_IN_MICROSECONDS * 10},
+                         }, SECOND_IN_MICROSECONDS * 10},
                          Loop{
                                  [](State &state_local) {
                                      (void) state_local;
@@ -74,20 +76,42 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
 
     while (true)
     {
-        state.timing.current_time = getMonotonicMicroseconds();
+        state.timing.current_time = get_monotonic_microseconds();
         for (Loop loop: loops)
         {
-            if (loop.shouldExecute(state.timing.current_time))
+            if (loop.do_execute(state.timing.current_time))
             {
                 loop.execution_function(state);
-                loop.incrementNextExecution();
+                loop.increment_next_execution();
             }
         }
         chThdSleep(1);
     }
 }
 
-static void initCanard()
+struct SubscriptionData
+{
+    CanardTransferKind transfer_kind;
+    int port_id;
+    unsigned long extent_bytes;
+    unsigned long time_out;
+};
+std::pair<const char *, SubscriptionData> subscriptions[3] = {
+        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+                                 uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
+                                 uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
+                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+                                 uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
+                                 uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
+                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+                                 uavcan_register_Access_1_0_FIXED_PORT_ID_,
+                                 uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
+                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+};
+
+static void init_canard()
 {
     {
         /* https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
@@ -114,17 +138,19 @@ static void initCanard()
     }
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     state.canard.node_id = state.param_node_id.get();
-    // Service servers:
+    for (auto &subscription: subscriptions)
     {
-        static CanardRxSubscription rx;
-        const int8_t res =  //
-                canardRxSubscribe(&state.canard,
-                                  CanardTransferKindRequest,
-                                  uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
-                                  uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
-                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
-                                  &rx);
-        assert(res > 0); // This is to make sure that the subscription was successful.
+        {
+            static CanardRxSubscription rx;
+            const int8_t res =  //
+                    canardRxSubscribe(&state.canard,
+                                      subscription.second.transfer_kind,
+                                      subscription.second.port_id,
+                                      subscription.second.extent_bytes,
+                                      subscription.second.time_out,
+                                      &rx);
+            assert(res > 0); // This is to make sure that the subscription was successful.
+        }
     }
 }
 

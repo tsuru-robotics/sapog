@@ -6,10 +6,10 @@
 #include "uavcan_node/config_wrapper/config_wrapper.hpp"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 
-std::optional<CanardTransfer> receiveTransfer(State &state, int if_index)
+std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
-    frame.timestamp_usec = getMonotonicMicroseconds();
+    frame.timestamp_usec = get_monotonic_microseconds();
     std::array<std::uint8_t, 8> payload_array{};
     frame.payload = &payload_array;
     for (uint16_t i = 0; i < max_frames_to_process_per_iteration; ++i)
@@ -41,14 +41,14 @@ std::optional<CanardTransfer> receiveTransfer(State &state, int if_index)
     return {};
 }
 
-void processReceivedTransfer(const State &state, const CanardTransfer *const transfer)
+void process_received_transfer(const State &state, const CanardTransfer *const transfer)
 {
     if (transfer->transfer_kind == CanardTransferKindMessage)
     {
-        processReceivedMessage(state, transfer);
+        process_received_message(state, transfer);
     } else if (transfer->transfer_kind == CanardTransferKindRequest)
     {
-        processReceivedRequest(state, transfer);
+        process_received_request(state, transfer);
     } else
     {
         assert(false); // This can only happen when received transfer is a response.
@@ -57,7 +57,7 @@ void processReceivedTransfer(const State &state, const CanardTransfer *const tra
 
 std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *const)>> receivers[3] = {
         {uavcan_node_GetInfo_1_0_FIXED_PORT_ID_, [](const State &state, const CanardTransfer *const transfer) {
-            const uavcan_node_GetInfo_Response_1_0 resp = processRequestNodeGetInfo();
+            const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
             uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
             size_t serialized_size = sizeof(serialized);
             const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
@@ -111,7 +111,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
                 if (error >= 0)
                 {
                     const CanardTransfer response_transfer = {
-                            .timestamp_usec = getMonotonicMicroseconds() + SECOND_IN_MICROSECONDS,
+                            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
                             .priority = CanardPriorityNominal,
                             .transfer_kind = CanardTransferKindMessage,
                             .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
@@ -133,7 +133,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
         }}
 };
 
-void processReceivedRequest(const State &state, const CanardTransfer *const transfer)
+void process_received_request(const State &state, const CanardTransfer *const transfer)
 {
     // Finds a handler and calls it
     for(auto& pair : receivers)
@@ -147,7 +147,7 @@ void processReceivedRequest(const State &state, const CanardTransfer *const tran
 }
 
 
-uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
+uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 {
     uavcan_node_GetInfo_Response_1_0 resp{};
     resp.protocol_version.major = CANARD_UAVCAN_SPECIFICATION_VERSION_MAJOR;
@@ -170,7 +170,7 @@ uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo()
     return resp;
 }
 
-void processReceivedMessage(const State &state, const CanardTransfer *const transfer)
+void process_received_message(const State &state, const CanardTransfer *const transfer)
 {
     if (transfer->port_id == uavcan_register_Access_1_0_FIXED_PORT_ID_)
     {

@@ -16,12 +16,12 @@ static const int max_frames_to_process_per_iteration = 1000;
 
 using namespace node::state;
 
-void processReceivedMessage(const State &state, const CanardTransfer *const transfer);
+void process_received_message(const State &state, const CanardTransfer *const transfer);
 
-uavcan_node_GetInfo_Response_1_0 processRequestNodeGetInfo();
+uavcan_node_GetInfo_Response_1_0 process_request_node_get_info();
 
-void processReceivedRequest(const State &state, const CanardTransfer *const transfer);
+void process_received_request(const State &state, const CanardTransfer *const transfer);
 
-void processReceivedTransfer(const State &state, const CanardTransfer *const transfer);
+void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 
-std::optional<CanardTransfer> receiveTransfer(State &state, int if_index);
+std::optional<CanardTransfer> receive_transfer(State &state, int if_index);

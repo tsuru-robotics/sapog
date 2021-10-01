@@ -1,5 +1,3 @@
-#ifndef FIRMWARE_TIME_H
-#define FIRMWARE_TIME_H
+#pragma once
 #include <libcanard/canard.h>
-CanardMicrosecond getMonotonicMicroseconds();
-#endif //FIRMWARE_TIME_H
+CanardMicrosecond get_monotonic_microseconds();

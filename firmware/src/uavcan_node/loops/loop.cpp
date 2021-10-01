@@ -2,12 +2,12 @@
 
 #include <utility>
 
-bool Loop::shouldExecute(CanardMicrosecond current_time)
+bool Loop::do_execute(CanardMicrosecond current_time)
 {
     return current_time >= next_execution_at;
 }
 
-void Loop::incrementNextExecution()
+void Loop::increment_next_execution()
 {
     next_execution_at += next_loop_delay;
 }

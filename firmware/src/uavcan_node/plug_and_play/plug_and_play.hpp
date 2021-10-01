@@ -6,13 +6,13 @@
 using namespace node::state;
 namespace node::config
 {
-bool SendPlugAndPlayRequest(State &state);
+bool send_plug_and_play_request(State &state);
 
-bool receivePlugAndPlayResponse(State &state);
+bool receive_plug_and_play_response(State &state);
 
-bool subscribeToPlugAndPlayResponse(State &state);
+bool subscribe_to_plug_and_play_response(State &state);
 
-bool saveNodeID(State &state);
+bool save_node_id(State &state);
 
 void plug_and_play_loop(State &state);
 }

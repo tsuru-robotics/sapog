@@ -1,5 +1,4 @@
 #include <bxcan/bxcan.h>
-#include <cstdio>
 #include "transmission.hpp"
 #include "state.hpp"
 #include "libcanard/canard.h"

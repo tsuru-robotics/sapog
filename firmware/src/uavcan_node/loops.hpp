@@ -11,17 +11,18 @@
 using namespace node::state;
 namespace node::loops
 {
-void handle1HzLoop(__attribute__((unused)) State &state)
+void handle_1hz_loop(__attribute__((unused)) State &state)
 {
     node::communications::publish_heartbeat(state.canard, state);
+    communications::publish_port_list(state.canard, state);
 }
 
-inline void handleFastLoop(__attribute__((unused)) State &state)
+inline void handle_fast_loop(__attribute__((unused)) State &state)
 {
-    receiveTransfer(state, 0);
-    std::optional<CanardTransfer> transfer = receiveTransfer(state, 0);
+    receive_transfer(state, 0);
+    std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
     if(transfer.has_value()){
-        processReceivedTransfer(state, &transfer.value());
+        process_received_transfer(state, &transfer.value());
     }
     transmit(state);
 }

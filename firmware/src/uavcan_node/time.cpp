@@ -7,7 +7,7 @@
 /// Mind the difference between monotonic time and wall time. Monotonic time never changes rate or makes leaps,
 /// it is therefore impossible to synchronize with an external reference. Wall time can be synchronized and therefore
 /// it may change rate or make leap adjustments. The two kinds of time serve completely different purposes.
-CanardMicrosecond getMonotonicMicroseconds()
+CanardMicrosecond get_monotonic_microseconds()
 {
     uint64_t currentTimeStamp{motor_rtctl_timestamp_hnsec()};
     return currentTimeStamp / 10;

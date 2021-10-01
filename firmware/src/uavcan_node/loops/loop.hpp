@@ -12,9 +12,9 @@ public:
 
     CanardMicrosecond next_execution_at;
 
-    bool shouldExecute(CanardMicrosecond current_time);
+    bool do_execute(CanardMicrosecond current_time);
 
-    void incrementNextExecution();
+    void increment_next_execution();
 
     std::function<void(node::state::State &state)> execution_function;
     CanardMicrosecond next_loop_delay;
