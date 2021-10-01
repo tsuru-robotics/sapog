@@ -1,6 +1,4 @@
-#ifndef FIRMWARE_CONFIG_WRAPPER_HPP
-#define FIRMWARE_CONFIG_WRAPPER_HPP
-
+#pragma once
 #include <utility>
 #include <cstdint>
 #include <functional>
@@ -31,25 +29,5 @@ convert_pair converters[2]{ // NOLINT(bugprone-dynamic-static-initializers)
                 }}
 };
 }
+converter_type find_converter(const char *name);
 
-
-converter_type find_converter(const char *name)
-{
-    int name_length{static_cast<int>(std::strlen(name))};
-    for (auto &pair: converters)
-    {
-        const char *current_name = pair.first;
-        if (strcmp(current_name, name) == 0)
-        {
-            converter_type *converter = &(pair.second);
-            return *converter;
-        }
-    }
-    // In case there isn't a matching converter, return one that returns an empty value.
-    // the returned value is basically selected to be uavcan.primitive.Empty.1.0
-    return [](float input){
-        return value_type{};
-    };
-}
-
-#endif //FIRMWARE_CONFIG_WRAPPER_HPP
