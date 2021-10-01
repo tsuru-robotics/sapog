@@ -1,4 +1,5 @@
 #include "config_wrapper.hpp"
+
 converter_type find_converter(const char *name)
 {
     for (auto &pair: converters)
@@ -12,7 +13,7 @@ converter_type find_converter(const char *name)
     }
     // In case there isn't a matching converter, return one that returns an empty value.
     // the returned value is basically selected to be uavcan.primitive.Empty.1.0
-    return [](float input){
+    return [](float input) {
         (void) input;
         return value_type{};
     };

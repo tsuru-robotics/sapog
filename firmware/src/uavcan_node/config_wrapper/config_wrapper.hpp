@@ -1,4 +1,5 @@
 #pragma once
+
 #include <utility>
 #include <cstdint>
 #include <functional>
@@ -29,5 +30,6 @@ convert_pair converters[2]{ // NOLINT(bugprone-dynamic-static-initializers)
                 }}
 };
 }
+
 converter_type find_converter(const char *name);
 

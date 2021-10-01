@@ -98,17 +98,17 @@ struct SubscriptionData
 };
 std::pair<const char *, SubscriptionData> subscriptions[3] = {
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
-                                 uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
-                                 uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
-                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+                                        uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
+                                        uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
-                                 uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
-                                 uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
-                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+                                        uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
+                                        uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
-                                 uavcan_register_Access_1_0_FIXED_PORT_ID_,
-                                 uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
-                                 CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+                                        uavcan_register_Access_1_0_FIXED_PORT_ID_,
+                                        uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
 };
 
 static void init_canard()

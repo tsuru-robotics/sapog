@@ -21,7 +21,8 @@ inline void handle_fast_loop(__attribute__((unused)) State &state)
 {
     receive_transfer(state, 0);
     std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
-    if(transfer.has_value()){
+    if (transfer.has_value())
+    {
         process_received_transfer(state, &transfer.value());
     }
     transmit(state);

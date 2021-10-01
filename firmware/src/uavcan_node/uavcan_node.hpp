@@ -6,14 +6,14 @@
 
 #ifndef SAPOG_UAVCAN_NODE_1_0_HPP
 #define SAPOG_UAVCAN_NODE_1_0_HPP
-namespace uavcan_node_1_0 {
-    class UAVCANNode {
-    public:
-        static int init();
-    };
+namespace uavcan_node_1_0
+{
+class UAVCANNode
+{
+public:
+    static int init();
+};
 }
-
-
 
 
 #endif //SAPOG_UAVCAN_NODE_1_0_HPP

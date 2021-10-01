@@ -56,7 +56,7 @@ void process_received_transfer(const State &state, const CanardTransfer *const t
 }
 
 std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *const)>> receivers[3] = {
-        {uavcan_node_GetInfo_1_0_FIXED_PORT_ID_, [](const State &state, const CanardTransfer *const transfer) {
+        {uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,    [](const State &state, const CanardTransfer *const transfer) {
             const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
             uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
             size_t serialized_size = sizeof(serialized);
@@ -125,8 +125,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             }
             return true;
         }},
-        {uavcan_register_List_1_0_FIXED_PORT_ID_, [](const State &state, const CanardTransfer *const transfer)
-        {
+        {uavcan_register_List_1_0_FIXED_PORT_ID_,   [](const State &state, const CanardTransfer *const transfer) {
             (void) state;
             (void) transfer;
             return true;
@@ -136,9 +135,9 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
 void process_received_request(const State &state, const CanardTransfer *const transfer)
 {
     // Finds a handler and calls it
-    for(auto& pair : receivers)
+    for (auto &pair: receivers)
     {
-        if(transfer->port_id == pair.first)
+        if (transfer->port_id == pair.first)
         {
             pair.second(state, transfer);
             return;

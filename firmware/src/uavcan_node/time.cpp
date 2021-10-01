@@ -1,6 +1,7 @@
 #include <libcanard/canard.h>
 #include <motor/realtime/api.h>
 #include "time.h"
+
 /// A deeply embedded system should sample a microsecond-resolution non-overflowing 64-bit timer.
 /// Here is a simple non-blocking implementation as an example:
 /// https://github.com/PX4/sapog/blob/601f4580b71c3c4da65cc52237e62a/firmware/src/motor/realtime/motor_timer.c#L233-L274

@@ -10,7 +10,7 @@
 
 static CanardRxSubscription AllocationMessageSubscription;
 
-void node::config::plug_and_play_loop(State& state)
+void node::config::plug_and_play_loop(State &state)
 {
     while (state.plug_and_play.anonymous)
     {
@@ -102,8 +102,8 @@ bool node::config::receive_plug_and_play_response(State &state)
     {
         uavcan_pnp_NodeIDAllocationData_1_0 msg{};
         auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
-                                                                      reinterpret_cast<uint8_t *>(&(transfer->payload)),
-                                                                      &(transfer->payload_size));
+                                                                       reinterpret_cast<uint8_t *>(&(transfer->payload)),
+                                                                       &(transfer->payload_size));
         if (result >= 0)
         {
             state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
@@ -112,10 +112,12 @@ bool node::config::receive_plug_and_play_response(State &state)
     }
     return false;
 }
-bool node::config::save_node_id(State &state){
+
+bool node::config::save_node_id(State &state)
+{
     uavcan_register_Value_1_0 data2{};
     uavcan_primitive_array_Integer64_1_0 data{};
-    data.value.elements[0]=state.plug_and_play.node_id;
+    data.value.elements[0] = state.plug_and_play.node_id;
     data.value.count = 1;
     data2.integer64 = data;
     uavcan_register_Value_1_0_select_integer64_(&data2);
