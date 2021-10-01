@@ -38,7 +38,8 @@
 #include <cstdint>
 #include <array>
 #include <board/led.hpp>
-#include <unique_id/unique_id.h>
+#include <board/unique_id.h>
+
 namespace board
 {
 void heapLock();

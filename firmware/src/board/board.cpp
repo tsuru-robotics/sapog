@@ -38,7 +38,7 @@
 #include <zubax_chibios/util/software_i2c.hpp>
 #include <zubax_chibios/platform/stm32/flash_writer.hpp>
 #include <zubax_chibios/platform/stm32/config_storage.hpp>
-#include <unique_id/unique_id.h>
+#include <board/unique_id.h>
 
 // Clock config validation
 #if STM32_PREDIV1_VALUE != 2
