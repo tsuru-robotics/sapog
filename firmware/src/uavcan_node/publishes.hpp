@@ -1,5 +1,4 @@
-#ifndef FIRMWARE_PUBLISHES_HPP
-#define FIRMWARE_PUBLISHES_HPP
+#pragma once
 
 #include "units.hpp"
 #include "state.hpp"
@@ -90,6 +89,3 @@ namespace node
         }
     }
 }
-
-
-#endif //FIRMWARE_PUBLISHES_HPP

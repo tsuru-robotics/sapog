@@ -1,5 +1,4 @@
-#ifndef FIRMWARE_STATE_HPP
-#define FIRMWARE_STATE_HPP
+#pragma once
 
 #include <zubax_chibios/config/config.hpp>
 #include <libcanard/canard.h>
@@ -43,4 +42,3 @@ struct State
     int reduntant_interfaces[2] = {0, 1};
 };
 }
-#endif //FIRMWARE_STATE_HPP

@@ -1,5 +1,4 @@
-#ifndef FIRMWARE_LOOPS_HPP
-#define FIRMWARE_LOOPS_HPP
+#pragma once
 
 #include <uavcan/pnp/NodeIDAllocationData_2_0.h>
 #include <uavcan/pnp/NodeIDAllocationData_1_0.h>
@@ -26,6 +25,3 @@ inline void handleFastLoop(__attribute__((unused)) State &state)
     transmit(state);
 }
 }
-
-
-#endif //FIRMWARE_LOOPS_HPP
