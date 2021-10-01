@@ -23,7 +23,6 @@
 #include "time.h"
 #include "loops.hpp"
 #include <thread>
-#include <sys/unistd.h>
 #include <uavcan_node/loops/loop.hpp>
 #include "board/board.hpp"
 
@@ -40,29 +39,18 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
 }
 
 
-namespace board
-{
-extern void die(int error);
+extern void board::die(int error);
 
 extern void *const ConfigStorageAddress;
 constexpr unsigned ConfigStorageSize = 1024;
-}
 
 using namespace uavcan_node_1_0;
 using namespace board;
 static THD_WORKING_AREA(_wa_control_thread, 1024 * 2); // This defines _wa_control_thread
 
-
 static void initCanard();
 
-
-using node::state::State;
-
-
 static State state{};
-namespace platform
-{
-
 [[noreturn]] static void control_thread(void *arg)
 {
     using namespace node::loops;
@@ -118,8 +106,8 @@ static void initCanard()
             o1heapInit(&::board::__heap_base__,
                        reinterpret_cast<std::size_t>(&__heap_end__) -
                        reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
-                       &platform::heapLock,
-                       &platform::heapUnlock);
+                       &::board::heapLock,
+                       &::board::heapUnlock);
     if (state.canard.user_reference == nullptr)
     {
         chibios_rt::System::halt("o1heap");
