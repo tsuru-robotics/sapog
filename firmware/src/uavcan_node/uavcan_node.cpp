@@ -46,11 +46,11 @@ constexpr unsigned ConfigStorageSize = 1024;
 
 using namespace uavcan_node_1_0;
 using namespace board;
-static THD_WORKING_AREA(_wa_control_thread, 1024 * 2); // This defines _wa_control_thread
-
 static void initCanard();
 
 static State state{};
+// This defines _wa_control_thread
+static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
 [[noreturn]] static void control_thread(void *arg)
 {
     using namespace node::loops;
@@ -84,16 +84,16 @@ static State state{};
             }
         }
         chThdSleep(1);
-//publish_port_list(canard, monotonic_time); // TODO: When we have subscriptions, enable this.
     }
 }
 
 static void initCanard()
 {
     {
-        // https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
-        // AHB/APB bridges (APB) page 49
-        // Turning on the clocks for the peripherals that are going to be used
+        /* https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+        AHB/APB bridges (APB) page 49
+        Turning on the clocks for the peripherals that are going to be used
+        */
         RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
         RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
         RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;

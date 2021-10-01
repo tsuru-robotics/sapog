@@ -27,7 +27,7 @@ std::optional<CanardTransfer> receiveTransfer(State &state, int if_index)
         const int8_t canard_result = canardRxAccept(&state.canard, &frame, if_index, &transfer);
         if (canard_result > 0)
         {
-            printf("I have received a transfer");
+            printf("I have received a transfer\n");
             return transfer;
             //state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
