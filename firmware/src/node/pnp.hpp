@@ -1,7 +1,7 @@
-#ifndef FIRMWARE_PLUG_AND_PLAY_HPP
-#define FIRMWARE_PLUG_AND_PLAY_HPP
+#ifndef FIRMWARE_PNP_HPP
+#define FIRMWARE_PNP_HPP
 
-#include "uavcan_node/state.hpp"
+#include "node/state.hpp"
 
 using namespace node::state;
 namespace node::config
@@ -16,4 +16,4 @@ bool save_node_id(State &state);
 
 void plug_and_play_loop(State &state);
 }
-#endif //FIRMWARE_PLUG_AND_PLAY_HPP
+#endif //FIRMWARE_PNP_HPP

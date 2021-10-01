@@ -1,9 +1,9 @@
-#include "uavcan_node/reception.hpp"
+#include "node/reception.hpp"
 #include "uavcan/_register/Access_1_0.h"
 #include "uavcan/_register/List_1_0.h"
 #include "uavcan/_register/Name_1_0.h"
 #include "uavcan/_register/Value_1_0.h"
-#include "uavcan_node/config_wrapper/config_wrapper.hpp"
+#include "node/conf/wrapper.hpp"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 
 std::optional<CanardTransfer> receive_transfer(State &state, int if_index)

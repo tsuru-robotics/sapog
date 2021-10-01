@@ -1,5 +1,5 @@
-#ifndef FIRMWARE_UAVCAN_TYPE_CONVERSION_H
-#define FIRMWARE_UAVCAN_TYPE_CONVERSION_H
+#ifndef FIRMWARE_CONVERT_TYPE_H
+#define FIRMWARE_CONVERT_TYPE_H
 
 #include <uavcan/_register/Value_1_0.h>
 #include <optional>
@@ -18,4 +18,4 @@ std::optional<T> pack(float input);
 //std::optional<uavcan_primitive_array_Bit_1_0> pack(const float input);
 }
 
-#endif //FIRMWARE_UAVCAN_TYPE_CONVERSION_H
+#endif //FIRMWARE_CONVERT_TYPE_H

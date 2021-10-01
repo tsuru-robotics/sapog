@@ -5,7 +5,7 @@
  */
 #define NUNAVUT_ASSERT assert
 
-#include "uavcan_node.hpp"
+#include "node.hpp"
 #include <cstddef>
 #include "zubax_chibios/config/config.hpp"
 #include <ch.h>
@@ -23,7 +23,7 @@
 #include "time.h"
 #include "loops.hpp"
 #include <thread>
-#include <uavcan_node/loops/loop.hpp>
+#include <node/loops/loop.hpp>
 #include "board/board.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)

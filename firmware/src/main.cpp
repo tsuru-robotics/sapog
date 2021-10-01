@@ -47,7 +47,7 @@
 #include <motor/motor.hpp>
 #include <cstring>
 #include <sys/unistd.h>
-#include "uavcan_node/uavcan_node.hpp"
+#include "node/node.hpp"
 //#include <zubax_chibios/sys/sys.cpp>
 #include <stdio.h>
 

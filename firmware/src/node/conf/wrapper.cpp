@@ -1,4 +1,4 @@
-#include "config_wrapper.hpp"
+#include "wrapper.hpp"
 
 converter_type find_converter(const char *name)
 {

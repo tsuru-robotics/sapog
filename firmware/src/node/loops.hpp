@@ -2,8 +2,8 @@
 
 #include <uavcan/pnp/NodeIDAllocationData_2_0.h>
 #include <uavcan/pnp/NodeIDAllocationData_1_0.h>
-#include "uavcan_node/plug_and_play/plug_and_play.hpp"
-#include "uavcan_node/time.h"
+#include "node/pnp.hpp"
+#include "node/time.h"
 #include "state.hpp"
 #include "publishes.hpp"
 #include "reception.hpp"

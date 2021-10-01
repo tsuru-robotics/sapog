@@ -1,11 +1,11 @@
 #include "libcanard/canard.h"
-#include "uavcan_node/units.hpp"
-#include "uavcan_node/time.h"
+#include "node/units.hpp"
+#include "node/time.h"
 #include <board/unique_id.h>
 #include "hashing/hash.hpp"
 #include "uavcan/pnp/NodeIDAllocationData_1_0.h"
-#include "plug_and_play.hpp"
-#include "uavcan_node/reception.hpp"
+#include "pnp.hpp"
+#include "node/reception.hpp"
 #include "src/settings/registers.hpp"
 
 static CanardRxSubscription AllocationMessageSubscription;

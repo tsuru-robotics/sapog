@@ -3,7 +3,7 @@
 
 #include <libcanard/canard.h>
 #include <functional>
-#include "uavcan_node/state.hpp"
+#include "node/state.hpp"
 
 class Loop
 {
