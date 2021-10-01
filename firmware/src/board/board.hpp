@@ -57,18 +57,18 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms);
  * This function is thread safe.
  */
 int i2c_exchange(std::uint8_t address,
-                 const void* tx_data, const std::uint16_t tx_size,
-                       void* rx_data, const std::uint16_t rx_size);
+                 const void *tx_data, const std::uint16_t tx_size,
+                 void *rx_data, const std::uint16_t rx_size);
 
 /**
  * Safer wrapper over @ref i2c_exchange().
  */
 template<unsigned TxSize, unsigned RxSize>
 inline int i2c_exchange(std::uint8_t address,
-                        const std::array<uint8_t, TxSize>& tx,
-                              std::array<uint8_t, RxSize>& rx)
+                        const std::array<uint8_t, TxSize> &tx,
+                        std::array<uint8_t, RxSize> &rx)
 {
-	return i2c_exchange(address, tx.data(), TxSize, rx.data(), RxSize);
+    return i2c_exchange(address, tx.data(), TxSize, rx.data(), RxSize);
 }
 
 __attribute__((noreturn))
@@ -90,7 +90,9 @@ HardwareVersion detect_hardware_version();
 float get_current_shunt_resistance();
 
 typedef std::array<std::uint8_t, 128> DeviceSignature;
-bool try_read_device_signature(DeviceSignature& out_sign);
-bool try_write_device_signature(const DeviceSignature& sign);
+
+bool try_read_device_signature(DeviceSignature &out_sign);
+
+bool try_write_device_signature(const DeviceSignature &sign);
 
 }
