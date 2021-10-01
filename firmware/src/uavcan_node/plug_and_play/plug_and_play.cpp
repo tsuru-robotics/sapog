@@ -1,7 +1,7 @@
 #include "libcanard/canard.h"
 #include "uavcan_node/units.hpp"
 #include "uavcan_node/time.h"
-#include <unique_id/unique_id.h>
+#include <board/unique_id.h>
 #include "hashing/hash.hpp"
 #include "uavcan/pnp/NodeIDAllocationData_1_0.h"
 #include "plug_and_play.hpp"
