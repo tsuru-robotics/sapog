@@ -43,7 +43,6 @@
 #include <assert.h>
 #include <zubax_chibios/config/config.h>
 #include <zubax_chibios/watchdog/watchdog.h>
-#include <optional>
 
 #define IDLE_CONTROL_PERIOD_MSEC  10
 #define WATCHDOG_TIMEOUT_MSEC     10000
@@ -59,7 +58,7 @@ unsigned comm_period_to_rpm(uint32_t comm_period);
 
 static int _watchdog_id;
 static MUTEX_DECL(_mutex);
-static std::optional<event_source_t> _setpoint_update_event{};
+static EVENTSOURCE_DECL(_setpoint_update_event); // "I have modified the insides of this to void *", Silver Valdvee
 static THD_WORKING_AREA(_wa_control_thread, 1024);
 
 /*
@@ -435,7 +434,7 @@ static void control_thread(void* arg)
 	chRegSetThreadName("motor");
 
 	event_listener_t listener;
-	chEvtRegisterMask(&_setpoint_update_event.value(), &listener, ALL_EVENTS);
+	chEvtRegisterMask(&_setpoint_update_event, &listener, ALL_EVENTS);
 
 	uint64_t timestamp_hnsec = motor_rtctl_timestamp_hnsec();
 
@@ -560,7 +559,7 @@ void motor_set_duty_cycle(float dc, int ttl_ms)
 	chMtxUnlock(&_mutex);
 
 	// Wake the control thread to process the new setpoint immediately
-	chEvtBroadcastFlags(&_setpoint_update_event.value(), ALL_EVENTS);
+	chEvtBroadcastFlags(&_setpoint_update_event, ALL_EVENTS);
 }
 
 void motor_set_rpm(unsigned rpm, int ttl_ms)
@@ -585,7 +584,7 @@ void motor_set_rpm(unsigned rpm, int ttl_ms)
 	chMtxUnlock(&_mutex);
 
 	// Wake the control thread to process the new setpoint immediately
-	chEvtBroadcastFlags(&_setpoint_update_event.value(), ALL_EVENTS);
+	chEvtBroadcastFlags(&_setpoint_update_event, ALL_EVENTS);
 }
 
 float motor_get_duty_cycle(void)
@@ -725,7 +724,7 @@ void motor_beep(int frequency, int duration_msec)
 		_state.beep_frequency = frequency;
 		_state.beep_duration_msec = duration_msec;
 		chMtxUnlock(&_mutex);
-		chEvtBroadcastFlags(&_setpoint_update_event.value(), ALL_EVENTS); // Wake the control thread
+		chEvtBroadcastFlags(&_setpoint_update_event, ALL_EVENTS); // Wake the control thread
 	} else {
 		chMtxUnlock(&_mutex);
 	}

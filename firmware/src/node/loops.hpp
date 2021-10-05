@@ -14,12 +14,12 @@ namespace node::loops
 void handle_1hz_loop(__attribute__((unused)) State &state)
 {
     node::communications::publish_heartbeat(state.canard, state);
-    communications::publish_port_list(state.canard, state);
+    // Before code below is uncommented, make sure that the node has an id.
+    // communications::publish_port_list(state.canard, state);
 }
 
 inline void handle_fast_loop(__attribute__((unused)) State &state)
 {
-    receive_transfer(state, 0);
     std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
     if (transfer.has_value())
     {

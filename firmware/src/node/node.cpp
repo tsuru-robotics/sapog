@@ -62,16 +62,16 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
-    static Loop loops[4]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS},
+    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS},
                          Loop{&handle_fast_loop, QUEUE_TIME_FRAME},
-                         Loop{[](State &state_local) {
+                         /*Loop{[](State &state_local) {
                              (void) state_local;
                          }, SECOND_IN_MICROSECONDS * 10},
                          Loop{
                                  [](State &state_local) {
                                      (void) state_local;
                                  }, QUEUE_TIME_FRAME
-                         },
+                         },*/
     };
 
     while (true)
@@ -95,20 +95,21 @@ struct SubscriptionData
     int port_id;
     unsigned long extent_bytes;
     unsigned long time_out;
+    std::optional<CanardRxSubscription> subscription;
 };
-std::pair<const char *, SubscriptionData> subscriptions[3] = {
+std::pair<const char *,  SubscriptionData> subscriptions[3] = {
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
                                         uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                         uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
-                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
-        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
+        {"uavcan.node.getinfo", {CanardTransferKindRequest, // TODO: fix strings uavcan.node.getinfo
                                         uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                         uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
-                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
                                         uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                         uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
-                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC}},
+                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
 };
 
 static void init_canard()
@@ -140,17 +141,16 @@ static void init_canard()
     state.canard.node_id = state.param_node_id.get();
     for (auto &subscription: subscriptions)
     {
-        {
-            static CanardRxSubscription rx;
-            const int8_t res =  //
-                    canardRxSubscribe(&state.canard,
-                                      subscription.second.transfer_kind,
-                                      subscription.second.port_id,
-                                      subscription.second.extent_bytes,
-                                      subscription.second.time_out,
-                                      &rx);
-            assert(res > 0); // This is to make sure that the subscription was successful.
-        }
+        CanardRxSubscription rx;
+        subscription.second.subscription = rx;
+        const int8_t res =  //
+                canardRxSubscribe(&state.canard,
+                                  subscription.second.transfer_kind,
+                                  subscription.second.port_id,
+                                  subscription.second.extent_bytes,
+                                  subscription.second.time_out,
+                                  &subscription.second.subscription.value());
+        assert(res > 0); // This is to make sure that the subscription was successful.
     }
 }
 

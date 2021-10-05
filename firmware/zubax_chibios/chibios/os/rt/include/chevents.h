@@ -72,7 +72,7 @@ struct event_listener {
  * @brief   Event Source structure.
  */
 typedef struct event_source {
-  event_listener_t      *es_next;       /**< @brief First Event Listener
+  void *es_next;       /**< @brief First Event Listener
                                                     registered on the Event
                                                     Source.                 */
 } event_source_t;

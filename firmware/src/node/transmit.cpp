@@ -30,7 +30,7 @@ void remove_frame(State &state, int if_index, const CanardFrame *txf)
 void transmit(State &state)
 {
     for (const CanardFrame *txf = NULL;
-         (txf = canardTxPeek(&state.canard, 0)) != NULL;)  // Look at the top of the TX queue.
+         (txf = canardTxPeek(&state.canard, 0)) != nullptr;)  // Look at the top of the TX queue.
     {
         bool isDriverBusy = !bxCANPush(0, state.timing.current_time, (*txf).timestamp_usec,
                                        (*txf).extended_can_id, (*txf).payload_size,

@@ -3,7 +3,7 @@
 #include <optional>
 #include <cstdio>
 #include "zubax_chibios/zubax_chibios/config/config.h"
-#include "src/node/conf/convert_type.h"
+#include "node/conf/wrapper.hpp"
 #include <variant>
 #include <motor/realtime/api.h>
 #include "motor/motor.hpp"

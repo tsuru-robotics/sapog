@@ -29,7 +29,9 @@ std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
         // assign the transfer to the given CanardTransfer object. Not a bug!
         CanardTransfer transfer{};
-        const int8_t canard_result = canardRxAccept(&state.canard, &frame, if_index, &transfer);
+        CanardRxSubscription subscription{};
+        const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer,
+                                                      reinterpret_cast<CanardRxSubscription **>(&subscription));
         if (canard_result > 0)
         {
             printf("I have received a transfer\n");

@@ -52,6 +52,9 @@ extern char __heap_end__;   // NOLINT
 
 os::watchdog::Timer init(unsigned watchdog_timeout_ms);
 
+/*void* allocate(std::size_t sz);
+void deallocate(const void* ptr);*/
+
 /**
  * Performs an I2C transaction.
  * This function is thread safe.

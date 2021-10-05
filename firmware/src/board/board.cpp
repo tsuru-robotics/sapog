@@ -119,6 +119,9 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 	return wdt;
 }
 
+/*void* allocate(std::size_t sz);
+void deallocate(const void* ptr);*/
+
 int i2c_exchange(std::uint8_t address,
                  const void* tx_data, const std::uint16_t tx_size,
                        void* rx_data, const std::uint16_t rx_size)
