@@ -133,13 +133,10 @@ bool node::config::receive_plug_and_play_response(State &state)
             //printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
             if (result < 0)
             {
-                printf("Failed to deserialize PNP data\n");
                 return false;
             }
-            printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
             if (msg.unique_id_hash == (state.plug_and_play.unique_id_hash & ((1ULL << 48U) - 1U)))
             {
-                printf("Hashes are matching\n");
                 if (msg.allocated_node_id.count > 0 && msg.allocated_node_id.elements[0].value > 0)
                 {
                     state.canard.node_id =  msg.allocated_node_id.elements[0].value;

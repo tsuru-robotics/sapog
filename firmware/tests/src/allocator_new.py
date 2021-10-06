@@ -4,18 +4,30 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import asyncio
+import json
 import os
 import pathlib
 import sys
 import re
 from typing import Optional
-
+from itertools import chain
+import pyuavcan.dsdl
+import typing
 from pyuavcan.application.node_tracker import Entry
+from pyuavcan.util import import_submodules, iter_descendants
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
+
+import_submodules(uavcan)
+ids = {}
+filtered_types = ["ABCMeta"]
+chained_descendants = chain(iter_descendants(pyuavcan.dsdl.FixedPortCompositeObject), iter_descendants(pyuavcan.dsdl.FixedPortServiceObject))
+filtered_generator = (type_ for type_ in chained_descendants if type_ not in filtered_types)
+for t in filtered_generator:
+    ids[pyuavcan.dsdl.get_fixed_port_id(t)] = t
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -37,18 +49,16 @@ async def main() -> None:
 
         def capture_handler(capture: _tracer.Capture):
             with open("rx_frm.txt", "a") as log_file:
-                ids = {
-                    384: "register_Access", 385: "register_List",
-                    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list",
-                    434: "get_transport_statistics", 435: "execute_command", 8165: "pnp_node_id_allocation_data",
-                    390: "pnp_cluster_add_entries", 391: "pnp_cluster_request_vote", 8164: "pnp_cluster_discovery"
-                }
                 if (transfer_trace := tracer.update(capture)) is not None:
+                    subject_id = None
+                    try:
+                        subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
+                    except Exception as e:
+                        print(e.args[-1])
                     final_result = ""
                     count = 0
                     for memory_view in transfer_trace.transfer.fragmented_payload:
                         my_list = memory_view.tolist()
-                        my_list.reverse()
                         for byte in bytes(my_list):
                             final_result += '{:02X} '.format(byte)
                         else:
@@ -62,15 +72,17 @@ async def main() -> None:
                     else:
                         final_result = final_result[:len(final_result) - len(" |")]
                     deserialized = str(transfer_trace.transfer)
+                    obj = pyuavcan.dsdl.deserialize(ids[subject_id], transfer_trace.transfer.fragmented_payload)
+                    print(json.dumps(pyuavcan.dsdl.to_builtin(obj)))
                     deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\nPAYLOAD\n" + final_result,
                                           deserialized)
                     deserialized = deserialized.replace(
                         "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(", "transfer(")[:-2]
                     for key, value in ids.items():
                         deserialized = deserialized.replace("subject_id=" + str(key),
-                                                            "subject_id=" + value + f"({str(key)})")
+                                                            "subject_id=" + value.__name__  + f"({str(key)})")
                         deserialized = deserialized.replace("service_id=" + str(key),
-                                                            "service_id=" + value + f"({str(key)})")
+                                                            "service_id=" + value.__name__ + f"({str(key)})")
                     log_file.write(deserialized + "\n")
 
         node.presentation.transport.begin_capture(capture_handler)
@@ -83,7 +95,7 @@ async def main() -> None:
                     print(next_entry.info)
                     a.register_node(node_id, bytes(next_entry.info.unique_id))
                     await asyncio.sleep(2)
-                    await reset_node_id(node, node_id)
+                    # await reset_node_id(node, node_id)
 
             asyncio.get_event_loop().create_task(handle_inner_function())
 

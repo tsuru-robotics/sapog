@@ -78,7 +78,6 @@ void publish_heartbeat(CanardInstance &canard, State &state)
     assert(err >= 0);
     if (err >= 0)
     {
-
         const CanardTransfer transfer = {
                 .timestamp_usec = state.timing.current_time +
                                   ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
