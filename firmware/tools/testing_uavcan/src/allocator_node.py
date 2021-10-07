@@ -4,6 +4,7 @@ import pathlib
 import sys
 
 import uavcan.pnp.NodeIDAllocationData_1_0
+import uavcan.node.ID_1_0
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -12,15 +13,27 @@ sys.path.insert(0, namespace_path)
 
 from pyuavcan.application import make_node, NodeInfo
 
+internal_table = {}
+
 
 async def main() -> None:
+    os.environ["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
+    os.environ["UAVCAN__CAN__MTU"] = "8"
     os.environ["UAVCAN__NODE__ID"] = "42"
-    os.environ["UAVCAN__UDP__IFACE"] = "127.0.0.1"
     with make_node(NodeInfo(name="com.zubax.sapog.tests.node1"), "databases/node1.db") as node:
+        allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
         async for m, _metadata in allocate_subscription:
+            print("Allocator received a request for an new NodeID allocation.")
             assert isinstance(m, uavcan.pnp.NodeIDAllocationData_1_0)
-            print("Received allocate request")
+            their_unique_id = m.unique_id_hash
+            if (their_node_id := internal_table.get(their_unique_id)) is None:
+                new_id = uavcan.node.ID_1_0()
+                new_id.value = 21
+                response = uavcan.pnp.NodeIDAllocationData_1_0(m.unique_id_hash, [new_id])
+                await allocate_responder.publish(response)
+            else:
+                print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
         while True:
             await asyncio.sleep(1)
 

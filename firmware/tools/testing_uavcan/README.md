@@ -44,3 +44,7 @@ and that's it. Now some extras:
 ```
 UAVCAN__UDP__IFACE="127.0.0.1" y sub uavcan.node.Heartbeat.1.0
 ```
+### Setting up a can interface
+```
+sudo slcand -o -s8 -t hw -S 3000000 /dev/serial/by-id/usb-Zubax_Robotics_Zubax_Babel_24003C00145130365030332000000000-if00
+```
