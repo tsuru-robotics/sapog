@@ -1,4 +1,3 @@
-# This node exists to request a NodeID from allocator_node.py
 import asyncio
 import os
 import pathlib
@@ -15,11 +14,13 @@ from pyuavcan.application import make_node, NodeInfo
 
 
 async def main() -> None:
-    os.environ["UAVCAN__NODE__ID"] = "43"
+    os.environ["UAVCAN__NODE__ID"] = "42"
     os.environ["UAVCAN__UDP__IFACE"] = "127.0.0.1"
     with make_node(NodeInfo(name="com.zubax.sapog.tests.node1"), "databases/node1.db") as node:
-        allocate_request = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
-        await allocate_request.publish(uavcan.pnp.NodeIDAllocationData_1_0())
+        allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
+        async for m, _metadata in allocate_subscription:
+            assert isinstance(m, uavcan.pnp.NodeIDAllocationData_1_0)
+            print("Received allocate request")
         while True:
             await asyncio.sleep(1)
 
