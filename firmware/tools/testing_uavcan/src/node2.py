@@ -49,6 +49,7 @@ async def main() -> None:
             request = uavcan.pnp.NodeIDAllocationData_1_0(os.getpid() % 100)
             await allocate_request.publish(request)
         print("I have received my NodeID")
+        allocate_subscriber.close()
         while True:
             await asyncio.sleep(1)
 
