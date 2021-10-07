@@ -1,2 +1,6 @@
 HeaterNode.db
 ControllerNode.db
+/deps/namespaces/reg/
+/deps/namespaces/sirius_cyber_corp/
+/deps/namespaces/uavcan/
+/src/databases/node1.db
