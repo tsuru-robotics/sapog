@@ -314,7 +314,7 @@ static float update_control_rpm(uint32_t comm_period, float dt)
 		_state.limit_mask,
 		dt,
 		(float)comm_period_to_rpm(comm_period),
-		static_cast<float>(_state.rpm_setpoint)
+        (float)_state.rpm_setpoint
 	};
 	return rpmctl_update(&input);
 }

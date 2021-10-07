@@ -4,6 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #include <bxcan/bxcan.h>
+#include <assert.h>
 #include "transmit.hpp"
 #include "state.hpp"
 #include "libcanard/canard.h"
@@ -37,9 +38,9 @@ void transmit(State &state)
                                        (*txf).payload);
         if (!isDriverBusy)
         {
-            // txf was first used by canardTxPeek,
-            // then by please_transmit, which is bxCanPush.
+            // txf was first used by canardTxPeek, then by bxCanPush
             // Now, txf is a pointer that needs to be deallocated in this scope.
+            assert(txf != nullptr);
             remove_frame(state, 0, txf);
         } else
         { break; }

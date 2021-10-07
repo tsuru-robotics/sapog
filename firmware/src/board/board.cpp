@@ -39,6 +39,8 @@
 #include <zubax_chibios/platform/stm32/flash_writer.hpp>
 #include <zubax_chibios/platform/stm32/config_storage.hpp>
 #include <board/unique_id.h>
+#include <cstdio>
+#include "o1heap/o1heap.h"
 
 // Clock config validation
 #if STM32_PREDIV1_VALUE != 2
@@ -62,11 +64,11 @@ const PALConfig pal_default_config = {
 
 /// Provided by linker
 const extern std::uint8_t DeviceSignatureStorage[];
-
+static O1HeapInstance* o1_heap_instance;
 namespace board
 {
 
-syssts_t g_heap_irq_status_{};  // NOLINT
+static syssts_t g_heap_irq_status_{};  // NOLINT
 
 void heapLock()
 {
@@ -76,6 +78,16 @@ void heapLock()
 void heapUnlock()
 {
     chSysRestoreStatusX(g_heap_irq_status_);
+}
+void* allocate(std::size_t sz)
+{
+    assert(o1_heap_instance);
+    return o1heapAllocate(o1_heap_instance, sz);
+}
+void deallocate(const void* ptr)
+{
+    assert(o1_heap_instance);
+    o1heapFree(o1_heap_instance, const_cast<void*>(ptr));
 }
 // This can't be constexpr because of reinterpret_cast<>
 static void* const ConfigStorageAddress = reinterpret_cast<void*>(0x08000000 + (256 * 1024) - 1024);
@@ -107,7 +119,18 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 	{
 		die(config_init_res);
 	}
+    // Heap init
 
+    o1_heap_instance = o1heapInit(&::board::__heap_base__,
+                       reinterpret_cast<std::size_t>(&__heap_end__) - reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
+                       &heapLock,
+                       &heapUnlock);
+    if(o1_heap_instance == nullptr)
+    {
+        printf("o1heap failed to initialize\n");
+        chibios_rt::System::halt("o1heap");
+    }
+    printf("o1heap initialized successfully\n");
 	// Banner
 	const auto hw_version = detect_hardware_version();
 	os::lowsyslog("%s %u.%u %u.%u.%08x / %d %s\n",
@@ -119,8 +142,7 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 	return wdt;
 }
 
-/*void* allocate(std::size_t sz);
-void deallocate(const void* ptr);*/
+
 
 int i2c_exchange(std::uint8_t address,
                  const void* tx_data, const std::uint16_t tx_size,

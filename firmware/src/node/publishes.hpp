@@ -88,7 +88,11 @@ void publish_heartbeat(CanardInstance &canard, State &state)
                 .payload_size   = serialized_size,
                 .payload        = &serialized[0],
         };
-        (void) canardTxPush(&canard, &transfer);
+        printf("serialized size:%d\n" , serialized_size);
+        printf("total size of transfer:%d\n", sizeof(transfer));
+        int number_of_frames_enqueued = canardTxPush(&canard, &transfer);
+        printf("Heartbeat is publishing %d frames.\n", number_of_frames_enqueued);
+        assert(number_of_frames_enqueued > 0);
     }
 }
 }

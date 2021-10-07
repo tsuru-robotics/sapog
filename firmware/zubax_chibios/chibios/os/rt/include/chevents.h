@@ -72,7 +72,7 @@ struct event_listener {
  * @brief   Event Source structure.
  */
 typedef struct event_source {
-  void *es_next;       /**< @brief First Event Listener
+  event_listener_t *es_next;       /**< @brief First Event Listener
                                                     registered on the Event
                                                     Source.                 */
 } event_source_t;
@@ -102,7 +102,7 @@ typedef void (*evhandler_t)(eventid_t id);
  *          source that is part of a bigger structure.
  * @param name the name of the event source variable
  */
-#define _EVENTSOURCE_DATA(name) {(void *)(&name)}
+#define _EVENTSOURCE_DATA(name) {(event_listener_t *)(&name)}
 
 /**
  * @brief   Static event source initializer.

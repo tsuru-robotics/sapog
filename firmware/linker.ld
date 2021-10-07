@@ -87,7 +87,7 @@ SECTIONS
         BYTE(0xFF)         /* Without this, the linker will ignore alignment */
     } > flash
 
-    .text :
+    .text : ALIGN(16) SUBALIGN(16)
     {
         FILL(0x99);
         *(.text)
@@ -101,19 +101,19 @@ SECTIONS
         *(.gcc*)
     } > flash
 
-    .ARM.extab :
+    .ARM.extab : ALIGN(16) SUBALIGN(16)
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > flash
 
-    .ARM.exidx :
+    .ARM.exidx : ALIGN(16) SUBALIGN(16)
     {
         PROVIDE(__exidx_start = .);
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         PROVIDE(__exidx_end = .);
      } > flash
 
-    .eh_frame_hdr :
+    .eh_frame_hdr : ALIGN(16) SUBALIGN(16)
     {
         *(.eh_frame_hdr)
     } > flash
@@ -132,7 +132,7 @@ SECTIONS
     _etext = .;
     _textdata_start = _etext;
 
-    .mstack :
+    .mstack : ALIGN(16) SUBALIGN(16)
     {
         . = ALIGN(8);
         __main_stack_base__ = .;
@@ -141,7 +141,7 @@ SECTIONS
         __main_stack_end__ = .;
     } > ram
 
-    .pstack :
+    .pstack : ALIGN(16) SUBALIGN(16)
     {
         __process_stack_base__ = .;
         __main_thread_stack_base__ = .;

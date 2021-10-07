@@ -29,13 +29,13 @@
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
     (void) ins;
-    return o1heapAllocate(static_cast<O1HeapInstance *>(ins->user_reference), amount);
+    return board::allocate(amount);
 }
 
 static void canardFree(CanardInstance *const ins, void *const pointer)
 {
     (void) ins;
-    o1heapFree(static_cast<O1HeapInstance *>(ins->user_reference), pointer);
+    board::deallocate(pointer);
 }
 
 
@@ -92,10 +92,10 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
 struct SubscriptionData
 {
     CanardTransferKind transfer_kind;
-    int port_id;
-    unsigned long extent_bytes;
-    unsigned long time_out;
-    std::optional<CanardRxSubscription> subscription;
+    CanardPortID port_id;
+    size_t extent_bytes;
+    CanardMicrosecond time_out;
+    CanardRxSubscription subscription;
 };
 std::pair<const char *,  SubscriptionData> subscriptions[3] = {
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
@@ -127,16 +127,6 @@ static void init_canard()
     bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
     bxCANConfigure(0, timings, false);
     state.canard = canardInit(&canardAllocate, &canardFree);
-    state.canard.user_reference =
-            o1heapInit(&::board::__heap_base__,
-                       reinterpret_cast<std::size_t>(&__heap_end__) -
-                       reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
-                       &::board::heapLock,
-                       &::board::heapUnlock);
-    if (state.canard.user_reference == nullptr)
-    {
-        chibios_rt::System::halt("o1heap");
-    }
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     state.canard.node_id = state.param_node_id.get();
     for (auto &subscription: subscriptions)
@@ -149,7 +139,7 @@ static void init_canard()
                                   subscription.second.port_id,
                                   subscription.second.extent_bytes,
                                   subscription.second.time_out,
-                                  &subscription.second.subscription.value());
+                                  &subscription.second.subscription);
         assert(res > 0); // This is to make sure that the subscription was successful.
     }
 }
