@@ -51,7 +51,7 @@ static void init_canard();
 
 static State state{};
 // This defines _wa_control_thread
-static THD_WORKING_AREA(_wa_control_thread, 1024 * 2);
+static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
 
 [[noreturn]] static void control_thread(void *arg)
 {

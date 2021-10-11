@@ -42,11 +42,12 @@ async def main() -> None:
         allocate_request = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         was_timer_restarted = False
         while os.environ["UAVCAN__NODE__ID"] == "0":
-            await asyncio.sleep(random() * 2)
+            await asyncio.sleep(1 + random() * 2)
             if was_timer_restarted:
                 was_timer_restarted = False
                 continue
             request = uavcan.pnp.NodeIDAllocationData_1_0(os.getpid() % 100)
+            print("Sending an allocation request")
             await allocate_request.publish(request)
         print("I have received my NodeID")
         allocate_subscriber.close()

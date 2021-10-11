@@ -44,4 +44,6 @@
 #define PORT_IDLE_THREAD_STACK_SIZE     64
 #define PORT_INT_REQUIRED_STACK         512
 
+#define OS_USE_CHPRINTF 1
+
 #include <zubax_chibios/sys/chconf_tail.h>

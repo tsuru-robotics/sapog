@@ -27,13 +27,13 @@ async def main() -> None:
             print("Allocator received a request for an new NodeID allocation.")
             assert isinstance(m, uavcan.pnp.NodeIDAllocationData_1_0)
             their_unique_id = m.unique_id_hash
-            if (their_node_id := internal_table.get(their_unique_id)) is None:
+            if (their_node_id := internal_table.get(their_unique_id)) is not None:
+                print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
+            else:
                 new_id = uavcan.node.ID_1_0()
                 new_id.value = 21
                 response = uavcan.pnp.NodeIDAllocationData_1_0(m.unique_id_hash, [new_id])
                 await allocate_responder.publish(response)
-            else:
-                print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
         while True:
             await asyncio.sleep(1)
 

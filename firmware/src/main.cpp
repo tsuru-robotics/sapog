@@ -50,7 +50,6 @@
 #include "node/node.hpp"
 //#include <zubax_chibios/sys/sys.cpp>
 #include <stdio.h>
-
 namespace
 {
 
@@ -179,7 +178,6 @@ int main()
 	do_startup_beep();
 
 	motor_confirm_initialization();
-    printf("Here I state that I have finished motor initialization, hurraaaaay!");
 
 	/*
 	 * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.

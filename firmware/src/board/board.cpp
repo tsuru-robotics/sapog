@@ -81,12 +81,10 @@ void heapUnlock()
 }
 void* allocate(std::size_t sz)
 {
-    assert(o1_heap_instance);
     return o1heapAllocate(o1_heap_instance, sz);
 }
 void deallocate(const void* ptr)
 {
-    assert(o1_heap_instance);
     o1heapFree(o1_heap_instance, const_cast<void*>(ptr));
 }
 // This can't be constexpr because of reinterpret_cast<>

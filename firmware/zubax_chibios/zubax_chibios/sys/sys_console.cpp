@@ -54,16 +54,11 @@ static int genericPrint(::BaseChannel* stream, unsigned timeout_msec, const char
      */
     static char buffer[256];
 
-#if defined(OS_USE_CHPRINTF) && OS_USE_CHPRINTF
     MemoryStream ms;
     msObjectInit(&ms, (uint8_t*)buffer, sizeof(buffer), 0);
     ::BaseSequentialStream* chp = (::BaseSequentialStream*)&ms;
     chvprintf(chp, format, vl);
     chSequentialStreamPut(chp, 0);
-#else
-    using namespace std;
-    vsnprintf(buffer, sizeof(buffer), format, vl);
-#endif
 
     /*
      * Writing the buffer replacing "\n" --> "\r\n"

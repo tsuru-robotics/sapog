@@ -232,5 +232,19 @@ void free(void* p)
         chSysHalt("free");
     }
 }
+void* _malloc_r(struct _reent* r, size_t sz)
+{
+    (void) r;
+    (void) sz;
+    return NULL;
+}
 
+void _free_r (struct _reent *r, void* x)
+{
+    (void) r;
+    (void) x;
+}
+void *	_calloc_r (struct _reent *, size_t, size_t){
+    return NULL;
+}
 }
