@@ -89,7 +89,6 @@ void publish_heartbeat(CanardInstance &canard, State &state)
                 .payload        = &serialized[0],
         };
         printf("serialized size:%d\n" , serialized_size);
-        printf("total size of transfer:%d\n", sizeof(transfer));
         int32_t number_of_frames_enqueued = canardTxPush(&canard, &transfer);
         printf("Heartbeat is publishing %ld frames.\n", number_of_frames_enqueued);
         assert(number_of_frames_enqueued > 0);
