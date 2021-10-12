@@ -12,11 +12,14 @@
 #include "pnp.hpp"
 #include "node/reception.hpp"
 #include "src/settings/registers.hpp"
+#include "transmit.hpp"
+#include <stdlib.h>
 
 static CanardRxSubscription AllocationMessageSubscription;
 
 void node::config::plug_and_play_loop(State &state)
 {
+    save_crc(state);
     while (state.plug_and_play.anonymous)
     {
         state.timing.current_time = get_monotonic_microseconds();
@@ -40,7 +43,9 @@ void node::config::plug_and_play_loop(State &state)
                 }
                 if (state.timing.current_time >= state.timing.next_pnp_request)
                 {
+                    srand(state.timing.current_time);
                     state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
+                    state.timing.next_pnp_request += SECOND_IN_MICROSECONDS / 2 + rand() % SECOND_IN_MICROSECONDS;
                     state.plug_and_play.request_count += 1;
                     continue;
                 }
@@ -59,15 +64,18 @@ void node::config::plug_and_play_loop(State &state)
         chThdSleep(1);
     }
 }
-
+void node::config::save_crc(State &state)
+{
+    auto unique_id = board::read_unique_id();
+    auto crc_object = CRC64{};
+    crc_object.update(unique_id.data(), sizeof(unique_id));
+    state.plug_and_play.unique_id_hash = crc_object.get();
+}
 bool node::config::send_plug_and_play_request(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.
     uavcan_pnp_NodeIDAllocationData_1_0 msg{};
-    auto unique_id = board::read_unique_id();
-    auto crc_object = CRC64{};
-    crc_object.update(unique_id.data(), sizeof(unique_id));
-    msg.unique_id_hash = crc_object.get();
+    msg.unique_id_hash = state.plug_and_play.unique_id_hash;
     uint8_t serialized[uavcan_pnp_NodeIDAllocationData_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     const int8_t err = uavcan_pnp_NodeIDAllocationData_1_0_serialize_(&msg, &serialized[0], &serialized_size);
@@ -85,6 +93,7 @@ bool node::config::send_plug_and_play_request(State &state)
                 .payload        = &serialized[0],
         };
         (void) canardTxPush(&state.canard, &transfer);  // The response will arrive asynchronously eventually.
+        transmit(state);
         return true;
     }
     return false;
@@ -103,16 +112,44 @@ bool node::config::subscribe_to_plug_and_play_response(State &state)
 bool node::config::receive_plug_and_play_response(State &state)
 {
     std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
-    if (transfer->port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
+    if (transfer.has_value())
     {
-        uavcan_pnp_NodeIDAllocationData_1_0 msg{};
-        auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
-                                                                       reinterpret_cast<uint8_t *>(&(transfer->payload)),
-                                                                       &(transfer->payload_size));
-        if (result >= 0)
+        printf("Received transfer for port_id %d\n", transfer.value().port_id);
+        if (transfer.value().port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
         {
-            state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
-            return true;
+            uavcan_pnp_NodeIDAllocationData_1_0 msg{};
+            auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
+                                                                           static_cast<const uint8_t*>(transfer->payload),
+                                                                           &(transfer->payload_size));
+            printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
+            if (result < 0)
+            {
+                printf("Failed to deserialize data\n");
+                return false;
+            }
+            printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
+            if (msg.unique_id_hash == state.plug_and_play.unique_id_hash)
+            {
+                if (msg.allocated_node_id.count > 0)
+                {
+                    if (msg.allocated_node_id.elements[0].value == 0)
+                    {
+                        // This is unfortunately what we are receiving
+                        printf("Received 0 as NodeID\n");
+                    } else if (msg.allocated_node_id.elements[0].value < CANARD_NODE_ID_MAX)
+                    {
+                        // Time for celebrations
+                        printf("Received appropriate NodeId allocation\n");
+                        printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
+                        state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
+                        return true;
+                    } else
+                    {
+                        printf("Received a negative value for NodeID allocation\n");
+                    }
+                }
+            }
+
         }
     }
     return false;

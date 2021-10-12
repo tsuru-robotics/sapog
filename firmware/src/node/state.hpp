@@ -33,7 +33,8 @@ enum class PNPStatus
 struct PlugAndPlay
 {
     int request_count = 0;
-    uint8_t node_id;
+    uint8_t node_id = 190;
+    uint64_t unique_id_hash;
     PNPStatus status = PNPStatus::Subscribing;
     bool anonymous = true;
 };

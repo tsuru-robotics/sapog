@@ -42,7 +42,6 @@ void transmit(State &state)
             // txf was first used by canardTxPeek, then by bxCanPush
             // Now, txf is a pointer that needs to be deallocated in this scope.
             assert(txf != nullptr);
-            printf("Sent one frame");
             remove_frame(state, 0, txf);
         } else
         { break; }

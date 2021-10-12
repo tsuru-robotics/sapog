@@ -60,6 +60,7 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
     init_canard();
     chRegSetThreadName("uavcan_thread");
     // Plug and play feature
+    state.canard.node_id = 190;
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
     state.timing.current_time = get_monotonic_microseconds();
@@ -134,8 +135,6 @@ static void init_canard()
     state.canard.node_id = state.param_node_id.get();
     for (auto &subscription: subscriptions)
     {
-        CanardRxSubscription rx;
-        subscription.second.subscription = rx;
         const int8_t res =  //
                 canardRxSubscribe(&state.canard,
                                   subscription.second.transfer_kind,

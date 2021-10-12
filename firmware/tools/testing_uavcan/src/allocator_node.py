@@ -20,7 +20,7 @@ async def main() -> None:
     os.environ["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
     os.environ["UAVCAN__CAN__MTU"] = "8"
     os.environ["UAVCAN__NODE__ID"] = "42"
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.node1"), "databases/node1.db") as node:
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
         async for m, _metadata in allocate_subscription:
@@ -30,8 +30,7 @@ async def main() -> None:
             if (their_node_id := internal_table.get(their_unique_id)) is not None:
                 print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
             else:
-                new_id = uavcan.node.ID_1_0()
-                new_id.value = 21
+                new_id = uavcan.node.ID_1_0(21)
                 response = uavcan.pnp.NodeIDAllocationData_1_0(m.unique_id_hash, [new_id])
                 await allocate_responder.publish(response)
         while True:
