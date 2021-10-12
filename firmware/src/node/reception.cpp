@@ -21,7 +21,7 @@ std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
     {
         bool bxCanQueueHadSomething = bxCANPop(if_index,
                                                &frame.extended_can_id,
-                                               &frame.payload_size, const_cast<void *>(frame.payload));
+                                               &frame.payload_size, payload_array.data());
         if (!bxCanQueueHadSomething)
         { return {}; }
         // The transfer is actually not stored here in this narrow scoped variable
@@ -29,12 +29,9 @@ std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
         // assign the transfer to the given CanardTransfer object. Not a bug!
         CanardTransfer transfer{};
-        CanardRxSubscription subscription{};
-        const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer,
-                                                      reinterpret_cast<CanardRxSubscription **>(&subscription));
+        const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer, nullptr);
         if (canard_result > 0)
         {
-            //printf("I have received a transfer\n");
             return transfer;
             //state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))

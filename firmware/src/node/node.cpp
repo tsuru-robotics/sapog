@@ -12,8 +12,6 @@
 #include <uavcan/node/port/List_0_1.h>
 #include "bxcan/bxcan.h"
 #include "reception.hpp"
-
-
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"
 #include "libcanard/canard.h"
@@ -65,28 +63,28 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
     node::config::plug_and_play_loop(state);
     state.timing.current_time = get_monotonic_microseconds();
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
-                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
-                         /*Loop{[](State &state_local) {
-                             (void) state_local;
-                         }, SECOND_IN_MICROSECONDS * 10},
-                         Loop{
-                                 [](State &state_local) {
-                                     (void) state_local;
-                                 }, QUEUE_TIME_FRAME
-                         },*/
+                        Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
+            /*Loop{[](State &state_local) {
+                (void) state_local;
+            }, SECOND_IN_MICROSECONDS * 10},
+            Loop{
+                    [](State &state_local) {
+                        (void) state_local;
+                    }, QUEUE_TIME_FRAME
+            },*/
     };
 
     while (true)
     {
-
         CanardMicrosecond current_time = get_monotonic_microseconds();
-        for (Loop& loop: loops)
+        for (Loop &loop: loops)
         {
             if (loop.do_execute(current_time))
             {
                 loop.execution_function(state);
                 loop.increment_next_execution();
-            } else {
+            } else
+            {
             }
         }
         chThdSleep(1);
@@ -101,7 +99,7 @@ struct SubscriptionData
     CanardMicrosecond time_out;
     CanardRxSubscription subscription;
 };
-std::pair<const char *,  SubscriptionData> subscriptions[3] = {
+std::pair<const char *, SubscriptionData> subscriptions[3] = {
         {"uavcan.node.getinfo", {CanardTransferKindRequest,
                                         uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                         uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,

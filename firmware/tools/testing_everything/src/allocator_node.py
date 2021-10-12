@@ -24,7 +24,6 @@ async def main() -> None:
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
         async for m, _metadata in allocate_subscription:
-            print("Allocator received a request for an new NodeID allocation.")
             assert isinstance(m, uavcan.pnp.NodeIDAllocationData_1_0)
             their_unique_id = m.unique_id_hash
             if (their_node_id := internal_table.get(their_unique_id)) is not None:

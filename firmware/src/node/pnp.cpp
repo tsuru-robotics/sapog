@@ -114,22 +114,23 @@ bool node::config::receive_plug_and_play_response(State &state)
     std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
     if (transfer.has_value())
     {
-        printf("Received transfer for port_id %d\n", transfer.value().port_id);
+        //printf("Received transfer for port_id %d\n", transfer.value().port_id);
         if (transfer.value().port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
         {
             uavcan_pnp_NodeIDAllocationData_1_0 msg{};
             auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
                                                                            static_cast<const uint8_t*>(transfer->payload),
                                                                            &(transfer->payload_size));
-            printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
+            //printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
             if (result < 0)
             {
                 printf("Failed to deserialize data\n");
                 return false;
             }
             printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
-            if (msg.unique_id_hash == state.plug_and_play.unique_id_hash)
+            if (msg.unique_id_hash == (state.plug_and_play.unique_id_hash & ((1ULL << 48U) - 1U)))
             {
+                printf("Hashes are matching\n");
                 if (msg.allocated_node_id.count > 0)
                 {
                     if (msg.allocated_node_id.elements[0].value == 0)
