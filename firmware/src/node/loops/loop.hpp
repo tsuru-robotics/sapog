@@ -12,14 +12,14 @@
 class Loop
 {
 public:
-    Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay);
+    Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay, CanardMicrosecond current_time);
+
+    CanardMicrosecond next_loop_delay;
 
     CanardMicrosecond next_execution_at;
 
-    bool do_execute(CanardMicrosecond current_time);
+    bool do_execute(CanardMicrosecond current_time) const;
 
     void increment_next_execution();
-
     std::function<void(node::state::State &state)> execution_function;
-    CanardMicrosecond next_loop_delay;
 };

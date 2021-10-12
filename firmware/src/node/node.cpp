@@ -62,8 +62,9 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
-    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS},
-                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME},
+    state.timing.current_time = get_monotonic_microseconds();
+    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
+                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
                          /*Loop{[](State &state_local) {
                              (void) state_local;
                          }, SECOND_IN_MICROSECONDS * 10},
@@ -76,13 +77,15 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
 
     while (true)
     {
-        state.timing.current_time = get_monotonic_microseconds();
-        for (Loop loop: loops)
+
+        CanardMicrosecond current_time = get_monotonic_microseconds();
+        for (Loop& loop: loops)
         {
-            if (loop.do_execute(state.timing.current_time))
+            if (loop.do_execute(current_time))
             {
                 loop.execution_function(state);
                 loop.increment_next_execution();
+            } else {
             }
         }
         chThdSleep(1);
