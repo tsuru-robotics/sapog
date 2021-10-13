@@ -12,7 +12,8 @@
 class Loop
 {
 public:
-    Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay, CanardMicrosecond current_time);
+    Loop(std::function<void(node::state::State &state)>, CanardMicrosecond next_loop_delay,
+         CanardMicrosecond current_time);
 
     CanardMicrosecond next_loop_delay;
 
@@ -21,5 +22,8 @@ public:
     bool do_execute(CanardMicrosecond current_time) const;
 
     void increment_next_execution();
+
     std::function<void(node::state::State &state)> execution_function;
+
+    Loop &operator=(const Loop &other) = delete;
 };

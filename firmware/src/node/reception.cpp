@@ -10,6 +10,7 @@
 #include "uavcan/_register/Value_1_0.h"
 #include "node/conf/wrapper.hpp"
 #include "zubax_chibios/zubax_chibios/config/config.h"
+#include "zubax_chibios/zubax_chibios/config/config.cpp"
 
 std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
 {
@@ -58,8 +59,53 @@ void process_received_transfer(const State &state, const CanardTransfer *const t
         assert(false); // This can only happen when received transfer is a response.
     }
 }
-
-std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *const)>> receivers[3] = {
+const char * get_name_null_terminated_string(uavcan_register_Access_Request_1_0& request)
+{
+    size_t space_including_null_terminator = request.name.name.count+1;
+    char request_name[space_including_null_terminator];
+    memcpy(request.name.name.elements, request_name, space_including_null_terminator);
+    request_name[space_including_null_terminator-1] = '\0';
+}
+uavcan_register_Value_1_0 get_response_value(const char * const request_name, int config_type){
+    uavcan_register_Value_1_0 response_value{};
+    float value = configGet(request_name);
+    if(config_type == CONFIG_TYPE_FLOAT) {
+        uavcan_register_Value_1_0_select_real64_(&response_value);
+        response_value.real64.value.elements[0] = value;
+    } else if (config_type == CONFIG_TYPE_INT)
+    {
+        uavcan_register_Value_1_0_select_integer64_(&response_value);
+        response_value.integer64.value.elements[0] = value;
+    } else if (config_type == CONFIG_TYPE_BOOL) {
+        uavcan_register_Value_1_0_select_bit_(&response_value);
+        nunavutSetBit(response_value.bit.value.bitpacked, response_value.bit.value.count, 0, value != 0);
+    }
+}
+bool respond_to_access(CanardInstance* canard, const char * request_name, const int param_type, const CanardTransfer * const transfer)
+{
+    uavcan_register_Access_Response_1_0 response{};
+    // Read the value and send it back to the client
+    uavcan_register_Value_1_0 response_value = get_response_value(request_name, param_type);
+    uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
+    size_t serialized_size = sizeof(serialized);
+    const int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response,
+                                                                        &serialized[0],
+                                                                        &serialized_size);
+    assert(error >= 0);
+    if (error <= 0){ return false; }
+    const CanardTransfer response_transfer = {
+            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
+            .priority = CanardPriorityNominal,
+            .transfer_kind = CanardTransferKindMessage,
+            .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
+            .remote_node_id = transfer->remote_node_id,
+            .transfer_id = transfer->transfer_id,
+            .payload_size = serialized_size,
+            .payload = &serialized[0],
+    };
+    (void) canardTxPush(const_cast<CanardInstance *>(canard), &response_transfer);
+}
+std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *const)>> receivers[] = {
         {uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,    [](const State &state, const CanardTransfer *const transfer) {
             const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
             uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
@@ -88,45 +134,29 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
                                                                           (const uint8_t *) transfer->payload,
                                                                           &temp_payload_size);
-            if (result >= 0)
+            assert(result >= 0);
+            if (result < 0)
+            { return false; } // maybe it is a damaged frame, could happen?
+            if (request.name.name.count == 0)
             {
-                if (request.name.name.count == 0)
-                {
-                    printf("Discarding empty name register access request.\n");
-                    return false;
-                }
-                auto request_name = (const char *) request.name.name.elements;
-                assert(request_name != nullptr);
-                auto converter = find_converter(request_name);
-                float register_value = configGet(request_name);
-                auto value = converter(register_value);
-                if (uavcan_register_Value_1_0_is_empty_(&value))
-                {
-                    std::printf("Didn't find a converter for %s\n", request_name);
-                    return false;
-                }
-                uavcan_register_Access_Response_1_0 response{};
-                uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
-                size_t serialized_size = sizeof(serialized);
-                const int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response,
-                                                                                    &serialized[0],
-                                                                                    &serialized_size);
-                assert(error >= 0);
-                if (error >= 0)
-                {
-                    const CanardTransfer response_transfer = {
-                            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
-                            .priority = CanardPriorityNominal,
-                            .transfer_kind = CanardTransferKindMessage,
-                            .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
-                            .remote_node_id = transfer->remote_node_id,
-                            .transfer_id = transfer->transfer_id,
-                            .payload_size = serialized_size,
-                            .payload = &serialized[0],
-                    };
-                    (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &response_transfer);
-                }
+                printf("Discarding empty name register access request.\n");
+                return false;
             }
+            auto request_name = get_name_null_terminated_string(request);
+            ConfigParam param{};
+            if(configGetDescr(request_name, &param) == errno){
+                return false;
+            }
+
+            // Bounds checking
+            bool doesRequestProvideValue = uavcan_register_Value_1_0_is_empty_(&request.value);
+
+            // Going to write a value to the register.
+            // The client is going to get a response with the actual value of the register
+            assert(request_name != nullptr);
+            // We are silently losing precision, but it shouldn't matter for this application
+            auto received_value = (float) request.value.integer64.value.elements[0];
+            respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name, param.type, transfer);
             return true;
         }},
         {uavcan_register_List_1_0_FIXED_PORT_ID_,   [](const State &state, const CanardTransfer *const transfer) {

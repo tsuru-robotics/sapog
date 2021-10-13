@@ -20,7 +20,7 @@ static CanardRxSubscription AllocationMessageSubscription;
 void node::config::plug_and_play_loop(State &state)
 {
     save_crc(state);
-    while (state.plug_and_play.anonymous)
+    while (state.canard.node_id == 0 || state.canard.node_id > 128)
     {
         state.timing.current_time = get_monotonic_microseconds();
         switch (state.plug_and_play.status)
@@ -54,10 +54,12 @@ void node::config::plug_and_play_loop(State &state)
                 if (node::config::save_node_id(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
+                    printf("NodeID was successfully saved to the configuration.");
+                } else {
+                    assert(false);
                 }
                 break;
             case node::state::PNPStatus::Done:
-                state.canard.node_id = state.plug_and_play.node_id;
                 state.plug_and_play.anonymous = false;
                 break;
         }
@@ -131,23 +133,10 @@ bool node::config::receive_plug_and_play_response(State &state)
             if (msg.unique_id_hash == (state.plug_and_play.unique_id_hash & ((1ULL << 48U) - 1U)))
             {
                 printf("Hashes are matching\n");
-                if (msg.allocated_node_id.count > 0)
+                if (msg.allocated_node_id.count > 0 && msg.allocated_node_id.elements[0].value > 0)
                 {
-                    if (msg.allocated_node_id.elements[0].value == 0)
-                    {
-                        // This is unfortunately what we are receiving
-                        printf("Received 0 as NodeID\n");
-                    } else if (msg.allocated_node_id.elements[0].value < CANARD_NODE_ID_MAX)
-                    {
-                        // Time for celebrations
-                        printf("Received appropriate NodeId allocation\n");
-                        printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
-                        state.plug_and_play.node_id = msg.allocated_node_id.elements[0].value;
-                        return true;
-                    } else
-                    {
-                        printf("Received a negative value for NodeID allocation\n");
-                    }
+                    state.canard.node_id =  msg.allocated_node_id.elements[0].value;
+                    return true;
                 }
             }
 
@@ -160,7 +149,7 @@ bool node::config::save_node_id(State &state)
 {
     uavcan_register_Value_1_0 data2{};
     uavcan_primitive_array_Integer64_1_0 data{};
-    data.value.elements[0] = state.plug_and_play.node_id;
+    data.value.elements[0] = state.canard.node_id;
     data.value.count = 1;
     data2.integer64 = data;
     uavcan_register_Value_1_0_select_integer64_(&data2);

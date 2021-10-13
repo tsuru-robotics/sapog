@@ -9,6 +9,7 @@
 #include "state.hpp"
 #include "transmit.hpp"
 #include <iterator>
+#include <uavcan/node/port/List_0_1.h>
 
 namespace node
 {
@@ -77,6 +78,7 @@ void publish_heartbeat(CanardInstance &canard, State &state)
     assert(err >= 0);
     if (err >= 0)
     {
+
         const CanardTransfer transfer = {
                 .timestamp_usec = state.timing.current_time +
                                   ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
@@ -88,9 +90,7 @@ void publish_heartbeat(CanardInstance &canard, State &state)
                 .payload_size   = serialized_size,
                 .payload        = &serialized[0],
         };
-        printf("serialized size:%d\n" , serialized_size);
         int32_t number_of_frames_enqueued = canardTxPush(&canard, &transfer);
-        printf("Heartbeat is publishing %ld frames.\n", number_of_frames_enqueued);
         assert(number_of_frames_enqueued > 0);
     }
 }

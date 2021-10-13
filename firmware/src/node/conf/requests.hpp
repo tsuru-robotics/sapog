@@ -4,3 +4,13 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #pragma once
+
+#include "uavcan/_register/Access_1_0.h"
+#include "uavcan/_register/Value_1_0.h"
+#include "uavcan/_register/List_1_0.h"
+#include "uavcan/_register/Name_1_0.h"
+
+namespace node::conf
+{
+bool receive_configuration_request(uavcan_register_Access_Request_1_0 request);
+}

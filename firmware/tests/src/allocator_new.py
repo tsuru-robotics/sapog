@@ -14,11 +14,9 @@ dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 sys.path.insert(0, namespace_path)
 
-from pyuavcan.application import make_node, NodeInfo, node_tracker
-from pyuavcan.application.plug_and_play import Allocator
-
-
-
+from pyuavcan.application import make_node, NodeInfo, Node
+from pyuavcan.application.node_tracker import NodeTracker
+from pyuavcan.application.plug_and_play import Allocator, CentralizedAllocator
 
 
 async def main() -> None:
@@ -26,12 +24,22 @@ async def main() -> None:
     os.environ["UAVCAN__CAN__MTU"] = "8"
     os.environ["UAVCAN__NODE__ID"] = "42"
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
-        t = node_tracker()
-        a = Allocator()
+        t = NodeTracker(node)
+        a = CentralizedAllocator(node)
 
         def handle_getinfo_update(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            a.register_node(node_id)
+            print("handler called")
+            if node_id:
+                print(node_id)
+                a.register_node(node_id)
+
         t.add_update_handler(handle_getinfo_update)
+        while True:
+            await asyncio.sleep(1)
+
+
+async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
+    pass
 
 
 if __name__ == "__main__":

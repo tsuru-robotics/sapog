@@ -7,22 +7,19 @@
 
 #include "node.hpp"
 #include <cstddef>
-#include "zubax_chibios/config/config.hpp"
 #include <ch.h>
-#include <uavcan/node/port/List_0_1.h>
 #include "bxcan/bxcan.h"
 #include "reception.hpp"
 #include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"
 #include "libcanard/canard.h"
-#include "o1heap/o1heap.h"
 #include "state.hpp"
 #include "units.hpp"
 #include "time.h"
 #include "loops.hpp"
-#include <thread>
 #include <node/loops/loop.hpp>
 #include "board/board.hpp"
+#include "node/conf/conf.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -100,15 +97,15 @@ struct SubscriptionData
     CanardRxSubscription subscription;
 };
 std::pair<const char *, SubscriptionData> subscriptions[3] = {
-        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+        {"uavcan.node.GetInfo_1_0", {CanardTransferKindRequest,
                                         uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                         uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
-        {"uavcan.node.getinfo", {CanardTransferKindRequest, // TODO: fix strings uavcan.node.getinfo
+        {"uavcan.pnp.NodeIDAllocationData_1_0", {CanardTransferKindRequest,
                                         uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                         uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
-        {"uavcan.node.getinfo", {CanardTransferKindRequest,
+        {"uavcan._register.Access_1_0", {CanardTransferKindRequest,
                                         uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                         uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
@@ -130,7 +127,7 @@ static void init_canard()
     bxCANConfigure(0, timings, false);
     state.canard = canardInit(&canardAllocate, &canardFree);
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
-    state.canard.node_id = state.param_node_id.get();
+    state.canard.node_id = node::conf::param_node_id.get();
     for (auto &subscription: subscriptions)
     {
         const int8_t res =  //

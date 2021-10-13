@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2021 Zubax, zubax.com
+ * Distributed under the MIT License, available in the file LICENSE.
+ * Author: Silver Valdvee <silver.valdvee@zubax.com>
+ */
 #include <uavcan/_register/Value_1_0.h>
 #include "registers.hpp"
 #include <optional>
@@ -42,7 +47,7 @@ bool StorageManager::registerWrite([[maybe_unused]] const char *const register_n
         value = conversion::extract(input_value->bit);
         if (value.has_value())
         {
-            configSet(register_name, value.value());
+            return configSet(register_name, value.value()) == 0;
         } else
         {
             return false;
@@ -53,7 +58,7 @@ bool StorageManager::registerWrite([[maybe_unused]] const char *const register_n
         value = conversion::extract(input_value->integer64);
         if (value.has_value())
         {
-            configSet(register_name, value.value());
+            return configSet(register_name, value.value()) == 0;
         } else
         {
             return false;
@@ -64,7 +69,7 @@ bool StorageManager::registerWrite([[maybe_unused]] const char *const register_n
         value = conversion::extract(input_value->real64);
         if (value.has_value())
         {
-            configSet(register_name, value.value());
+            return configSet(register_name, value.value()) == 0;
         } else
         {
             return false;

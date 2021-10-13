@@ -238,20 +238,19 @@ CONFIG_PARAM_INT("mot_spup_blnk_pm",    100,   1,     300)      // permill
 
 static void configure(void)
 {
-	_params.timing_advance_min_deg64               = configGet("mot_tim_adv_min") * 64 / 60;
-	_params.timing_advance_max_deg64               = configGet("mot_tim_adv_max") * 64 / 60;
-	_params.max_comm_period_for_max_timing_advance = configGet("mot_tim_cp_max") * HNSEC_PER_USEC;
-	_params.max_comm_period_for_min_timing_advance = configGet("mot_tim_cp_min") * HNSEC_PER_USEC;
+	_params.timing_advance_min_deg64               = configGet( "mot_tim_adv_min") * 64 / 60;
+    _params.timing_advance_max_deg64               = configGet( "mot_tim_adv_max") * 64 / 60;
+    _params.max_comm_period_for_max_timing_advance = configGet( "mot_tim_cp_max")  * HNSEC_PER_USEC;
+    _params.max_comm_period_for_min_timing_advance = configGet( "mot_tim_cp_min") * HNSEC_PER_USEC;
+    _params.motor_bemf_window_len_denom            = configGet( "mot_bemf_win_den");
+    _params.bemf_valid_range_pct128                = configGet( "mot_bemf_range") * 128 / 100;
+    _params.zc_failures_max                        = configGet( "mot_zc_fails_max");
+    _params.comm_period_max                        = configGet( "mot_comm_per_max") * HNSEC_PER_USEC;
+    _params.comm_blank_hnsec                       = configGet( "mot_blank_usec") * HNSEC_PER_USEC;
+    _params.spinup_start_comm_period               = configGet( "mot_spup_st_cp") * HNSEC_PER_USEC;
+    _params.spinup_timeout                         = configGet( "mot_spup_to_ms") * HNSEC_PER_MSEC;
+    _params.spinup_blanking_time_permil            = configGet( "mot_spup_blnk_pm");
 
-	_params.motor_bemf_window_len_denom = configGet("mot_bemf_win_den");
-	_params.bemf_valid_range_pct128     = configGet("mot_bemf_range") * 128 / 100;
-	_params.zc_failures_max  = configGet("mot_zc_fails_max");
-	_params.comm_period_max  = configGet("mot_comm_per_max") * HNSEC_PER_USEC;
-	_params.comm_blank_hnsec = configGet("mot_blank_usec") * HNSEC_PER_USEC;
-
-	_params.spinup_start_comm_period = configGet("mot_spup_st_cp") * HNSEC_PER_USEC;
-	_params.spinup_timeout           = configGet("mot_spup_to_ms") * HNSEC_PER_MSEC;
-	_params.spinup_blanking_time_permil = configGet("mot_spup_blnk_pm");
 
 	/*
 	 * Validation
