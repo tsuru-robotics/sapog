@@ -12,5 +12,4 @@
 
 namespace node::conf
 {
-bool receive_configuration_request(uavcan_register_Access_Request_1_0 request);
 }

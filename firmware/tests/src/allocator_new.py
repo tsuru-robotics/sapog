@@ -8,6 +8,8 @@ from pyuavcan.application.node_tracker import Entry
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
+import uavcan.register.Access_1_0
+import uavcan.primitive.array
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -27,20 +29,36 @@ async def main() -> None:
         t = NodeTracker(node)
         a = CentralizedAllocator(node)
 
-        def handle_getinfo_update(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            print(locals())
-            print("handler called")
+        async def handle_getinfo_update(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
+            await asyncio.sleep(1)
             if node_id and next_entry and next_entry.info is not None:
-                print(node_id)
+                print(next_entry.info)
                 a.register_node(node_id, bytes(next_entry.info.unique_id))
+                await reset_node_id(node, node_id)
 
-        t.add_update_handler(handle_getinfo_update)
+        t.add_update_handler(lambda node_id, previous_entry, next_entry : asyncio.get_event_loop().create_task(handle_getinfo_update(node_id, previous_entry, next_entry)))
+        print("Running")
         while True:
             await asyncio.sleep(1)
 
 
+already_ran = False
+
+
 async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
-    pass
+    print(f"Resetting node_id of {current_target_node_id}")
+    global already_ran
+    if already_ran:
+        return
+    already_ran = True
+    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
+    msg = uavcan.register.Access_1_0.Request()
+    my_array = uavcan.primitive.array.Integer64_1_0()
+    my_array.value = [0]
+    msg.name.name = "uavcan_node_id"
+    msg.value.integer64 = my_array
+    response = await service_client.call(msg)
+    print(response)
 
 
 if __name__ == "__main__":

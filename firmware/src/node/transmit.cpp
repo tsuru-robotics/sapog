@@ -9,6 +9,7 @@
 #include "transmit.hpp"
 #include "state.hpp"
 #include "libcanard/canard.h"
+#include "time.h"
 
 // This project differs from ds015_demo
 // Here we use bxCan and not SocketCan
@@ -34,10 +35,10 @@ void transmit(State &state)
     for (const CanardFrame *txf = NULL;
          (txf = canardTxPeek(&state.canard, 0)) != nullptr;)  // Look at the top of the TX queue.
     {
-        bool isDriverBusy = !bxCANPush(0, state.timing.current_time, (*txf).timestamp_usec,
-                                       (*txf).extended_can_id, (*txf).payload_size,
-                                       (*txf).payload);
-        if (!isDriverBusy)
+        bool is_driver_busy = !bxCANPush(0, get_monotonic_microseconds(), (*txf).timestamp_usec,
+                                         (*txf).extended_can_id, (*txf).payload_size,
+                                         (*txf).payload);
+        if (!is_driver_busy)
         {
             // txf was first used by canardTxPeek, then by bxCanPush
             // Now, txf is a pointer that needs to be deallocated in this scope.

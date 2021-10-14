@@ -19,6 +19,7 @@ static CanardRxSubscription AllocationMessageSubscription;
 
 void node::config::plug_and_play_loop(State &state)
 {
+    bool already_tried_saving = false;
     save_crc(state);
     while (state.canard.node_id == 0 || state.canard.node_id > 128)
     {
@@ -33,6 +34,11 @@ void node::config::plug_and_play_loop(State &state)
                 if (node::config::send_plug_and_play_request(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::SentRequest;
+                } else {
+                    if(already_tried_saving){
+                        goto out_of_loop;
+                    }
+                    already_tried_saving = true;
                 }
                 break;
             case node::state::PNPStatus::SentRequest:
@@ -65,6 +71,7 @@ void node::config::plug_and_play_loop(State &state)
         }
         chThdSleep(1);
     }
+    out_of_loop:;
 }
 void node::config::save_crc(State &state)
 {
@@ -126,7 +133,7 @@ bool node::config::receive_plug_and_play_response(State &state)
             //printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
             if (result < 0)
             {
-                printf("Failed to deserialize data\n");
+                printf("Failed to deserialize PNP data\n");
                 return false;
             }
             printf("Received ID: %d\n", msg.allocated_node_id.elements[0].value);
@@ -153,5 +160,5 @@ bool node::config::save_node_id(State &state)
     data.value.count = 1;
     data2.integer64 = data;
     uavcan_register_Value_1_0_select_integer64_(&data2);
-    return ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
+    return ::config::registers::getInstance().registerWrite("uavcan_node_id", &data2);
 }
