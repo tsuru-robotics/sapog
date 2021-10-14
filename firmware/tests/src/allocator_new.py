@@ -28,10 +28,11 @@ async def main() -> None:
         a = CentralizedAllocator(node)
 
         def handle_getinfo_update(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
+            print(locals())
             print("handler called")
-            if node_id:
+            if node_id and next_entry and next_entry.info is not None:
                 print(node_id)
-                a.register_node(node_id)
+                a.register_node(node_id, bytes(next_entry.info.unique_id))
 
         t.add_update_handler(handle_getinfo_update)
         while True:
