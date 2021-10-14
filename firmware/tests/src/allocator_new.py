@@ -30,10 +30,10 @@ async def main() -> None:
         a = CentralizedAllocator(node)
 
         async def handle_getinfo_update(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            await asyncio.sleep(1)
             if node_id and next_entry and next_entry.info is not None:
                 print(next_entry.info)
                 a.register_node(node_id, bytes(next_entry.info.unique_id))
+                await asyncio.sleep(2)
                 await reset_node_id(node, node_id)
 
         t.add_update_handler(lambda node_id, previous_entry, next_entry : asyncio.get_event_loop().create_task(handle_getinfo_update(node_id, previous_entry, next_entry)))

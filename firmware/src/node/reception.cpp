@@ -80,7 +80,7 @@ static void handle_node_id_change_request(uavcan_register_Value_1_0 new_node_id)
 }
 */
 
-uavcan_register_Value_1_0 get_response_value(const char *const request_name, int config_type)
+uavcan_register_Value_1_0 get_response_value(const char *const request_name)
 {
     uavcan_register_Value_1_0 response_value{};
     ConfigParam param{};
@@ -90,15 +90,15 @@ uavcan_register_Value_1_0 get_response_value(const char *const request_name, int
         return response_value;
     }
     float value = configGet(request_name);
-    if (config_type == CONFIG_TYPE_FLOAT)
+    if (param.type == CONFIG_TYPE_FLOAT)
     {
         uavcan_register_Value_1_0_select_real64_(&response_value);
         response_value.real64.value.elements[0] = value;
-    } else if (config_type == CONFIG_TYPE_INT)
+    } else if (param.type == CONFIG_TYPE_INT)
     {
         uavcan_register_Value_1_0_select_integer64_(&response_value);
         response_value.integer64.value.elements[0] = value;
-    } else if (config_type == CONFIG_TYPE_BOOL)
+    } else if (param.type == CONFIG_TYPE_BOOL)
     {
         uavcan_register_Value_1_0_select_bit_(&response_value);
         nunavutSetBit(response_value.bit.value.bitpacked, response_value.bit.value.count, 0, value != 0);
@@ -106,22 +106,25 @@ uavcan_register_Value_1_0 get_response_value(const char *const request_name, int
     return response_value;
 }
 
-bool respond_to_access(CanardInstance *canard, const char *request_name, const int param_type,
+bool respond_to_access(CanardInstance *canard, const char *request_name,
                        const CanardTransfer *const transfer)
 {
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
-    uavcan_register_Value_1_0 response_value = get_response_value(request_name, param_type);
+    uavcan_register_Value_1_0 response_value = get_response_value(request_name);
     printf("Value returned\n");
     response.value = response_value;
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
+    printf("Serializing\n");
     const int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response,
                                                                         &serialized[0],
                                                                         &serialized_size);
+    printf("The actual error was %d", error);
     assert(error >= 0);
-    if (error <= 0)
+    if (error < 0)
     { return false; }
+    printf("Serialized successfully\n");
     const CanardTransfer response_transfer = {
             .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
             .priority = CanardPriorityNominal,
@@ -132,6 +135,7 @@ bool respond_to_access(CanardInstance *canard, const char *request_name, const i
             .payload_size = serialized_size,
             .payload = &serialized[0],
     };
+    printf("Transfer created\n");
     (void) canardTxPush(const_cast<CanardInstance *>(canard), &response_transfer);
     printf("Pushed response\n");
     return true;
@@ -179,7 +183,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
             get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
             printf("Null terminated string successfully assembled\n");
-            ConfigParam param{};
+
             printf("request_name\n");
             printf("length of request_name: %d\n", request.name.name.count);
             printf("%s\n", request_name.data());
@@ -198,7 +202,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             assert(request_name.data() != nullptr);
             // We are silently losing precision, but it shouldn't matter for this application
             printf("Responding to access\n");
-            respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.data(), param.type, transfer);
+            respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.data(), transfer);
             return true;
         }},
         {uavcan_register_List_1_0_FIXED_PORT_ID_,   [](const State &state, const CanardTransfer *const transfer) {
