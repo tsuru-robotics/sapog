@@ -28,19 +28,20 @@ from pyuavcan.application.plug_and_play import CentralizedAllocator
 from pyuavcan.transport import _tracer
 
 
-
-
 async def main() -> None:
     os.environ["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
     os.environ["UAVCAN__CAN__MTU"] = "8"
     os.environ["UAVCAN__NODE__ID"] = "42"
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         tracer = node.presentation.transport.make_tracer()
+
         def capture_handler(capture: _tracer.Capture):
             with open("rx_frm.txt", "a") as log_file:
                 ids = {
                     384: "register_Access", 385: "register_List",
-                    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list"
+                    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list",
+                    434: "get_transport_statistics", 435: "execute_command", 8165: "pnp_node_id_allocation_data",
+                    390: "pnp_cluster_add_entries", 391: "pnp_cluster_request_vote", 8164: "pnp_cluster_discovery"
                 }
                 if (transfer_trace := tracer.update(capture)) is not None:
                     final_result = ""
@@ -61,13 +62,15 @@ async def main() -> None:
                     else:
                         final_result = final_result[:len(final_result) - len(" |")]
                     deserialized = str(transfer_trace.transfer)
-                    deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\n" + final_result, deserialized)
+                    deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\nPAYLOAD\n" + final_result,
+                                          deserialized)
                     deserialized = deserialized.replace(
-                        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(", "transfer(")[
-                                   :-2]
+                        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(", "transfer(")[:-2]
                     for key, value in ids.items():
-                        deserialized = deserialized.replace("subject_id=" + str(key), "subject_id=" + value)
-                        deserialized = deserialized.replace("service_id=" + str(key), "service_id=" + value)
+                        deserialized = deserialized.replace("subject_id=" + str(key),
+                                                            "subject_id=" + value + f"({str(key)})")
+                        deserialized = deserialized.replace("service_id=" + str(key),
+                                                            "service_id=" + value + f"({str(key)})")
                     log_file.write(deserialized + "\n")
 
         node.presentation.transport.begin_capture(capture_handler)
