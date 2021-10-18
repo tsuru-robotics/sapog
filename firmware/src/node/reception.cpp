@@ -117,18 +117,16 @@ bool respond_to_access(CanardInstance *canard, const char *request_name,
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     printf("Serializing\n");
-    const int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response,
-                                                                        &serialized[0],
-                                                                        &serialized_size);
+    int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response, &serialized[0], &serialized_size);
     printf("The actual error was %d", error);
     assert(error >= 0);
     if (error < 0)
     { return false; }
     printf("Serialized successfully\n");
     const CanardTransfer response_transfer = {
-            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
-            .priority = CanardPriorityNominal,
-            .transfer_kind = CanardTransferKindMessage,
+            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS * 2,
+            .priority = transfer->priority,
+            .transfer_kind = CanardTransferKindResponse,
             .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
             .remote_node_id = transfer->remote_node_id,
             .transfer_id = transfer->transfer_id,
