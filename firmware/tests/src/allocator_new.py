@@ -22,6 +22,11 @@ from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator
 from pyuavcan.transport import _tracer
 
+ids = {
+    384: "register_Access", 385: "register_List",
+    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list"
+}
+
 
 async def main() -> None:
     os.environ["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
@@ -40,10 +45,18 @@ async def main() -> None:
                         for byte in bytes(my_list):
                             final_result += '{:02X} '.format(byte)
                         else:
-                            final_result = final_result[:len(final_result)-1]
-                        final_result += " frame_border "
+                            final_result = final_result[:len(final_result) - 1]
+                        final_result += " | "
+                    else:
+                        final_result = final_result[:len(final_result) - len(" |")]
                     deserialized = str(transfer_trace.transfer)
-                    deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", final_result, deserialized)
+                    deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\n" + final_result, deserialized)
+                    deserialized = deserialized.replace(
+                        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(MessageDataSpecifier(", "transfer(")[
+                                   :-2]
+                    for key, value in ids.items():
+                        deserialized = deserialized.replace("subject_id=" + str(key), "subject_id=" + value)
+                        deserialized = deserialized.replace("service_id=" + str(key), "service_id=" + value)
                     log_file.write(deserialized + "\n")
 
         node.presentation.transport.begin_capture(capture_handler)
