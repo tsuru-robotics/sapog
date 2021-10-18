@@ -1,3 +1,8 @@
+#
+# Copyright (c) 2021 Zubax, zubax.com
+# Distributed under the MIT License, available in the file LICENSE.
+# Author: Silver Valdvee <silver.valdvee@zubax.com>
+#
 import asyncio
 import os
 import pathlib
@@ -22,10 +27,7 @@ from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator
 from pyuavcan.transport import _tracer
 
-ids = {
-    384: "register_Access", 385: "register_List",
-    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list"
-}
+
 
 
 async def main() -> None:
@@ -34,11 +36,15 @@ async def main() -> None:
     os.environ["UAVCAN__NODE__ID"] = "42"
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         tracer = node.presentation.transport.make_tracer()
-
         def capture_handler(capture: _tracer.Capture):
             with open("rx_frm.txt", "a") as log_file:
+                ids = {
+                    384: "register_Access", 385: "register_List",
+                    430: "node_GetInfo", 7509: "node_heartbeat", 7510: "node_port_list"
+                }
                 if (transfer_trace := tracer.update(capture)) is not None:
                     final_result = ""
+                    count = 0
                     for memory_view in transfer_trace.transfer.fragmented_payload:
                         my_list = memory_view.tolist()
                         my_list.reverse()
@@ -46,13 +52,18 @@ async def main() -> None:
                             final_result += '{:02X} '.format(byte)
                         else:
                             final_result = final_result[:len(final_result) - 1]
-                        final_result += " | "
+                        count += 1
+                        if count >= 4:
+                            final_result += "\n"
+                            count = 0
+                        else:
+                            final_result += " | "
                     else:
                         final_result = final_result[:len(final_result) - len(" |")]
                     deserialized = str(transfer_trace.transfer)
                     deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\n" + final_result, deserialized)
                     deserialized = deserialized.replace(
-                        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(MessageDataSpecifier(", "transfer(")[
+                        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(", "transfer(")[
                                    :-2]
                     for key, value in ids.items():
                         deserialized = deserialized.replace("subject_id=" + str(key), "subject_id=" + value)
