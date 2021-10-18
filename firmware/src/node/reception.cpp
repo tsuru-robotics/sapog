@@ -69,42 +69,30 @@ static void get_name_null_terminated_string(uavcan_register_Access_Request_1_0 &
     out_request_name.at(request.name.name.count) = '\0';
 }
 
-/*
-static void handle_node_id_change_request(CanardNodeID new_node_id)
+void get_response_value(const char *const request_name, uavcan_register_Value_1_0 &out_value)
 {
-
-}
-static void handle_node_id_change_request(uavcan_register_Value_1_0 new_node_id)
-{
-
-}
-*/
-
-uavcan_register_Value_1_0 get_response_value(const char *const request_name)
-{
-    uavcan_register_Value_1_0 response_value{};
     ConfigParam param{};
     if (configGetDescr(request_name, &param) != 0)
     {
-        uavcan_register_Value_1_0_select_empty_(&response_value);
-        return response_value;
+        uavcan_register_Value_1_0_select_empty_(&out_value);
     }
     float value = configGet(request_name);
-    printf("Received this value to respond with: %f", value);
+    printf("Received this value to respond with: %d", (int) value);
     if (param.type == CONFIG_TYPE_FLOAT)
     {
-        uavcan_register_Value_1_0_select_real64_(&response_value);
-        response_value.real64.value.elements[0] = value;
+        uavcan_register_Value_1_0_select_real64_(&out_value);
+        out_value.real64.value.elements[0] = value;
+        out_value.real64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_INT)
     {
-        uavcan_register_Value_1_0_select_integer64_(&response_value);
-        response_value.integer64.value.elements[0] = value;
+        uavcan_register_Value_1_0_select_integer64_(&out_value);
+        out_value.integer64.value.elements[0] = value;
+        out_value.integer64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_BOOL)
     {
-        uavcan_register_Value_1_0_select_bit_(&response_value);
-        nunavutSetBit(response_value.bit.value.bitpacked, response_value.bit.value.count, 0, value != 0);
+        uavcan_register_Value_1_0_select_bit_(&out_value);
+        nunavutSetBit(out_value.bit.value.bitpacked, out_value.bit.value.count, 0, value != 0);
     }
-    return response_value;
 }
 
 bool respond_to_access(CanardInstance *canard, const char *request_name,
@@ -112,14 +100,15 @@ bool respond_to_access(CanardInstance *canard, const char *request_name,
 {
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
-    uavcan_register_Value_1_0 response_value = get_response_value(request_name);
+    uavcan_register_Value_1_0 response_value{};
+    get_response_value(request_name, response_value);
     printf("Value returned\n");
     response.value = response_value;
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     printf("Serializing\n");
     int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response, &serialized[0], &serialized_size);
-    printf("The actual error was %d", error);
+    printf("The actual error was %d\n", error);
     assert(error >= 0);
     if (error < 0)
     { return false; }
@@ -194,9 +183,9 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             if (does_request_provide_value)
             {
                 float received_value = (float) request.value.integer64.value.elements[0];
-                printf("The received value is %d", (int)received_value);
+                printf("The received value is %d\n", (int) received_value);
                 printf("Register value set\n");
-                char * request_name_c = request_name.data();
+                char *request_name_c = request_name.data();
                 printf("request_name: %s\n", request_name_c);
                 configSet(request_name_c, received_value);
                 configSave();
