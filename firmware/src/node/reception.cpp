@@ -90,6 +90,7 @@ uavcan_register_Value_1_0 get_response_value(const char *const request_name)
         return response_value;
     }
     float value = configGet(request_name);
+    printf("Received this value to respond with: %f", value);
     if (param.type == CONFIG_TYPE_FLOAT)
     {
         uavcan_register_Value_1_0_select_real64_(&response_value);
@@ -188,13 +189,17 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
 
 
             // Bounds checking
-            bool does_request_provide_value = uavcan_register_Value_1_0_is_empty_(&request.value);
-            float received_value = (float) request.value.integer64.value.elements[0];
+            bool does_request_provide_value = !uavcan_register_Value_1_0_is_empty_(&request.value);
             // Going to write a value to the register.
             if (does_request_provide_value)
             {
+                float received_value = (float) request.value.integer64.value.elements[0];
+                printf("The received value is %d", (int)received_value);
                 printf("Register value set\n");
-                configSet(request_name.data(), received_value);
+                char * request_name_c = request_name.data();
+                printf("request_name: %s\n", request_name_c);
+                configSet(request_name_c, received_value);
+                configSave();
             }
             // The client is going to get a response with the actual value of the register
             assert(request_name.data() != nullptr);

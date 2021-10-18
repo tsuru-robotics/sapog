@@ -30,6 +30,7 @@ void remove_frame(State &state, int if_index, const CanardFrame *txf)
     state.canard.memory_free(&state.canard, (CanardFrame *) txf);
 }
 
+/// Uses bxCAN to send all frames that have been queued in canard, returns no value
 void transmit(State &state)
 {
     for (const CanardFrame *txf = NULL;
