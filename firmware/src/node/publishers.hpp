@@ -58,7 +58,7 @@ void publish_port_list(CanardInstance &canard, State &state)
                 .transfer_kind  = CanardTransferKindMessage,
                 .port_id        = uavcan_node_port_List_0_1_FIXED_PORT_ID_,
                 .remote_node_id = CANARD_NODE_ID_UNSET,
-                .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++),
+                .transfer_id    = (CanardTransferID)(state.transfer_ids.uavcan_node_port_list++),
                 .payload_size   = serialized_size,
                 .payload        = &serialized[0],
         };
@@ -69,7 +69,7 @@ void publish_port_list(CanardInstance &canard, State &state)
 void publish_heartbeat(CanardInstance &canard, State &state)
 {
     uavcan_node_Heartbeat_1_0 heartbeat{};
-    heartbeat.uptime = (uint32_t) ((state.timing.current_time - state.timing.started_at) / MEGA);
+    heartbeat.uptime = (uint32_t)((state.timing.current_time - state.timing.started_at) / MEGA);
     heartbeat.mode.value = uavcan_node_Mode_1_0_OPERATIONAL;
     heartbeat.health.value = uavcan_node_Health_1_0_NOMINAL;
     uint8_t serialized[uavcan_node_Heartbeat_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
@@ -85,7 +85,7 @@ void publish_heartbeat(CanardInstance &canard, State &state)
                 .transfer_kind  = CanardTransferKindMessage,
                 .port_id        = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
                 .remote_node_id = CANARD_NODE_ID_UNSET,
-                .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_node_heartbeat++),
+                .transfer_id    = (CanardTransferID)(state.transfer_ids.uavcan_node_heartbeat++),
                 .payload_size   = serialized_size,
                 .payload        = &serialized[0],
         };

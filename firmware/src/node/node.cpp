@@ -54,10 +54,7 @@ static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
     (void) arg;
     init_canard();
     chRegSetThreadName("uavcan_thread");
-    configSet("uavcan_node_id", 190);
     // Plug and play feature
-    state.canard.node_id = 190;
-
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
     state.timing.current_time = get_monotonic_microseconds();

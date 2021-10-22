@@ -39,7 +39,7 @@ FW_VERSION_MINOR = 3
 export SAPOG_BASE := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export SAPOG_SRC_DIR = $(abspath $(SAPOG_BASE)/src)
 
-PYTHON := python3.6
+PYTHON := python3.8
 
 #
 # Sources

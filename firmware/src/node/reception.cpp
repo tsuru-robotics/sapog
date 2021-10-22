@@ -10,7 +10,7 @@
 #include "uavcan/_register/Value_1_0.h"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
-
+#include "reg/udral/physics/acoustics/Note_0_1.h"
 std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
@@ -182,7 +182,12 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             (void) state;
             (void) transfer;
             return true;
-        }}
+        }},
+        {,   [](const State &state, const CanardTransfer *const transfer) {
+            (void) state;
+            (void) transfer;
+            return true;
+        }},
 };
 
 void process_received_request(const State &state, const CanardTransfer *const transfer)
