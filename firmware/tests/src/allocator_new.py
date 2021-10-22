@@ -19,6 +19,7 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
+from multiprocessing import cpu_count
 
 do_update_dsdl = False
 import subprocess
@@ -78,7 +79,7 @@ async def do_everything() -> None:
                      (tests_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
                      (tests_directory / downloads_folder_name / extra_parent_directory / "reg").absolute())
     subprocess.run(["make", "dsdl"], cwd=firmware_directory)
-    subprocess.run(["make", "-j4"], cwd=firmware_directory)
+    subprocess.run(["make", f"-j{cpu_count()}"], cwd=firmware_directory)
 
 
 async def compile_dsdl():
