@@ -5,6 +5,8 @@ import sys
 import re
 from typing import Optional
 from itertools import chain
+
+import pytest
 import pyuavcan.dsdl
 import typing
 
@@ -102,19 +104,21 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
     return capture_handler
 
 
-class SpecialTracker:
-    def __init__(self):
-        import_submodules(uavcan)
-        ids = fill_ids()
-        with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
-            tracer = node.presentation.transport.make_tracer()
-            node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
-            t = NodeTracker(node)
-            centralized_allocator = CentralizedAllocator(node)
-            t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
-            print("Running")
-            while True:
-                await asyncio.sleep(1)
+import os
 
-    def __str__(self):
-        pass
+
+@pytest.fixture
+def make_my_allocator_node() -> Node:
+    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
+    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
+    os.environ.setdefault("UAVCAN__NODE__ID", "42")
+    import_submodules(uavcan)
+    ids = fill_ids()
+    node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db")
+    tracer = node.presentation.transport.make_tracer()
+    node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
+    t = NodeTracker(node)
+    centralized_allocator = CentralizedAllocator(node)
+    t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+    print("Running")
+    return node

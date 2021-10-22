@@ -37,19 +37,35 @@ remove_zip_files_after_use = True
 sapog_root = pathlib.Path(__file__).parent.parent.parent.parent.absolute()
 firmware_directory = sapog_root / "firmware"
 tests_directory = firmware_directory / "tests"
-print(sapog_root)
 
 
-async def build_sapog() -> None:
-    subprocess.run(["make", "-j8"], cwd=(source_path.parent / downloads_folder_name / "sapog-3" / "firmware").absolute())
+def get_port():
+    from glob import glob
+    output = subprocess.check_output(["realpath", "-LPz", glob("/dev/serial/by-id/usb-*Black_Magic_Probe*-if00")[0]]).decode("utf-8")[:-1]
+    return output
 
 
 def move_directories(destination: pathlib.Path, *source_dirs: pathlib.Path):
     subprocess.run(["mv", "-t", destination, *source_dirs])
 
 
-async def do_everything() -> None:
+async def upload_compound():
+    temp_file = f"""tar ext {get_port()}
+mon swdp_scan
+attach 1
+set mem inaccessible-by-default off
+load
+quit"""
+    arguments = []
+    for line in temp_file.split("\n"):
+        arguments.append("-ex")
+        arguments.append(f"{line.rstrip()}")  # https://manned.org/arm-none-eabi-gdb/7308522e
+    subprocess.run(["arm-none-eabi-gdb", firmware_directory / "build" / "compound.elf", *arguments, "--batch"])
+
+
+async def build_sapog() -> None:
     public_regulated_data_types_directory = (firmware_directory / "public_regulated_data_types").absolute()
+    subprocess.run(["make", "clean"], cwd=firmware_directory)
     subprocess.run(["rm", "-rf", public_regulated_data_types_directory])
     subprocess.run(["rm", "-rf", tests_directory / downloads_folder_name])
     subprocess.run(["rm", "-rf", firmware_directory / "generated" / "nunavut_out"])
@@ -73,7 +89,6 @@ async def do_everything() -> None:
     zip_file.extractall(source_path.parent / downloads_folder_name)
     print(extra_parent_directory)
     zip_file.close()
-
     subprocess.run(["mkdir", public_regulated_data_types_directory])
     move_directories(public_regulated_data_types_directory,
                      (tests_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
@@ -87,17 +102,14 @@ async def compile_dsdl():
 
 
 async def start_build_process() -> None:
-    do_everything()
+    await build_sapog()
 
 
 async def main() -> None:
-    # asyncio.get_event_loop().create_task(start_build_process())
-    os.environ["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
-    os.environ["UAVCAN__CAN__MTU"] = "8"
-    os.environ["UAVCAN__NODE__ID"] = "42"
-    await do_everything()
-    while True:
-        await asyncio.sleep(1)
+    await build_sapog()
+    await upload_compound()
+    # while True:
+    #     await asyncio.sleep(1)
 
 
 already_ran = False
