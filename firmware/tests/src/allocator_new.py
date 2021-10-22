@@ -29,6 +29,7 @@ import os.path
 
 downloads_folder_name = "downloads"
 tracking_branch_name = "v3"
+discard_local_changes = False
 assert (len(downloads_folder_name) > 4)
 downloads_folder_name = downloads_folder_name.replace("*", "")
 remove_zip_files_after_use = True
@@ -47,7 +48,13 @@ def move_directories(destination: pathlib.Path, *source_dirs: pathlib.Path):
 
 
 async def do_everything() -> None:
-    subprocess.run(["git", "checkout", "--force", tracking_branch_name])
+    public_regulated_data_types_directory = (firmware_directory / "public_regulated_data_types").absolute()
+    subprocess.run(["rm", "-rf", public_regulated_data_types_directory])
+    subprocess.run(["rm", "-rf", tests_directory / downloads_folder_name])
+    subprocess.run(["rm", "-rf", firmware_directory / "generated" / "nunavut_out"])
+    subprocess.run(["mkdir", tests_directory / downloads_folder_name])
+    if discard_local_changes:
+        subprocess.run(["git", "checkout", "--force", tracking_branch_name])
     import zipfile
     # making a request for downloading the zip file
     url = "https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip"
@@ -65,7 +72,7 @@ async def do_everything() -> None:
     zip_file.extractall(source_path.parent / downloads_folder_name)
     print(extra_parent_directory)
     zip_file.close()
-    public_regulated_data_types_directory = (firmware_directory / "public_regulated_data_types").absolute()
+
     subprocess.run(["mkdir", public_regulated_data_types_directory])
     move_directories(public_regulated_data_types_directory,
                      (tests_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
