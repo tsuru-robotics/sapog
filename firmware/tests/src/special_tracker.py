@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import pathlib
 import sys
 import re
@@ -12,11 +11,8 @@ import typing
 from pyuavcan.dsdl import FixedPortObject
 
 source_path = pathlib.Path(__file__).parent.absolute()
-print(source_path.absolute())
 dependency_path = source_path.parent / "deps"
-print(dependency_path.absolute())
 namespace_path = dependency_path / "namespaces"
-print(namespace_path.absolute())
 sys.path.insert(0, namespace_path.absolute())
 
 import uavcan.pnp.NodeIDAllocationData_1_0
@@ -25,18 +21,16 @@ import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
 do_update_dsdl = False
-import subprocess
+
 from pyuavcan.application import make_node, NodeInfo, Node
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
-from pyuavcan.transport import _tracer, Trace
+from pyuavcan.transport import _tracer, Trace, Tracer
 from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
-import requests
-import os.path
 
 
-def handle_getinfo_update(allocator: Allocator):
+def make_handler_for_getinfo_update(allocator: Allocator):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
@@ -92,31 +86,35 @@ def fill_ids():
     return ids
 
 
+def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject]):
+    def capture_handler(capture: _tracer.Capture):
+        with open("rx_frm.txt", "w") as log_file:
+            # Checking to see if a transfer has finished, then assigning the value to transfer_trace
+            if (transfer_trace := tracer.update(capture)) is not None:
+                subject_id = None
+                try:
+                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
+                except Exception as e:
+                    print(e.args[-1])
+                print(deserialize_trace(transfer_trace, ids, subject_id))
+                log_file.write(format_trace_view_nicely() + "\n")
+
+    return capture_handler
+
+
 class SpecialTracker:
     def __init__(self):
         import_submodules(uavcan)
         ids = fill_ids()
         with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
             tracer = node.presentation.transport.make_tracer()
-
-            def capture_handler(capture: _tracer.Capture):
-                with open("rx_frm.txt", "w") as log_file:
-                    # Checking to see if a transfer has finished, then assigning the value to transfer_trace
-                    if (transfer_trace := tracer.update(capture)) is not None:
-                        subject_id = None
-                        try:
-                            subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
-                        except Exception as e:
-                            print(e.args[-1])
-                        print(deserialize_trace(transfer_trace, ids, subject_id))
-                        log_file.write(format_trace_view_nicely() + "\n")
-                node.presentation.transport.begin_capture(capture_handler)
-                t = NodeTracker(node)
-                centralized_allocator = CentralizedAllocator(node)
-                t.add_update_handler(handle_getinfo_update(centralized_allocator))
-                print("Running")
-                while True:
-                    await asyncio.sleep(1)
+            node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
+            t = NodeTracker(node)
+            centralized_allocator = CentralizedAllocator(node)
+            t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+            print("Running")
+            while True:
+                await asyncio.sleep(1)
 
     def __str__(self):
         pass
