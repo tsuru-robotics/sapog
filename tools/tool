@@ -158,6 +158,7 @@ def get_needed_elf_file(directory):
     files = filter(lambda x: str(x).endswith(".elf"), files)
     enumerated_files = list(enumerate(files))
     say()
+    requested_nr = None
     if len(enumerated_files) > 1:
         say("No input files were specified, now looking for elf files, would like to use any of them?")
         for index, file in enumerated_files:
