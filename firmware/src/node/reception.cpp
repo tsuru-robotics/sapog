@@ -11,7 +11,8 @@
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
-std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
+
+std::optional <CanardTransfer> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
@@ -29,7 +30,7 @@ std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
         // assign the transfer to the given CanardTransfer object. Not a bug!
         CanardTransfer transfer{};
-        CanardRxSubscription** this_subscription;
+        CanardRxSubscription **this_subscription;
         const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer, this_subscription);
         //this_subscription->
         if (canard_result > 0)
@@ -159,7 +160,7 @@ std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *
             {
                 return false;
             }
-            std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
+            std::array < char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1 > request_name;
             get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
 
             // Bounds checking

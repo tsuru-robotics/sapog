@@ -7,8 +7,6 @@ import asyncio
 import os
 import pathlib
 import sys
-import tempfile
-import typing
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -73,8 +71,6 @@ async def build_sapog() -> None:
     # making a request for downloading the zip file
     url = "https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip"
     r = requests.get(url, allow_redirects=True)
-    if os.path.isdir((source_path.parent / downloads_folder_name / "public_regulated_data_types-master").absolute()) and not do_update_dsdl:
-        return
     # writing the received binary to a file
     zip_path = firmware_directory / downloads_folder_name / "public_regulated_data_types.zip"
     public_regulated_data_types = open(zip_path, "wb")
@@ -110,23 +106,6 @@ async def main() -> None:
 
 
 already_ran = False
-
-
-async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
-    print(f"Resetting node_id of {current_target_node_id}")
-    global already_ran
-    if already_ran:
-        return
-    already_ran = True
-    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
-    msg = uavcan.register.Access_1_0.Request()
-    my_array = uavcan.primitive.array.Integer64_1_0()
-    my_array.value = [1]
-    msg.name.name = "uavcan_node_id"
-    msg.value.integer64 = my_array
-    response = await service_client.call(msg)
-    print(response)
-
 
 if __name__ == "__main__":
     try:

@@ -20,6 +20,7 @@
 #include <node/loops/loop.hpp>
 #include "board/board.hpp"
 #include "node/conf/conf.hpp"
+#include "reg/udral/physics/acoustics/Note_0_1.h"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -46,7 +47,8 @@ static void init_canard();
 
 static State state{};
 // This defines _wa_control_thread
-static THD_WORKING_AREA(_wa_control_thread, 1024 * 4);
+static THD_WORKING_AREA(_wa_control_thread,
+1024 * 4);
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -95,7 +97,7 @@ struct SubscriptionData
     CanardMicrosecond time_out;
     CanardRxSubscription subscription;
 };
-std::pair<const char *, SubscriptionData> subscriptions[3] = {
+std::pair<const char *, SubscriptionData> subscriptions[] = {
         {"uavcan.node.GetInfo_1_0",             {CanardTransferKindRequest,
                                                         uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                                         uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
@@ -108,7 +110,13 @@ std::pair<const char *, SubscriptionData> subscriptions[3] = {
                                                         uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                         uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
                                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}},
+        {"reg.udral.physics.acoustics.Note_0_1",         {CanardTransferKindMessage,
+                                                        0U, // zero means configurable
+                                                        reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
+                                                        CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {}}}
+
 };
+
 
 static void init_canard()
 {
@@ -129,7 +137,7 @@ static void init_canard()
     ConfigParam _{};
     bool value_exists = configGetDescr("uavcan_node_id", &_) != -ENOENT;
     float stored_node_id = 0;
-    if(value_exists)
+    if (value_exists)
     {
         stored_node_id = configGet("uavcan_node_id");
     }
@@ -143,6 +151,14 @@ static void init_canard()
 
     for (auto &subscription: subscriptions)
     {
+        if(subscription.second.port_id == 0){
+            if(configGetDescr(subscription.first, &_) != -ENOENT){
+                subscription.second.port_id = configGet(subscription.first);
+            } else {
+                printf("Subscription for %s had no subject port id configured", subscription.first);
+                continue;
+            }
+        }
         const int8_t res =  //
                 canardRxSubscribe(&state.canard,
                                   subscription.second.transfer_kind,

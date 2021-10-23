@@ -111,6 +111,25 @@ def get_target_node_id(allocator_node: Node) -> int:
     pass
 
 
+async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
+    print(f"Resetting node_id of {current_target_node_id}")
+    global already_ran
+    if already_ran:
+        return
+    already_ran = True
+    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
+    msg = uavcan.register.Access_1_0.Request()
+    my_array = uavcan.primitive.array.Integer64_1_0()
+    my_array.value = [1]
+    msg.name.name = "uavcan_node_id"
+    msg.value.integer64 = my_array
+    response = await service_client.call(msg)
+    print(response)
+
+
+def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
+    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
+
 def make_my_allocator_node() -> Node:
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
