@@ -107,7 +107,10 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
 import os
 
 
-@pytest.fixture
+def get_target_node_id(allocator_node: Node) -> int:
+    pass
+
+
 def make_my_allocator_node() -> Node:
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
