@@ -300,7 +300,7 @@ $(BUILDDIR)/lib$(PROJECT).a: $(OBJS)
 
 clean:
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR)
+	-rm -fR .dep $(BUILDDIR) downloads generated public_regulated_data_types
 	@echo
 	@echo Done
 

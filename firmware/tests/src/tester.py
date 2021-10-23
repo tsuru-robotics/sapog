@@ -21,6 +21,7 @@ def test_access_register(make_my_allocator_node):
     pass
 
 
+# make_my_allocator_node is a fixture from special_tracker
 def test_write_register(make_my_allocator_node):
     sending_node = make_my_allocator_node
     print(f"Resetting node_id of {current_target_node_id}")

@@ -66,10 +66,7 @@ quit"""
 async def build_sapog() -> None:
     public_regulated_data_types_directory = (firmware_directory / "public_regulated_data_types").absolute()
     subprocess.run(["make", "clean"], cwd=firmware_directory)
-    subprocess.run(["rm", "-rf", public_regulated_data_types_directory])
-    subprocess.run(["rm", "-rf", tests_directory / downloads_folder_name])
-    subprocess.run(["rm", "-rf", firmware_directory / "generated" / "nunavut_out"])
-    subprocess.run(["mkdir", tests_directory / downloads_folder_name])
+    subprocess.run(["mkdir", firmware_directory / downloads_folder_name])
     if discard_local_changes:
         subprocess.run(["git", "checkout", "--force", tracking_branch_name])
     import zipfile
@@ -79,20 +76,20 @@ async def build_sapog() -> None:
     if os.path.isdir((source_path.parent / downloads_folder_name / "public_regulated_data_types-master").absolute()) and not do_update_dsdl:
         return
     # writing the received binary to a file
-    zip_path = source_path.parent / downloads_folder_name / "public_regulated_data_types.zip"
+    zip_path = firmware_directory / downloads_folder_name / "public_regulated_data_types.zip"
     public_regulated_data_types = open(zip_path, "wb")
     public_regulated_data_types.write(r.content)
     public_regulated_data_types.close()
     zip_file = zipfile.ZipFile(zip_path)
     name_list = zip_file.namelist()
     extra_parent_directory = name_list[0]
-    zip_file.extractall(source_path.parent / downloads_folder_name)
+    zip_file.extractall(firmware_directory / downloads_folder_name)
     print(extra_parent_directory)
     zip_file.close()
     subprocess.run(["mkdir", public_regulated_data_types_directory])
     move_directories(public_regulated_data_types_directory,
-                     (tests_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
-                     (tests_directory / downloads_folder_name / extra_parent_directory / "reg").absolute())
+                     (firmware_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
+                     (firmware_directory / downloads_folder_name / extra_parent_directory / "reg").absolute())
     subprocess.run(["make", "dsdl"], cwd=firmware_directory)
     subprocess.run(["make", f"-j{cpu_count()}"], cwd=firmware_directory)
 
