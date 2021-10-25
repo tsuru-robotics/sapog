@@ -3,6 +3,15 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
+#include <utility>
+#include <uavcan/node/GetInfo_1_0.h>
+#include <uavcan/pnp/NodeIDAllocationData_1_0.h>
+#include <uavcan/_register/Access_1_0.h>
+#include <reg/udral/physics/acoustics/Note_0_1.h>
+#include "libcanard/canard.h"
+#include <deque>
+#include <array>
+#include "node/state.hpp"
 
 #ifndef SAPOG_UAVCAN_NODE_1_0_HPP
 #define SAPOG_UAVCAN_NODE_1_0_HPP
@@ -14,6 +23,15 @@ public:
     static int init();
 };
 }
-
+struct SubscriptionData
+{
+    CanardTransferKind transfer_kind;
+    CanardPortID port_id;
+    size_t extent_bytes;
+    CanardMicrosecond time_out;
+    CanardRxSubscription subscription;
+    std::function<bool(const node::state::State &, const CanardTransfer *const)> handler;
+};
+std::pair<const std::pair<const char *, SubscriptionData>*, const std::pair<const char *, SubscriptionData>*> get_subscriptions();
 
 #endif //SAPOG_UAVCAN_NODE_1_0_HPP

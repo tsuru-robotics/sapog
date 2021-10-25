@@ -10,9 +10,10 @@
 #include "uavcan/_register/Value_1_0.h"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
+#include "node.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
 
-std::optional <CanardTransfer> receive_transfer(State &state, int if_index)
+std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
@@ -124,76 +125,82 @@ bool respond_to_access(CanardInstance *canard, const char *request_name,
     return true;
 }
 
-std::pair<unsigned int, std::function<bool(const State &, const CanardTransfer *const)>> receivers[] = {
-        {uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,    [](const State &state, const CanardTransfer *const transfer) {
-            const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
-            uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
-            size_t serialized_size = sizeof(serialized);
-            const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
-            if (res >= 0)
-            {
-                CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
-                if (transfer->timestamp_usec > 0)
-                {
-                    rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
-                }
-                rt.transfer_kind = CanardTransferKindResponse;
-                rt.payload_size = serialized_size;
-                rt.payload = &serialized[0];
-                (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
-            } else
-            {
-                assert(false);
-            }
-            return true;
-        }},
-        {uavcan_register_Access_1_0_FIXED_PORT_ID_, [](const State &state, const CanardTransfer *const transfer) {
-            uavcan_register_Access_Request_1_0 request{};
-            size_t temp_payload_size{transfer->payload_size};
-            auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
-                                                                          (const uint8_t *) transfer->payload,
-                                                                          &temp_payload_size);
-            assert(result >= 0);
-            if (result < 0)
-            { return false; } // maybe it is a damaged frame, could happen?
-            if (request.name.name.count == 0)
-            {
-                return false;
-            }
-            std::array < char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1 > request_name;
-            get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
+bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer)
+{
+    const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
+    uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
+    size_t serialized_size = sizeof(serialized);
+    const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
+    if (res >= 0)
+    {
+        CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
+        if (transfer->timestamp_usec > 0)
+        {
+            rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
+        }
+        rt.transfer_kind = CanardTransferKindResponse;
+        rt.payload_size = serialized_size;
+        rt.payload = &serialized[0];
+        (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
+    } else
+    {
+        assert(false);
+    }
+    return true;
+}
+bool uavcan_register_Access_1_0_handler(const State &state, const CanardTransfer *const transfer)
+{
+    uavcan_register_Access_Request_1_0 request{};
+    size_t temp_payload_size{transfer->payload_size};
+    auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
+                                                                  (const uint8_t *) transfer->payload,
+                                                                  &temp_payload_size);
+    assert(result >= 0);
+    if (result < 0)
+    { return false; } // maybe it is a damaged frame, could happen?
+    if (request.name.name.count == 0)
+    {
+        return false;
+    }
+    std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
+    get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
 
-            // Bounds checking
-            bool does_request_provide_value = !uavcan_register_Value_1_0_is_empty_(&request.value);
-            // Going to write a value to the register.
-            if (does_request_provide_value)
-            {
-                float received_value = (float) request.value.integer64.value.elements[0];
-                char *request_name_c = request_name.data();
-                configSet(request_name_c, received_value);
-                configSave();
-            }
-            // The client is going to get a response with the actual value of the register
-            assert(request_name.data() != nullptr);
-            // We are silently losing precision, but it shouldn't matter for this application
-            respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.data(), transfer);
-            return true;
-        }},
-        {uavcan_register_List_1_0_FIXED_PORT_ID_,   [](const State &state, const CanardTransfer *const transfer) {
-            (void) state;
-            (void) transfer;
-            return true;
-        }},
-};
+    // Bounds checking
+    bool does_request_provide_value = !uavcan_register_Value_1_0_is_empty_(&request.value);
+    // Going to write a value to the register.
+    if (does_request_provide_value)
+    {
+        float received_value = (float) request.value.integer64.value.elements[0];
+        char *request_name_c = request_name.data();
+        configSet(request_name_c, received_value);
+        configSave();
+    }
+    // The client is going to get a response with the actual value of the register
+    assert(request_name.data() != nullptr);
+    // We are silently losing precision, but it shouldn't matter for this application
+    respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.data(), transfer);
+    return true;
+}
+
+bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer)
+{
+    (void) transfer;
+    (void) state;
+    return true;
+}
+
 
 void process_received_request(const State &state, const CanardTransfer *const transfer)
 {
     // Finds a handler and calls it
-    for (auto &pair: receivers)
+    auto a = get_subscriptions();
+    auto start = a.first;
+    auto end = a.second;
+    for (auto it = start; it!=end; ++it)
     {
-        if (transfer->port_id == pair.first)
+        if (transfer->port_id == it->second.port_id)
         {
-            pair.second(state, transfer);
+            it->second.handler(state, transfer);
             return;
         }
     }

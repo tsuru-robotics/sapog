@@ -30,3 +30,7 @@ void process_received_request(const State &state, const CanardTransfer *const tr
 void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 
 std::optional<CanardTransfer> receive_transfer(State &state, int if_index);
+bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer);
+bool uavcan_pnp_NodeIDAllocationData_1_0_handler(const State &state, const CanardTransfer *const transfer);
+bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer);
+bool uavcan_register_Access_1_0_handler(const State &state, const CanardTransfer *const transfer);

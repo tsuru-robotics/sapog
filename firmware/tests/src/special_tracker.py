@@ -130,6 +130,7 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
 def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
+
 def make_my_allocator_node() -> Node:
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")

@@ -23,6 +23,8 @@ class SetupData:
     target_node_id: int
 
 
+# I refuse to use fixtures, what if someone doesn't know about them
+# they would be super confused.
 def do_setup():
     node = make_my_allocator_node()
     target_node_id = get_target_node_id()
