@@ -148,6 +148,12 @@ bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *c
     }
     return true;
 }
+bool not_implemented_handler(const State &state, const CanardTransfer *const transfer)
+{
+    (void) transfer;
+    (void) state;
+    return true;
+}
 bool uavcan_register_Access_1_0_handler(const State &state, const CanardTransfer *const transfer)
 {
     uavcan_register_Access_Request_1_0 request{};

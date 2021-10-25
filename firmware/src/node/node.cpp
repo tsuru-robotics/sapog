@@ -99,7 +99,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      nullptr}},
+                                                                      &not_implemented_handler}},
     {uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,           {CanardTransferKindRequest,
                                                                       uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                                       uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
