@@ -106,7 +106,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_register_Access_1_0_handler}},
     {reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
-                                                                      0U, // zero means configurable
+                                                                      0xFFFF, // means configurable
                                                                       reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}}

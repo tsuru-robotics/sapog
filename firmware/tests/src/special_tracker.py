@@ -131,7 +131,7 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
 
-def make_my_allocator_node() -> Node:
+async def make_my_allocator_node() -> Node:
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
     os.environ.setdefault("UAVCAN__NODE__ID", "42")
@@ -144,4 +144,12 @@ def make_my_allocator_node() -> Node:
     centralized_allocator = CentralizedAllocator(node)
     t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
     print("Running")
+    await asyncio.sleep(10)
     return node
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.get_event_loop().run_until_complete(make_my_allocator_node())
+    except KeyboardInterrupt:
+        pass

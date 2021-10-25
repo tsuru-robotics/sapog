@@ -4,7 +4,6 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import asyncio
-import os
 import pathlib
 import sys
 
@@ -13,22 +12,12 @@ dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 sys.path.insert(0, namespace_path.absolute())
 
-import uavcan.pnp.NodeIDAllocationData_1_0
-import uavcan.node.ID_1_0
-import uavcan.register.Access_1_0
-import uavcan.primitive.array
 from multiprocessing import cpu_count
-
-do_update_dsdl = False
 import subprocess
-from pyuavcan.application import make_node, NodeInfo, Node
-
 import requests
-import os.path
 
 downloads_folder_name = "downloads"
 tracking_branch_name = "v3"
-discard_local_changes = False
 assert (len(downloads_folder_name) > 4)
 downloads_folder_name = downloads_folder_name.replace("*", "")
 remove_zip_files_after_use = True
@@ -47,7 +36,7 @@ def move_directories(destination: pathlib.Path, *source_dirs: pathlib.Path):
     subprocess.run(["mv", "-t", destination, *source_dirs])
 
 
-async def upload_compound():
+async def upload_sapog():
     temp_file = f"""tar ext {get_port()}
 mon swdp_scan
 attach 1
@@ -65,8 +54,6 @@ async def build_sapog() -> None:
     public_regulated_data_types_directory = (firmware_directory / "public_regulated_data_types").absolute()
     subprocess.run(["make", "clean"], cwd=firmware_directory)
     subprocess.run(["mkdir", firmware_directory / downloads_folder_name])
-    if discard_local_changes:
-        subprocess.run(["git", "checkout", "--force", tracking_branch_name])
     import zipfile
     # making a request for downloading the zip file
     url = "https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip"
@@ -90,17 +77,13 @@ async def build_sapog() -> None:
     subprocess.run(["make", f"-j{cpu_count()}"], cwd=firmware_directory)
 
 
-async def compile_dsdl():
-    subprocess.run(["make", "dsdl"], cwd=(source_path.parent / downloads_folder_name / "sapog-3" / "firmware").absolute())
-
-
 async def start_build_process() -> None:
     await build_sapog()
 
 
 async def main() -> None:
     await build_sapog()
-    await upload_compound()
+    # await upload_compound()
     # while True:
     #     await asyncio.sleep(1)
 
