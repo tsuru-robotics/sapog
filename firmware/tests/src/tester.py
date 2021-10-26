@@ -4,7 +4,7 @@ import sys
 
 from pyuavcan.application import Node
 
-from special_tracker import make_my_allocator_node, get_target_node_id
+from allocator import make_my_allocator_node, get_target_node_id
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
