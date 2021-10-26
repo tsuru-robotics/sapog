@@ -1,0 +1,10 @@
+name: Sapog tests
+on: push
+jobs:
+  heartbeat:
+    runs-on: [ self-hosted, zubaxpc ]
+    steps:
+      - name: Powering on
+        run: psu.py on
+      - name: Test Sapog heartbeat
+        run: python firmware/tests/specialtracker.py

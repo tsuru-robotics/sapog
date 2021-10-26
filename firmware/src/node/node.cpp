@@ -62,14 +62,6 @@ static THD_WORKING_AREA(_wa_control_thread,
     state.timing.current_time = get_monotonic_microseconds();
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
-        /*Loop{[](State &state_local) {
-            (void) state_local;
-        }, SECOND_IN_MICROSECONDS * 10},
-        Loop{
-                [](State &state_local) {
-                    (void) state_local;
-                }, QUEUE_TIME_FRAME
-        },*/
     };
 
     while (true)
@@ -99,7 +91,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &not_implemented_handler}},
+                                                                      &not_implemented_handler}}, // is in pnp.cpp
     {uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,           {CanardTransferKindRequest,
                                                                       uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                                       uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
@@ -112,7 +104,8 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}}
 };
 
-std::pair<const std::pair<const char *, SubscriptionData>*, const std::pair<const char *, SubscriptionData>*> get_subscriptions()
+std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>
+get_subscriptions()
 {
     return {std::begin(subscriptions), std::end(subscriptions)};
 }

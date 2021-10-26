@@ -144,12 +144,20 @@ async def make_my_allocator_node() -> Node:
     centralized_allocator = CentralizedAllocator(node)
     t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
     print("Running")
-    await asyncio.sleep(10)
     return node
+
+
+async def run_allocator(with_debugging=False):
+    if with_debugging:
+        pass
+    node = make_my_allocator_node()
+    while True:
+        asyncio.sleep(1)
+    node.close()
 
 
 if __name__ == "__main__":
     try:
-        asyncio.get_event_loop().run_until_complete(make_my_allocator_node())
+        asyncio.get_event_loop().run_until_complete(run_allocator())
     except KeyboardInterrupt:
         pass
