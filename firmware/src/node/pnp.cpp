@@ -120,7 +120,7 @@ bool node::config::subscribe_to_plug_and_play_response(State &state)
 
 bool node::config::receive_plug_and_play_response(State &state)
 {
-    std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
+    std::optional<CanardTransfer> transfer = receive_transfer(state, 0).first;
     if (transfer.has_value())
     {
         //printf("Received transfer for port_id %d\n", transfer.value().port_id);

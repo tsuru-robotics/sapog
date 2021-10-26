@@ -32,6 +32,8 @@ struct SubscriptionData
     CanardRxSubscription subscription;
     std::function<bool(const node::state::State &, const CanardTransfer *const)> handler;
 };
+// This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
+// the subscriptions array
 std::pair<const std::pair<const char *, SubscriptionData>*, const std::pair<const char *, SubscriptionData>*> get_subscriptions();
 
 #endif //SAPOG_UAVCAN_NODE_1_0_HPP

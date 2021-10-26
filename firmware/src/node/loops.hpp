@@ -21,10 +21,11 @@ void handle_1hz_loop(__attribute__((unused)) State &state)
 
 inline void handle_fast_loop(__attribute__((unused)) State &state)
 {
-    std::optional<CanardTransfer> transfer = receive_transfer(state, 0);
-    if (transfer.has_value())
+    auto transfer = receive_transfer(state, 0);
+    if (transfer.first.has_value())
     {
-        process_received_transfer(state, &transfer.value());
+        transfer.second->handler(state, &transfer.first.value());
+        //process_received_transfer(state, &transfer.value());
     }
     transmit(state);
 }

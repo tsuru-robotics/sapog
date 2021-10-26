@@ -13,7 +13,7 @@
 #include "node.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
 
-std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
+std::pair<std::optional<CanardTransfer>, SubscriptionData*> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
@@ -31,12 +31,12 @@ std::optional<CanardTransfer> receive_transfer(State &state, int if_index)
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
         // assign the transfer to the given CanardTransfer object. Not a bug!
         CanardTransfer transfer{};
-        CanardRxSubscription **this_subscription;
-        const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer, this_subscription);
+        CanardRxSubscription *this_subscription;
+        const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer, &this_subscription);
         //this_subscription->
         if (canard_result > 0)
         {
-            return transfer;
+            return {transfer, static_cast<SubscriptionData*>(this_subscription->user_reference)};
             //state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
         { ;  // Zero means that the frame did not complete a transfer so there is nothing to do.

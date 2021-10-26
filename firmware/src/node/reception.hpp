@@ -16,6 +16,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include <cstddef>
 #include <cstdio>
 #include "time.h"
+#include "node.hpp"
 #include <board/unique_id.h>
 #include <bxcan/bxcan.h>
 
@@ -29,7 +30,7 @@ void process_received_request(const State &state, const CanardTransfer *const tr
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 
-std::optional<CanardTransfer> receive_transfer(State &state, int if_index);
+std::pair<std::optional<CanardTransfer>, SubscriptionData*> receive_transfer(State &state, int if_index);
 bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer);
 bool uavcan_pnp_NodeIDAllocationData_1_0_handler(const State &state, const CanardTransfer *const transfer);
 bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer);
