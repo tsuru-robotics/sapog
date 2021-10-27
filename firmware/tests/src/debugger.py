@@ -36,11 +36,8 @@ def make_handler_for_getinfo_update(allocator: Allocator):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
-                print("Allocating one node")
-                allocator.register_node(node_id, bytes(next_entry.info.unique_id))
+                print("Debugger sees an allocation request")
                 await asyncio.sleep(2)
-                # await reset_node_id(node, node_id)
-
         asyncio.get_event_loop().create_task(handle_inner_function())
 
     return handle_getinfo_handler_format
@@ -73,8 +70,10 @@ def format_trace_view_nicely(trace: Trace, ids: typing.Dict[int, FixedPortObject
 
 
 def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
-    obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
-    return json.dumps(pyuavcan.dsdl.to_builtin(obj))
+    if ids.get(subject_id) is not None:
+        obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
+        return json.dumps(pyuavcan.dsdl.to_builtin(obj))
+    return "missing id"
 
 
 def fill_ids():

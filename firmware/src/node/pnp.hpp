@@ -16,6 +16,8 @@ bool receive_plug_and_play_response(State &state);
 
 bool subscribe_to_plug_and_play_response(State &state);
 
+bool unsubscribe_plug_and_play_response(State &state);
+
 bool save_node_id(State &state);
 
 void plug_and_play_loop(State &state);

@@ -63,7 +63,7 @@ static THD_WORKING_AREA(_wa_control_thread,
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
     };
-    printf("Has this node_id after pnp: %d", state.canard.node_id);
+    printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     while (true)
     {
         CanardMicrosecond current_time = get_monotonic_microseconds();
@@ -81,17 +81,18 @@ static THD_WORKING_AREA(_wa_control_thread,
     }
 }
 
+// Not all subscriptions come from here, allocation comes from pnp.cpp file and is used there only
 std::pair<const char *, SubscriptionData> subscriptions[] = {
     {uavcan_node_GetInfo_1_0_FULL_NAME_AND_VERSION_,              {CanardTransferKindRequest,
                                                                       uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                                                       uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_node_GetInfo_1_0_handler}},
-    {uavcan_pnp_NodeIDAllocationData_1_0_FULL_NAME_AND_VERSION_,  {CanardTransferKindRequest,
+/*    {uavcan_pnp_NodeIDAllocationData_1_0_FULL_NAME_AND_VERSION_,  {CanardTransferKindRequest,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &not_implemented_handler}}, // is in pnp.cpp
+                                                                      &not_implemented_handler}}, // is in pnp.cpp*/
     {uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,           {CanardTransferKindRequest,
                                                                       uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                                       uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
@@ -129,7 +130,7 @@ static void init_canard()
     ConfigParam _{};
     bool value_exists = configGetDescr("uavcan_node_id", &_) != -ENOENT;
     float stored_node_id = CANARD_NODE_ID_UNSET;
-    if (value_exists && false)
+    if (value_exists)
     {
         stored_node_id = configGet("uavcan_node_id");
     }

@@ -42,7 +42,6 @@ struct State
     Timing timing;
     TransferIds transfer_ids;
     PlugAndPlay plug_and_play;
-    os::config::Param<unsigned> param_node_id{"uavcan.node.id", 129, 0, 129};
     CanardInstance canard;
     int reduntant_interfaces[2] = {0, 1};
 };

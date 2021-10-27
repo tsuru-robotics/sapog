@@ -21,7 +21,7 @@ void node::config::plug_and_play_loop(State &state)
 {
     bool already_tried_saving = false;
     save_crc(state);
-    while (state.canard.node_id > 127)
+    while (state.canard.node_id == CANARD_NODE_ID_UNSET)
     {
         state.timing.current_time = get_monotonic_microseconds();
         // With every success, the state moves to the next element further down in the switch block
@@ -61,12 +61,13 @@ void node::config::plug_and_play_loop(State &state)
                 if (node::config::save_node_id(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
-                    printf("NodeID was successfully saved to the configuration.");
+                    printf("NodeID was successfully saved to the configuration.\n");
                 } else {
                     assert(false);
                 }
                 break;
             case node::state::PNPStatus::Done:
+                unsubscribe_plug_and_play_response(state);
                 state.plug_and_play.anonymous = false;
                 break;
         }
@@ -118,6 +119,11 @@ bool node::config::subscribe_to_plug_and_play_response(State &state)
                                          CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, &AllocationMessageSubscription);
     return res;
 }
+bool node::config::unsubscribe_plug_and_play_response(State &state)
+{
+    assert(canardRxUnsubscribe(&state.canard, CanardTransferKindMessage, uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_) == 1);
+    return true;
+}
 
 bool node::config::receive_plug_and_play_response(State &state)
 {
@@ -157,6 +163,7 @@ bool node::config::save_node_id(State &state)
     data.value.elements[0] = state.canard.node_id;
     data.value.count = 1;
     data2.integer64 = data;
+    printf("writing %d to node_id\n", state.canard.node_id);
     uavcan_register_Value_1_0_select_integer64_(&data2);
     return ::config::registers::getInstance().registerWrite("uavcan_node_id", &data2);
 }
