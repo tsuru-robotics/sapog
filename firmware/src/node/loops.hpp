@@ -15,6 +15,7 @@ void handle_1hz_loop(__attribute__((unused)) State &state)
 {
     node::communications::publish_heartbeat(state.canard, state);
     transmit(state);
+    printf("Heartbeat.\n");
     // Before code below is uncommented, make sure that the node has an id.
     // communications::publish_port_list(state.canard, state);
 }

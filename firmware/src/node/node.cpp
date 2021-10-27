@@ -63,7 +63,7 @@ static THD_WORKING_AREA(_wa_control_thread,
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
     };
-
+    printf("Has this node_id after pnp: %d", state.canard.node_id);
     while (true)
     {
         CanardMicrosecond current_time = get_monotonic_microseconds();
@@ -128,14 +128,14 @@ static void init_canard()
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     ConfigParam _{};
     bool value_exists = configGetDescr("uavcan_node_id", &_) != -ENOENT;
-    float stored_node_id = 0;
-    if (value_exists)
+    float stored_node_id = CANARD_NODE_ID_UNSET;
+    if (value_exists && false)
     {
         stored_node_id = configGet("uavcan_node_id");
     }
     if (stored_node_id == NAN)
     {
-        state.canard.node_id = 0;
+        state.canard.node_id = CANARD_NODE_ID_UNSET;
     } else
     {
         state.canard.node_id = stored_node_id;
@@ -167,6 +167,7 @@ static void init_canard()
         }
         assert(res > 0); // This is to make sure that the subscription was successful.
     }
+    printf("Canard initialized\n");
 }
 
 

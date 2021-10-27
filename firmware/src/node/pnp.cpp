@@ -21,7 +21,7 @@ void node::config::plug_and_play_loop(State &state)
 {
     bool already_tried_saving = false;
     save_crc(state);
-    while (state.canard.node_id == 0 || state.canard.node_id > 128)
+    while (state.canard.node_id > 127)
     {
         state.timing.current_time = get_monotonic_microseconds();
         // With every success, the state moves to the next element further down in the switch block

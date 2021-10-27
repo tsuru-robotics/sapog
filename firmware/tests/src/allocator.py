@@ -36,7 +36,7 @@ def make_handler_for_getinfo_update(allocator: Allocator):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
-                print(next_entry.info)
+                print("Allocating one node")
                 allocator.register_node(node_id, bytes(next_entry.info.unique_id))
                 await asyncio.sleep(2)
                 # await reset_node_id(node, node_id)
@@ -90,7 +90,7 @@ def fill_ids():
 
 def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject]):
     def capture_handler(capture: _tracer.Capture):
-        with open("rx_frm.txt", "w") as log_file:
+        with open("rx_frm.txt", "a") as log_file:
             # Checking to see if a transfer has finished, then assigning the value to transfer_trace
             if (transfer_trace := tracer.update(capture)) is not None:
                 subject_id = None
@@ -99,7 +99,7 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
                 except Exception as e:
                     print(e.args[-1])
                 print(deserialize_trace(transfer_trace, ids, subject_id))
-                log_file.write(format_trace_view_nicely() + "\n")
+                log_file.write(format_trace_view_nicely(transfer_trace, ids) + "\n")
 
     return capture_handler
 
@@ -135,31 +135,45 @@ async def make_my_allocator_node(with_debugging=False) -> Node:
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
     os.environ.setdefault("UAVCAN__NODE__ID", "42")
-    import_submodules(uavcan)
-    ids = fill_ids()
     node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db")
     if with_debugging:
+        import_submodules(uavcan)
+        ids = fill_ids()
         tracer = node.presentation.transport.make_tracer()
         node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
-        t = NodeTracker(node)
+    t = NodeTracker(node)
     centralized_allocator = CentralizedAllocator(node)
-    if with_debugging:
-        t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+    t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
     print("Running")
-    return node
+    return node, centralized_allocator, t
 
 
 async def run_allocator(with_debugging=False):
     if with_debugging:
         pass
-    node = make_my_allocator_node()
+    node, allocator, tracker = await make_my_allocator_node()
     while True:
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
     node.close()
 
 
+async def run_allocator2(with_debugging=False):
+    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
+    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
+    os.environ.setdefault("UAVCAN__NODE__ID", "42")
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
+        import_submodules(uavcan)
+        ids = fill_ids()
+        tracer = node.presentation.transport.make_tracer()
+        node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
+        t = NodeTracker(node)
+        centralized_allocator = CentralizedAllocator(node)
+        t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+        while True:
+            await asyncio.sleep(1)
+
 if __name__ == "__main__":
     try:
-        asyncio.get_event_loop().run_until_complete(run_allocator())
+        asyncio.get_event_loop().run_until_complete(run_allocator2())
     except KeyboardInterrupt:
         pass
