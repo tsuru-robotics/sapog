@@ -143,14 +143,14 @@ static void init_canard()
 
     for (auto &subscription: subscriptions)
     {
-        if (subscription.second.port_id == 0)
+        if (subscription.second.port_id == 0xFFFF)
         {
             if (configGetDescr(subscription.first, &_) != -ENOENT)
             {
                 subscription.second.port_id = configGet(subscription.first);
             } else
             {
-                printf("Subscription for %s had no subject port id configured", subscription.first);
+                printf("Subscription for %s had no subject port id configured\n", subscription.first);
                 continue;
             }
         }
