@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import pathlib
 import sys
@@ -25,9 +26,9 @@ class SetupData:
 
 # I refuse to use fixtures, what if someone doesn't know about them
 # they would be super confused.
-def do_setup():
-    node = make_my_allocator_node()
-    target_node_id = get_target_node_id()
+async def do_setup():
+    node = (await make_my_allocator_node())[0]
+    target_node_id = await get_target_node_id(node)
     return SetupData(node, target_node_id)
 
 
@@ -35,26 +36,38 @@ def do_cleanup(data: SetupData):
     data.node.close()
 
 
-def test_access_register():
-    setup = do_setup()
-    pass
+# def test_access_register():
+#     setup = do_setup()
+#     pass
+#
+#
+# # make_my_allocator_node is a fixture from special_tracker
+# def test_write_register():
+#     setup = do_setup()
+#     print(f"Resetting node_id of {setup.target_node_id}")
+#     global already_ran
+#     if already_ran:
+#         return
+#     already_ran = True
+#     service_client = setup.node.make_client(uavcan.register.Access_1_0, setup.target_node_id)
+#     msg = uavcan.register.Access_1_0.Request()
+#     my_array = uavcan.primitive.array.Integer64_1_0()
+#     my_array.value = [1]
+#     msg.name.name = "uavcan_node_id"
+#     msg.value.integer64 = my_array
+#     response = await service_client.call(msg)
+#     print(response)
+#     setup.node.close()
 
 
-# make_my_allocator_node is a fixture from special_tracker
-def test_write_register():
-    setup = do_setup()
-    sending_node = make_my_allocator_node
-    print(f"Resetting node_id of {setup.target_node_id}")
-    global already_ran
-    if already_ran:
-        return
-    already_ran = True
-    service_client = sending_node.make_client(uavcan.register.Access_1_0, setup.target_node_id)
-    msg = uavcan.register.Access_1_0.Request()
-    my_array = uavcan.primitive.array.Integer64_1_0()
-    my_array.value = [1]
-    msg.name.name = "uavcan_node_id"
-    msg.value.integer64 = my_array
+async def dotest_restart_node():
+    setup = await do_setup()
+    service_client = setup.node.make_client(uavcan.node.ExecuteCommand_1_1, setup.target_node_id)
+    msg = uavcan.node.ExecuteCommand_1_1.Request()
+    msg.command = msg.COMMAND_RESTART
     response = await service_client.call(msg)
     print(response)
-    sending_node.close()
+    setup.node.close()
+
+
+asyncio.get_event_loop().run_until_complete(dotest_restart_node())
