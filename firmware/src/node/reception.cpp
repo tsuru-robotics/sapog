@@ -51,15 +51,16 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData*> receive_transfer(Sta
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer)
 {
-    if (transfer->transfer_kind == CanardTransferKindMessage)
+    auto a = get_subscriptions();
+    auto start = a.first;
+    auto end = a.second;
+    for (auto it = start; it!=end; ++it)
     {
-        process_received_message(state, transfer);
-    } else if (transfer->transfer_kind == CanardTransferKindRequest)
-    {
-        process_received_request(state, transfer);
-    } else
-    {
-        assert(false); // This can only happen when received transfer is a response.
+        if (transfer->port_id == it->second.port_id)
+        {
+            it->second.handler(state, transfer);
+            return;
+        }
     }
 }
 
@@ -197,23 +198,6 @@ bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const Cana
 }
 
 
-void process_received_request(const State &state, const CanardTransfer *const transfer)
-{
-    // Finds a handler and calls it
-    auto a = get_subscriptions();
-    auto start = a.first;
-    auto end = a.second;
-    for (auto it = start; it!=end; ++it)
-    {
-        if (transfer->port_id == it->second.port_id)
-        {
-            it->second.handler(state, transfer);
-            return;
-        }
-    }
-}
-
-
 uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 {
     uavcan_node_GetInfo_Response_1_0 resp{};
@@ -234,14 +218,4 @@ uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 
     // The software image CRC and the Certificate of Authenticity are optional so not populated in this demo.
     return resp;
-}
-
-void process_received_message(const State &state, const CanardTransfer *const transfer)
-{
-    if (transfer->port_id == uavcan_register_Access_1_0_FIXED_PORT_ID_)
-    {
-        // The transfer could be deserialized to a uavcan_register_Access_Response_1_0
-    }
-    (void) state;
-    (void) transfer;
 }
