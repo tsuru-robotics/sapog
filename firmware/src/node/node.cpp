@@ -31,6 +31,7 @@
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <uavcan/node/ExecuteCommand_1_1.h>
 #include <node/essential/access.hpp>
+#include <node/essential/get_info.hpp>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -58,7 +59,7 @@ static void init_canard();
 static State state{};
 // This defines _wa_control_thread
 static THD_WORKING_AREA(_wa_control_thread,
-1024 * 4);
+                        1024 * 4);
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -99,7 +100,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
                                                                       uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &uavcan_node_GetInfo_1_0_handler}},
+                                                                      &node::essential::uavcan_node_GetInfo_1_0_handler}},
 /*    {uavcan_pnp_NodeIDAllocationData_1_0_FULL_NAME_AND_VERSION_,  {CanardTransferKindRequest,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
                                                                       uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,

@@ -31,6 +31,7 @@ use_compound_named_file = False
 use_command_without_verification = False
 
 tempFile = """target extended-remote $PORT
+monitor connect_srst enable
 mon swdp_scan
 attach 1
 load
