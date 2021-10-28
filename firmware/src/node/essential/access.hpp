@@ -10,6 +10,6 @@
 
 namespace node::essential
 {
-bool uavcan_node_GetInfo_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer);
+bool uavcan_register_Access_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer);
 }
 

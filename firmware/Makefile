@@ -50,8 +50,15 @@ CSRC = $(wildcard $(SAPOG_SRC_DIR)/motor/realtime/*.c) \
        $(wildcard $(SAPOG_SRC_DIR)/motor/*.c)
 
 CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
-         $(wildcard $(SAPOG_SRC_DIR)/**/*.cpp)\
-         $(wildcard $(SAPOG_SRC_DIR)/*/*/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/node/essential/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/node/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/node/commands/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/node/conf/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/node/loops/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/board/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/hashing/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/motor/*.cpp) \
+         $(wildcard $(SAPOG_SRC_DIR)/settings/*.cpp) \
          $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.cpp)
 
 UINCDIR = src           \

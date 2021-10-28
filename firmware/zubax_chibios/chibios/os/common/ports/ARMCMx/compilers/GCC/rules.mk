@@ -298,9 +298,14 @@ $(BUILDDIR)/lib$(PROJECT).a: $(OBJS)
 	@echo
 	@echo Done
 
+clean_generated:
+	@echo Cleaning generated files
+	-rm -fR downloads generated public_regulated_data_types
+	@echo
+	@echo Done
 clean:
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR) downloads generated public_regulated_data_types
+	-rm -fR .dep $(BUILDDIR)
 	@echo
 	@echo Done
 

@@ -26,9 +26,12 @@ uavcan_node_GetInfo_Response_1_0 process_request_node_get_info();
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 
-std::pair<std::optional<CanardTransfer>, SubscriptionData*> receive_transfer(State &state, int if_index);
+std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(State &state, int if_index);
+
 bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer);
+
 bool uavcan_pnp_NodeIDAllocationData_1_0_handler(const State &state, const CanardTransfer *const transfer);
+
 bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer);
-bool uavcan_register_Access_1_0_handler(const State &state, const CanardTransfer *const transfer);
+
 bool not_implemented_handler(const State &state, const CanardTransfer *const transfer);

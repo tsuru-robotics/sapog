@@ -30,6 +30,7 @@
 #include <reg/udral/physics/dynamics/translation/LinearTs_0_1.h>
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <uavcan/node/ExecuteCommand_1_1.h>
+#include <node/essential/access.hpp>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -108,18 +109,19 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                                       uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &uavcan_register_Access_1_0_handler}},
+                                                                      &node::essential::uavcan_register_Access_1_0_handler}},
     {reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
                                                                       0xFFFF, // means configurable
                                                                       reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}},
-    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
+    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,       {CanardTransferKindMessage,
                                                                       uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}},
 };
+
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>
 get_subscriptions()
@@ -181,7 +183,8 @@ static void init_canard()
         if (subscription.second.handler != nullptr)
         {
             subscription.second.subscription.user_reference = &subscription.second;
-        } else {
+        } else
+        {
             printf("Subscription %s had no handler set.\n", subscription.first);
         }
         assert(res > 0); // This is to make sure that the subscription was successful.
