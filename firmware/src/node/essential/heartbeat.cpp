@@ -7,7 +7,7 @@
 #include <node/units.hpp>
 
 
-void publish_heartbeat(CanardInstance &canard, State &state)
+void publish_heartbeat(CanardInstance &canard, node::state::State &state)
 {
     uavcan_node_Heartbeat_1_0 heartbeat{};
     heartbeat.uptime = (uint32_t) ((state.timing.current_time - state.timing.started_at) / MEGA);

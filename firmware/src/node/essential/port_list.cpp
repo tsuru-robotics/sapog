@@ -7,7 +7,7 @@
 #include <node/units.hpp>
 #include "port_list.hpp"
 
-void publish_port_list(CanardInstance &canard, State &state)
+void publish_port_list(CanardInstance &canard, node::state::State &state)
 {
     assert(canard.node_id > CANARD_NODE_ID_MAX);
     uavcan_node_port_List_0_1 m{};

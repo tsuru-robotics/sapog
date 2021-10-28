@@ -6,4 +6,5 @@
 #include <libcanard/canard.h>
 #include "node/state.hpp"
 
-void publish_port_list(CanardInstance &canard, State &state);
+
+void publish_port_list(CanardInstance &canard, node::state::State &state);

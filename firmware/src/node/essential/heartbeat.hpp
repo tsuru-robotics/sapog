@@ -9,4 +9,4 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 #include "node/state.hpp"
 
-void publish_heartbeat(CanardInstance &canard, State &state);
+void publish_heartbeat(CanardInstance &canard, node::state::State &state);

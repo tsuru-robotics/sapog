@@ -5,8 +5,10 @@
  */
 
 #include "node/state.hpp"
+#include "node/commands/commands.hpp"
 
-bool uavcan_node_ExecuteCommand_Request_1_1_handler(const State &state, const CanardTransfer *const transfer)
+bool
+uavcan_node_ExecuteCommand_Request_1_1_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
 
 }

@@ -9,4 +9,4 @@
 #include <libcanard/canard.h>
 #include "node/state.hpp"
 
-bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer);
+bool uavcan_node_GetInfo_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer);
