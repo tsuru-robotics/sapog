@@ -120,7 +120,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &reg_udral_physics_acoustics_Note_0_1_handler}},
+                                                                      &uavcan_node_ExecuteCommand_Request_1_1_handler}},
 };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.

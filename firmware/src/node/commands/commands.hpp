@@ -6,4 +6,4 @@
 #pragma once
 
 bool
-uavcan_node_ExecuteCommand_Request_1_1_handler(const node::state::State &state, const CanardTransfer *const transfer);
+uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const CanardTransfer *const transfer);

@@ -39,6 +39,7 @@ struct PlugAndPlay
 };
 struct State
 {
+    bool is_restart_required = false;
     Timing timing;
     TransferIds transfer_ids;
     PlugAndPlay plug_and_play;

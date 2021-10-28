@@ -58,7 +58,7 @@ void process_received_transfer(const State &state, const CanardTransfer *const t
     {
         if (transfer->port_id == it->second.port_id)
         {
-            it->second.handler(state, transfer);
+            it->second.handler(const_cast<State &>(state), transfer);
             return;
         }
     }
