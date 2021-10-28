@@ -7,20 +7,21 @@
 #include "state.hpp"
 #include "publishers.hpp"
 #include "reception.hpp"
+#include "node/essential/heartbeat.hpp"
 
-using namespace node::state;
+
 namespace node::loops
 {
-void handle_1hz_loop(__attribute__((unused)) State &state)
+void handle_1hz_loop(node::state::State &state)
 {
-    node::communications::publish_heartbeat(state.canard, state);
+    node::essential::publish_heartbeat(state.canard, state);
     transmit(state);
     printf("Heartbeat.\n");
     // Before code below is uncommented, make sure that the node has an id.
     // communications::publish_port_list(state.canard, state);
 }
 
-inline void handle_fast_loop(__attribute__((unused)) State &state)
+inline void handle_fast_loop(node::state::State &state)
 {
     auto transfer = receive_transfer(state, 0);
     if (transfer.first.has_value())

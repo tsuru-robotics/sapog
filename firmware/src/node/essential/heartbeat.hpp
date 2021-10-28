@@ -9,4 +9,7 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 #include "node/state.hpp"
 
+namespace node::essential
+{
 void publish_heartbeat(CanardInstance &canard, node::state::State &state);
+}

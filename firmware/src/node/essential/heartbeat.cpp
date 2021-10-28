@@ -6,7 +6,8 @@
 #include "heartbeat.hpp"
 #include <node/units.hpp>
 
-
+namespace node::essential
+{
 void publish_heartbeat(CanardInstance &canard, node::state::State &state)
 {
     uavcan_node_Heartbeat_1_0 heartbeat{};
@@ -34,3 +35,5 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
         assert(number_of_frames_enqueued > 0);
     }
 }
+}
+

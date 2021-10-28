@@ -8,7 +8,9 @@
 #include <cstdio>
 #include <uavcan/node/GetInfo_1_0.h>
 #include <board/unique_id.h>
+#include <node/units.hpp>
 #include "get_info.hpp"
+
 
 static uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 {
@@ -32,7 +34,10 @@ static uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
     return resp;
 }
 
-bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *const transfer)
+
+namespace node::essential
+{
+bool uavcan_node_GetInfo_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
     printf("GetInfo handler responding\n");
     const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
@@ -56,3 +61,6 @@ bool uavcan_node_GetInfo_1_0_handler(const State &state, const CanardTransfer *c
     }
     return true;
 }
+
+}
+

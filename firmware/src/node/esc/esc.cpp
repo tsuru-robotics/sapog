@@ -13,12 +13,15 @@
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <cstdio>
 
-bool reg_udral_physics_electricity_PowerTs_0_1_handler(const State &state, const CanardTransfer *const transfer)
+bool
+reg_udral_physics_electricity_PowerTs_0_1_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
     reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
     printf("ESC handler\n");
     size_t temp_payload_size{transfer->payload_size};
     auto result = reg_udral_physics_electricity_PowerTs_0_1_deserialize_(&power_ts, (const uint8_t *) transfer->payload,
-                                                                  &temp_payload_size);
+                                                                         &temp_payload_size);
+    (void) state;
+    (void) result;
     return true;
 }

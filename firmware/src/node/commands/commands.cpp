@@ -10,5 +10,7 @@
 bool
 uavcan_node_ExecuteCommand_Request_1_1_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
-
+    (void) state;
+    (void) transfer;
+    return true;
 }
