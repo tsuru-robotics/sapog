@@ -45,20 +45,13 @@ PYTHON := python3.8
 # Sources
 #
 
-CSRC = $(wildcard $(SAPOG_SRC_DIR)/motor/realtime/*.c) \
-       $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.c) \
-       $(wildcard $(SAPOG_SRC_DIR)/motor/*.c)
+# https://stackoverflow.com/a/18258352
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \
-         $(wildcard $(SAPOG_SRC_DIR)/node/essential/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/node/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/node/commands/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/node/conf/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/node/loops/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/board/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/hashing/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/motor/*.cpp) \
-         $(wildcard $(SAPOG_SRC_DIR)/settings/*.cpp) \
+CSRC = $(call rwildcard,$(SAPOG_SRC_DIR),*.c) \
+       $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.c) \
+
+CPPSRC = $(call rwildcard,$(SAPOG_SRC_DIR),*.cpp) \
          $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.cpp)
 
 UINCDIR = src           \
