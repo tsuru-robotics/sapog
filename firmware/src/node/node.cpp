@@ -21,6 +21,15 @@
 #include "board/board.hpp"
 #include "node/conf/conf.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
+#include "node/commands/commands.hpp"
+
+#include <reg/udral/service/common/Readiness_0_1.h>
+#include <reg/udral/service/actuator/common/__0_1.h>
+#include <reg/udral/service/actuator/common/Feedback_0_1.h>
+#include <reg/udral/service/actuator/common/Status_0_1.h>
+#include <reg/udral/physics/dynamics/translation/LinearTs_0_1.h>
+#include <reg/udral/physics/electricity/PowerTs_0_1.h>
+#include <uavcan/node/ExecuteCommand_1_1.h>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -102,7 +111,12 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       0xFFFF, // means configurable
                                                                       reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &reg_udral_physics_acoustics_Note_0_1_handler}}
+                                                                      &reg_udral_physics_acoustics_Note_0_1_handler}},
+    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
+                                                                      uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
+                                                                      uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
+                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+                                                                      &reg_udral_physics_acoustics_Note_0_1_handler}},
 };
 
 std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>

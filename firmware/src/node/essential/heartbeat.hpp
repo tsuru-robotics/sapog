@@ -4,7 +4,9 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #pragma once
-#include <node/state.hpp>
 
-using namespace node::state;
-bool reg_udral_physics_electricity_PowerTs_0_1_handler(const State &state, const CanardTransfer *const transfer);
+#include <libcanard/canard.h>
+#include <uavcan/node/Heartbeat_1_0.h>
+#include "node/state.hpp"
+
+void publish_heartbeat(CanardInstance &canard, State &state);

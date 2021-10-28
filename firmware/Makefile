@@ -45,9 +45,7 @@ PYTHON := python3.8
 # Sources
 #
 
-CSRC = $(wildcard $(SAPOG_SRC_DIR)/*.c)     \
-       $(wildcard $(SAPOG_SRC_DIR)/*/*.c)   \
-       $(wildcard $(SAPOG_SRC_DIR)/*/*/*.c) \
+CSRC = $(wildcard $(SAPOG_SRC_DIR)/motor/*/*.c) \
        $(wildcard $(SAPOG_SRC_DIR)/../include/*/*.c)
 
 CPPSRC = $(wildcard $(SAPOG_SRC_DIR)/*.cpp)   \

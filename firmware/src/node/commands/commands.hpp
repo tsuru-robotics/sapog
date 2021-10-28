@@ -4,7 +4,4 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #pragma once
-#include <node/state.hpp>
-
-using namespace node::state;
-bool reg_udral_physics_electricity_PowerTs_0_1_handler(const State &state, const CanardTransfer *const transfer);
+bool uavcan_node_ExecuteCommand_Request_1_1_handler(const State &state, const CanardTransfer *const transfer);
