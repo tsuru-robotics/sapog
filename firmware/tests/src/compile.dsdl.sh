@@ -1,0 +1,1 @@
+yakut compile -O deps/ ../downloads/public_regulated_data_types-master/uavcan ../downloads/public_regulated_data_types-master/reg

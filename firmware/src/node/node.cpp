@@ -59,11 +59,13 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Plug and play feature
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::config::plug_and_play_loop(state);
+    // Loops are created
     state.timing.current_time = get_monotonic_microseconds();
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
+    // Loops begin running
     while (true)
     {
         CanardMicrosecond current_time = get_monotonic_microseconds();
@@ -104,7 +106,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}}
 };
-
+// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>
 get_subscriptions()
 {
@@ -165,6 +167,8 @@ static void init_canard()
         if (subscription.second.handler != nullptr)
         {
             subscription.second.subscription.user_reference = &subscription.second;
+        } else {
+            printf("Subscription %s had no handler set.\n", subscription.first);
         }
         assert(res > 0); // This is to make sure that the subscription was successful.
     }

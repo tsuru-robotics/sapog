@@ -6,7 +6,6 @@ import re
 from typing import Optional
 from itertools import chain
 
-import pytest
 import pyuavcan.dsdl
 import typing
 
@@ -131,10 +130,21 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
 
+def check_and_make_defaults():
+    env_default = {
+        "UAVCAN__CAN__IFACE": "socketcan:slcan0",
+        "UAVCAN__CAN__MTU": "8",
+        "UAVCAN__NODE__ID": "42"
+    }
+    for key, value in env_default.items():
+        if os.environ.get(key) is not None:
+            print(
+                f"Warning, environment variable {key} has already been set, your defaults are overridden by value \"{value}\".")
+        os.environ.setdefault(key, value)
+
+
 async def make_my_allocator_node(with_debugging=False) -> Node:
-    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
-    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
-    os.environ.setdefault("UAVCAN__NODE__ID", "42")
+    check_and_make_defaults()
     node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db")
     if with_debugging:
         import_submodules(uavcan)
@@ -158,9 +168,7 @@ async def run_allocator(with_debugging=False):
 
 
 async def run_allocator2(with_debugging=False):
-    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
-    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
-    os.environ.setdefault("UAVCAN__NODE__ID", "42")
+    check_and_make_defaults()
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         import_submodules(uavcan)
         ids = fill_ids()
