@@ -5,13 +5,14 @@
  */
 #include "heartbeat.hpp"
 #include <node/units.hpp>
+#include <node/time.h>
 
 namespace node::essential
 {
 void publish_heartbeat(CanardInstance &canard, node::state::State &state)
 {
     uavcan_node_Heartbeat_1_0 heartbeat{};
-    heartbeat.uptime = (uint32_t) ((state.timing.current_time - state.timing.started_at) / MEGA);
+    heartbeat.uptime = (uint32_t) ((get_monotonic_microseconds() - state.timing.started_at) / MEGA);
     heartbeat.mode.value = uavcan_node_Mode_1_0_OPERATIONAL;
     heartbeat.health.value = uavcan_node_Health_1_0_NOMINAL;
     uint8_t serialized[uavcan_node_Heartbeat_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
@@ -21,8 +22,8 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
     if (err >= 0)
     {
         const CanardTransfer transfer = {
-            .timestamp_usec = state.timing.current_time +
-                              ONE_SECOND_DEADLINE_usec * 2, // transmission deadline 1 second, optimal for heartbeat
+            .timestamp_usec = get_monotonic_microseconds() +
+                              ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
             .priority       = CanardPriorityNominal,
             .transfer_kind  = CanardTransferKindMessage,
             .port_id        = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,

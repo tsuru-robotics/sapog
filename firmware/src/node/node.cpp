@@ -58,7 +58,7 @@ static void init_canard();
 static State state{};
 // This defines _wa_control_thread
 static THD_WORKING_AREA(_wa_control_thread,
-                        1024 * 4);
+1024 * 4);
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -159,7 +159,7 @@ static void init_canard()
     {
         state.canard.node_id = stored_node_id;
     }
-
+    state.timing.started_at = get_monotonic_microseconds();
     for (auto &subscription: subscriptions)
     {
         if (subscription.second.port_id == 0xFFFF)
