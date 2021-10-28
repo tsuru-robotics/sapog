@@ -22,11 +22,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 
 using namespace node::state;
 
-void process_received_message(const State &state, const CanardTransfer *const transfer);
-
 uavcan_node_GetInfo_Response_1_0 process_request_node_get_info();
-
-void process_received_request(const State &state, const CanardTransfer *const transfer);
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 

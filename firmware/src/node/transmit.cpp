@@ -11,14 +11,6 @@
 #include "libcanard/canard.h"
 #include "time.h"
 
-// This project differs from ds015_demo
-// Here we use bxCan and not SocketCan
-bool please_transmit(const CanardFrame txf, CanardMicrosecond monotonic_micro_seconds, int index)
-{
-    return bxCANPush(index, monotonic_micro_seconds, txf.timestamp_usec, txf.extended_can_id, txf.payload_size,
-                     txf.payload);
-}
-
 using namespace node::state;
 
 // Removes the frame from the queue and deallocates the dynamic memory of it
