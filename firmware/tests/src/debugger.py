@@ -1,3 +1,9 @@
+#
+# Copyright (c) 2021 Zubax, zubax.com
+# Distributed under the MIT License, available in the file LICENSE.
+# Author: Silver Valdvee <silver.valdvee@zubax.com>
+#
+
 import asyncio
 import json
 import pathlib
@@ -38,6 +44,7 @@ def make_handler_for_getinfo_update(allocator: Allocator):
             if node_id and next_entry and next_entry.info is not None:
                 print("Debugger sees an allocation request")
                 await asyncio.sleep(2)
+
         asyncio.get_event_loop().create_task(handle_inner_function())
 
     return handle_getinfo_handler_format

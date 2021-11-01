@@ -82,11 +82,10 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Loops begin running
     while (true)
     {
-        if (state.is_restart_required)
+        if (state.is_restart_required && !os::isRebootRequested())
         {
             printf("Sent %d remaining frames before restarting\n", transmit(state));
-            chThdSleep(3);
-            os::requestReboot();
+            os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
         }
         CanardMicrosecond current_time = get_monotonic_microseconds();
         for (Loop &loop: loops)
