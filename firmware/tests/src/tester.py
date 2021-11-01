@@ -71,7 +71,7 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
         nonlocal target_node_id
         if transfer_from.source_node_id != test_conductor_node.id:
             target_node_id = transfer_from.source_node_id
-            # event.set()
+            event.set()
 
     async def time_out():
         nonlocal event
@@ -80,18 +80,17 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
 
     asyncio.get_event_loop().create_task(time_out())
     heartbeat_subscriber.receive_in_background(handle_heartbeats)
-    # def capture_handler(capture: _tracer.Capture):
-    #     print("Yeah")
-    #     tracer = test_conductor_node.presentation.transport.make_tracer()
-    #     if (transfer_trace := tracer.update(capture)) is not None:
-    #         event.set()
-
+    # stops here and waits for the handler to declare that it has received a fitting node_id
+    # if the timeout sets the event first then None is returned
     await event.wait()
     heartbeat_subscriber.close()
     return target_node_id
 
 
-# The tests themselves should not be run asynchronously, I just find it convenient to type await instead of asyncio.get_event_loop().run_until_complete()
+async def is_waiting_pnp() -> bool:
+    pass
+
+
 def test_allows_pnp():
     pass
 
