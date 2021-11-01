@@ -145,17 +145,30 @@ def check_and_make_defaults():
         os.environ.setdefault(key, value)
 
 
-async def make_my_allocator_node(with_debugging=False) -> Node:
+async def make_node(name: str):
+    """not for reuse"""
+    node = make_node(NodeInfo(name=name), f"databases/{name}.db")
+    return node
+
+
+def get_ids():
+    import_submodules(uavcan)
+    return fill_ids()
+
+
+async def make_my_allocator_node(get_info_handler, capture_handler, with_debugging=False) -> Node:
     check_and_make_defaults()
-    node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db")
+    node = make_node("com.zubax.sapog.tests.allocator")
     if with_debugging:
-        import_submodules(uavcan)
-        ids = fill_ids()
+
         tracer = node.presentation.transport.make_tracer()
-        node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
+        if capture_handler:
+            node.presentation.transport.begin_capture(capture_handler)
     t = NodeTracker(node)
     centralized_allocator = CentralizedAllocator(node)
-    t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+    if get_info_handler:
+        t.add_update_handler(get_info_handler)
+
     print("Running")
     return node, centralized_allocator, t
 
@@ -169,8 +182,10 @@ async def run_allocator(with_debugging=False):
     node.close()
 
 
-async def run_allocator2(time_out: Optional[int]):
+async def run_allocator2(time_out: int = None):
     check_and_make_defaults()
+    make_handler_for_getinfo_update(centralized_allocator)
+    make_capture_handler(tracer, ids)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         import_submodules(uavcan)
         ids = fill_ids()
@@ -183,7 +198,7 @@ async def run_allocator2(time_out: Optional[int]):
         if time_out:
             async def time_out_coroutine(time_out_time):
                 nonlocal event
-                await asyncio.sleep()
+                await asyncio.sleep(time_out_time)
                 event.set()
 
             asyncio.get_event_loop().create_task(time_out_coroutine(time_out))
