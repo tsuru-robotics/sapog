@@ -4,14 +4,10 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #include "node/reception.hpp"
-#include "uavcan/_register/Access_1_0.h"
-#include "uavcan/_register/List_1_0.h"
 #include "uavcan/_register/Name_1_0.h"
-#include "uavcan/_register/Value_1_0.h"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
 #include "node.hpp"
-#include "reg/udral/physics/acoustics/Note_0_1.h"
 
 std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(State &state, int if_index)
 {
@@ -70,13 +66,4 @@ bool not_implemented_handler(const State &state, const CanardTransfer *const tra
     (void) state;
     return true;
 }
-
-
-bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer)
-{
-    (void) transfer;
-    (void) state;
-    return true;
-}
-
 

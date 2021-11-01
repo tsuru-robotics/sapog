@@ -30,11 +30,9 @@ static bool unsubscribe_plug_and_play_response(State &state);
 
 static bool save_node_id(State &state);
 
+
 namespace node::pnp
 {
-
-}
-
 void plug_and_play_loop(State &state)
 {
     bool already_tried_saving = false;
@@ -110,6 +108,7 @@ void plug_and_play_loop(State &state)
         chThdSleep(1);
     }
 out_of_loop:;
+}
 }
 
 static void save_crc(State &state)

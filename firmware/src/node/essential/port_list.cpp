@@ -5,6 +5,7 @@
 #include <uavcan/node/port/List_0_1.h>
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <node/units.hpp>
+#include <node/node.hpp>
 #include "port_list.hpp"
 
 void publish_port_list(CanardInstance &canard, node::state::State &state)

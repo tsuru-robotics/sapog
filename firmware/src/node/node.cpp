@@ -76,9 +76,9 @@ static THD_WORKING_AREA(_wa_control_thread,
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::pnp::plug_and_play_loop(state);
     // Loops are created
-    state.timing.current_time = get_monotonic_microseconds();
-    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, state.timing.current_time},
-                        Loop{&handle_fast_loop, QUEUE_TIME_FRAME, state.timing.current_time}
+    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
+                        Loop{&handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
+                        Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     // Loops begin running

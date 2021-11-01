@@ -24,6 +24,7 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
+import reg.drone.physics.acoustics.Note_0_1
 
 
 @dataclasses.dataclass
@@ -91,11 +92,16 @@ async def is_waiting_pnp() -> bool:
     pass
 
 
+def configure_note_register():
+    print(reg.drone.physics.acoustics.Note_0_1)
+
+
 def test_allows_pnp():
-    pass
+    node, _, tracker = wrap_await(make_my_allocator_node())
 
 
 def wrap_await(async_def):
+    """Makes the function given as an argument a synchronous function."""
     return asyncio.get_event_loop().run_until_complete(async_def)
 
 
@@ -103,7 +109,7 @@ def test_restart_node():
     node, _, tracker = wrap_await(make_my_allocator_node())
     target_node_id = wrap_await(get_target_node_id(node))
     assert target_node_id is not None
-    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, )
+    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
     response = wrap_await(service_client.call(msg))
@@ -114,3 +120,7 @@ def test_restart_node():
 def test_has_heartbeat():
     node, _, node_tracker = wrap_await(make_my_allocator_node())
     assert wrap_await(get_target_node_id(node)) is not None
+
+
+if __name__ == "__main__":
+    configure_note_register()
