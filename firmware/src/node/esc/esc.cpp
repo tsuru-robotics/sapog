@@ -13,6 +13,13 @@
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <cstdio>
 
+bool sub_esc_rpm_handler(const node::state::State &state, const CanardTransfer *const transfer)
+{
+    (void) state;
+    (void) transfer;
+    return true;
+}
+
 bool
 reg_udral_physics_electricity_PowerTs_0_1_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {

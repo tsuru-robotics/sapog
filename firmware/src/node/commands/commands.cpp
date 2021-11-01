@@ -5,6 +5,7 @@
  */
 
 #include <uavcan/node/ExecuteCommand_1_1.h>
+#include <cstdio>
 #include "node/state.hpp"
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
@@ -12,6 +13,7 @@
 bool
 uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const CanardTransfer *const transfer)
 {
+    printf("Handling execute command\n");
     uavcan_node_ExecuteCommand_Request_1_1 request{};
     size_t size = transfer->payload_size;
 
@@ -21,7 +23,6 @@ uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const 
         uavcan_node_ExecuteCommand_Response_1_1 response{};
         switch (request.command)
         {
-
             case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
                 state.is_restart_required = true;
                 response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;

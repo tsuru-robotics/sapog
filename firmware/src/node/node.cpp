@@ -29,9 +29,12 @@
 #include <reg/udral/service/actuator/common/Status_0_1.h>
 #include <reg/udral/physics/dynamics/translation/LinearTs_0_1.h>
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
+#include <reg/udral/service/actuator/common/sp/Scalar_0_1.h>
 #include <uavcan/node/ExecuteCommand_1_1.h>
 #include <node/essential/access.hpp>
 #include <node/essential/get_info.hpp>
+#include <motor/motor.hpp>
+#include <node/esc/esc.hpp>
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -121,6 +124,11 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_node_ExecuteCommand_Request_1_1_handler}},
+    {"sub.esc.rpm",                                               {CanardTransferKindRequest,
+                                                                      0xFFFF,
+                                                                      reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
+                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+                                                                      &sub_esc_rpm_handler}},
 };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.

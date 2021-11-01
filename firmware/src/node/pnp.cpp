@@ -16,12 +16,19 @@
 #include <stdlib.h>
 
 static CanardRxSubscription AllocationMessageSubscription;
+static board::LEDOverlay led_ctl;
 
 void node::config::plug_and_play_loop(State &state)
 {
     bool already_tried_saving = false;
     save_crc(state);
-    while (state.canard.node_id == CANARD_NODE_ID_UNSET)
+    if (state.canard.node_id == CANARD_NODE_ID_UNSET)
+    {
+        printf("Plug and play activated.\n");
+    }
+    bool do_save = false;
+    bool needs_pnp = state.canard.node_id == CANARD_NODE_ID_UNSET;
+    while (needs_pnp)
     {
         state.timing.current_time = get_monotonic_microseconds();
         // With every success, the state moves to the next element further down in the switch block
@@ -30,18 +37,21 @@ void node::config::plug_and_play_loop(State &state)
             case node::state::PNPStatus::Subscribing:
                 node::config::subscribe_to_plug_and_play_response(state);
                 state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
-                break;
+                continue;
             case node::state::PNPStatus::TryingToSend:
                 if (node::config::send_plug_and_play_request(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::SentRequest;
-                } else {
-                    if(already_tried_saving){
+                    led_ctl.set_hex_rgb(0x003110);
+                } else
+                {
+                    if (already_tried_saving)
+                    {
                         goto out_of_loop;
                     }
                     already_tried_saving = true;
                 }
-                break;
+                continue;
             case node::state::PNPStatus::SentRequest:
                 // The following should write the received NodeID into the state object
                 if (node::config::receive_plug_and_play_response(state))
@@ -56,25 +66,34 @@ void node::config::plug_and_play_loop(State &state)
                     state.plug_and_play.request_count += 1;
                     continue;
                 }
-                break;
+                continue;
             case node::state::PNPStatus::ReceivedResponse:
+                if (!do_save)
+                {
+                    state.plug_and_play.status = node::state::PNPStatus::Done;
+                    continue;
+                }
                 if (node::config::save_node_id(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
                     printf("NodeID was successfully saved to the configuration.\n");
-                } else {
-                    assert(false);
+                } else
+                {
+                    printf("Failed to save the node_id.\n");
                 }
-                break;
+                continue;
             case node::state::PNPStatus::Done:
+                led_ctl.set(board::LEDColor::DARK_GREEN);
                 unsubscribe_plug_and_play_response(state);
                 state.plug_and_play.anonymous = false;
+                needs_pnp = false;
                 break;
         }
         chThdSleep(1);
     }
-    out_of_loop:;
+out_of_loop:;
 }
+
 void node::config::save_crc(State &state)
 {
     auto unique_id = board::read_unique_id();
@@ -82,6 +101,7 @@ void node::config::save_crc(State &state)
     crc_object.update(unique_id.data(), sizeof(unique_id));
     state.plug_and_play.unique_id_hash = crc_object.get();
 }
+
 bool node::config::send_plug_and_play_request(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.
@@ -94,14 +114,14 @@ bool node::config::send_plug_and_play_request(State &state)
     if (err >= 0)
     {
         const CanardTransfer transfer = {
-                .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
-                .priority       = CanardPrioritySlow,
-                .transfer_kind  = CanardTransferKindMessage,
-                .port_id        = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
-                .remote_node_id = CANARD_NODE_ID_UNSET,
-                .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++),
-                .payload_size   = serialized_size,
-                .payload        = &serialized[0],
+            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
+            .priority       = CanardPrioritySlow,
+            .transfer_kind  = CanardTransferKindMessage,
+            .port_id        = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
+            .remote_node_id = CANARD_NODE_ID_UNSET,
+            .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++),
+            .payload_size   = serialized_size,
+            .payload        = &serialized[0],
         };
         (void) canardTxPush(&state.canard, &transfer);  // The response will arrive asynchronously eventually.
         transmit(state);
@@ -119,9 +139,11 @@ bool node::config::subscribe_to_plug_and_play_response(State &state)
                                          CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, &AllocationMessageSubscription);
     return res;
 }
+
 bool node::config::unsubscribe_plug_and_play_response(State &state)
 {
-    assert(canardRxUnsubscribe(&state.canard, CanardTransferKindMessage, uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_) == 1);
+    assert(canardRxUnsubscribe(&state.canard, CanardTransferKindMessage,
+                               uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_) == 1);
     return true;
 }
 
@@ -135,7 +157,7 @@ bool node::config::receive_plug_and_play_response(State &state)
         {
             uavcan_pnp_NodeIDAllocationData_1_0 msg{};
             auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,
-                                                                           static_cast<const uint8_t*>(transfer->payload),
+                                                                           static_cast<const uint8_t *>(transfer->payload),
                                                                            &(transfer->payload_size));
             //printf("The size of allocated_node_id arra is %d\n", msg.allocated_node_id.count);
             if (result < 0)
@@ -146,7 +168,7 @@ bool node::config::receive_plug_and_play_response(State &state)
             {
                 if (msg.allocated_node_id.count > 0 && msg.allocated_node_id.elements[0].value > 0)
                 {
-                    state.canard.node_id =  msg.allocated_node_id.elements[0].value;
+                    state.canard.node_id = msg.allocated_node_id.elements[0].value;
                     return true;
                 }
             }

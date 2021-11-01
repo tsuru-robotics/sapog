@@ -106,22 +106,6 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
 import os
 
 
-# TODO: Need to implement this method to be able to test anything.
-async def get_target_node_id(test_conductor_node: Node) -> int:
-    """Catch any node that is sending a heartbeat, make sure that it isn't the testing node and then return its
-    node ID"""
-    t = NodeTracker(test_conductor_node)
-    event = asyncio.Event(loop=asyncio.get_event_loop())
-
-    def capture_handler(capture: _tracer.Capture):
-        tracer = test_conductor_node.presentation.transport.make_tracer()
-        if (transfer_trace := tracer.update(capture)) is not None:
-            print("Yeah")
-
-    t.add_update_handler(capture_handler)
-    return 1
-
-
 async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
     print(f"Resetting node_id of {current_target_node_id}")
     global already_ran
