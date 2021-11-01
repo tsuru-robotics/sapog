@@ -32,14 +32,6 @@ class SetupData:
     target_node_id: int
 
 
-# I refuse to use fixtures, what if someone doesn't know about them
-# they would be super confused.
-async def do_setup():
-    node, _, node_tracker = (await make_my_allocator_node())
-    target_node_id = await get_target_node_id(node)
-    return SetupData(node, target_node_id)
-
-
 def do_cleanup(data: SetupData):
     data.node.close()
 
@@ -79,8 +71,14 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
         nonlocal target_node_id
         if transfer_from.source_node_id != test_conductor_node.id:
             target_node_id = transfer_from.source_node_id
-            event.set()
+            # event.set()
 
+    async def time_out():
+        nonlocal event
+        await asyncio.sleep(1)
+        event.set()
+
+    asyncio.get_event_loop().create_task(time_out())
     heartbeat_subscriber.receive_in_background(handle_heartbeats)
     # def capture_handler(capture: _tracer.Capture):
     #     print("Yeah")
@@ -93,14 +91,25 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
     return target_node_id
 
 
-async def dotest_restart_node():
-    setup = await do_setup()
-    service_client = setup.node.make_client(uavcan.node.ExecuteCommand_1_1, setup.target_node_id)
+# The tests themselves should not be run asynchronously, I just find it convenient to type await instead of asyncio.get_event_loop().run_until_complete()
+def test_allows_pnp():
+    pass
+
+
+def wrap_await(async_def):
+    return asyncio.get_event_loop().run_until_complete(async_def)
+
+
+def test_restart_node():
+    node, _, tracker = wrap_await(make_my_allocator_node())
+    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, wrap_await(get_target_node_id(node)))
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
-    response = await service_client.call(msg)
-    print(response)
-    setup.node.close()
+    response = wrap_await(service_client.call(msg))
+    node.close()
+    assert response is not None
 
 
-asyncio.get_event_loop().run_until_complete(dotest_restart_node())
+def test_has_heartbeat():
+    node, _, node_tracker = wrap_await(make_my_allocator_node())
+    assert wrap_await(get_target_node_id(node)) is not None

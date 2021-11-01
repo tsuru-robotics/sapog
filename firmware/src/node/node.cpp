@@ -36,6 +36,8 @@
 #include <motor/motor.hpp>
 #include <node/esc/esc.hpp>
 
+#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
     (void) ins;
@@ -109,18 +111,13 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &node::essential::uavcan_node_GetInfo_1_0_handler}},
-/*    {uavcan_pnp_NodeIDAllocationData_1_0_FULL_NAME_AND_VERSION_,  {CanardTransferKindRequest,
-                                                                      uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
-                                                                      uavcan_pnp_NodeIDAllocationData_1_0_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &not_implemented_handler}}, // is in pnp.cpp*/
     {uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,           {CanardTransferKindRequest,
                                                                       uavcan_register_Access_1_0_FIXED_PORT_ID_,
                                                                       uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &node::essential::uavcan_register_Access_1_0_handler}},
     {reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
-                                                                      0xFFFF, // means configurable
+                                                                      CONFIGURABLE_SUBJECT_ID,
                                                                       reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}},
@@ -130,7 +127,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_node_ExecuteCommand_Request_1_1_handler}},
     {"sub.esc.rpm",                                               {CanardTransferKindRequest,
-                                                                      0xFFFF,
+                                                                      CONFIGURABLE_SUBJECT_ID,
                                                                       reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &sub_esc_rpm_handler}},

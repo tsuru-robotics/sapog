@@ -6,5 +6,7 @@ jobs:
     steps:
       - name: Powering on
         run: psu.py on
-      - name: Test Sapog heartbeat
-        run: python firmware/tests/specialtracker.py
+      - name: Allocation
+        run: python firmware/tests/src/allocator.py
+      - name: Restarting
+        run: python firmware/tests/src/tester.py
