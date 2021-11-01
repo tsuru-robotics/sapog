@@ -131,6 +131,11 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &sub_esc_rpm_handler}},
+    {"sub.esc.power",                                             {CanardTransferKindRequest,
+                                                                      CONFIGURABLE_SUBJECT_ID,
+                                                                      reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
+                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+                                                                      &sub_esc_rpm_handler}}
 };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.

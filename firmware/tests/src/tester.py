@@ -8,6 +8,7 @@ import asyncio
 import dataclasses
 import pathlib
 import sys
+import time
 
 import pyuavcan
 from pyuavcan.application import Node
@@ -98,6 +99,8 @@ def configure_note_register():
 
 def test_allows_pnp():
     node, _, tracker = wrap_await(make_my_allocator_node())
+    time.sleep(1.2)
+    assert wrap_await(get_target_node_id(node)) is not None
 
 
 def wrap_await(async_def):

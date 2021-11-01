@@ -37,14 +37,13 @@ from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
 
 
-def make_handler_for_getinfo_update(allocator: Allocator):
+def make_handler_for_getinfo_update(allocator: Allocator, event: asyncio.Event):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
                 print("Allocating one node")
                 allocator.register_node(node_id, bytes(next_entry.info.unique_id))
-                await asyncio.sleep(2)
-                # await reset_node_id(node, node_id)
+                event.set()
 
         asyncio.get_event_loop().create_task(handle_inner_function())
 
@@ -170,7 +169,7 @@ async def run_allocator(with_debugging=False):
     node.close()
 
 
-async def run_allocator2(with_debugging=False):
+async def run_allocator2(time_out: Optional[int]):
     check_and_make_defaults()
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         import_submodules(uavcan)
@@ -179,9 +178,18 @@ async def run_allocator2(with_debugging=False):
         node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
         t = NodeTracker(node)
         centralized_allocator = CentralizedAllocator(node)
-        t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
-        while True:
-            await asyncio.sleep(1)
+        event = asyncio.Event()
+        t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator, event))
+        if time_out:
+            async def time_out_coroutine(time_out_time):
+                nonlocal event
+                await asyncio.sleep()
+                event.set()
+
+            asyncio.get_event_loop().create_task(time_out_coroutine(time_out))
+        while not event.is_set():
+            await asyncio.sleep(0.04)
+        return True
 
 
 if __name__ == "__main__":

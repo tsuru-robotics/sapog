@@ -20,6 +20,13 @@ bool sub_esc_rpm_handler(const node::state::State &state, const CanardTransfer *
     return true;
 }
 
+bool sub_esc_power_handler(const node::state::State &state, const CanardTransfer *const transfer)
+{
+    (void) state;
+    (void) transfer;
+    return true;
+}
+
 bool
 reg_udral_physics_electricity_PowerTs_0_1_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
