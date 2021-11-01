@@ -82,6 +82,12 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Loops begin running
     while (true)
     {
+        if (state.is_restart_required)
+        {
+            printf("Sent %d remaining frames before restarting\n", transmit(state));
+            chThdSleep(3);
+            os::requestReboot();
+        }
         CanardMicrosecond current_time = get_monotonic_microseconds();
         for (Loop &loop: loops)
         {
@@ -119,7 +125,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &reg_udral_physics_acoustics_Note_0_1_handler}},
-    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,       {CanardTransferKindMessage,
+    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,       {CanardTransferKindRequest,
                                                                       uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},

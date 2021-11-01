@@ -96,8 +96,9 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
                 try:
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
                 except Exception as e:
-                    print(e.args[-1])
-                print(deserialize_trace(transfer_trace, ids, subject_id))
+                    pass
+                    # print(e.args[-1])
+                # print(deserialize_trace(transfer_trace, ids, subject_id))
                 log_file.write(format_trace_view_nicely(transfer_trace, ids) + "\n")
 
     return capture_handler

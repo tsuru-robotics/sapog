@@ -22,9 +22,10 @@ void remove_frame(State &state, int if_index, const CanardFrame *txf)
     state.canard.memory_free(&state.canard, (CanardFrame *) txf);
 }
 
-/// Uses bxCAN to send all frames that have been queued in canard, returns no value
-void transmit(State &state)
+/// Uses bxCAN to send all frames that have been queued in canard, returns the amount of frames that were sent
+int transmit(State &state)
 {
+    int count_sent_frames = 0;
     for (const CanardFrame *txf = NULL;
          (txf = canardTxPeek(&state.canard, 0)) != nullptr;)  // Look at the top of the TX queue.
     {
@@ -36,8 +37,10 @@ void transmit(State &state)
             // txf was first used by canardTxPeek, then by bxCanPush
             // Now, txf is a pointer that needs to be deallocated in this scope.
             assert(txf != nullptr);
+            count_sent_frames++;
             remove_frame(state, 0, txf);
         } else
         { break; }
     }
+    return count_sent_frames;
 }
