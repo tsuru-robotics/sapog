@@ -73,9 +73,9 @@ typedef struct
 typedef struct
 {
     uint16_t bit_rate_prescaler;     /// [1, 1024]
-    uint8_t  bit_segment_1;          /// [1, 16]
-    uint8_t  bit_segment_2;          /// [1, 8]
-    uint8_t  max_resync_jump_width;  /// [1, 4] (recommended value is 1)
+    uint8_t bit_segment_1;          /// [1, 16]
+    uint8_t bit_segment_2;          /// [1, 8]
+    uint8_t max_resync_jump_width;  /// [1, 4] (recommended value is 1)
 } BxCANTimings;
 
 /// Initialization can be performed multiple times to switch between operating modes and/or bit rates.
@@ -87,7 +87,7 @@ typedef struct
 /// Use bxCANConfigureFilters() to override this after the interface is configured.
 ///
 /// WARNING: The clock of the CAN module must be enabled before this function is invoked!
-///          If CAN2 is used, CAN1 must be also enabled!
+///          If CAN2 is used, CAN1 must be initialized first (at least in silent mode)!
 ///
 /// WARNING: The driver is not thread-safe!
 ///          It does not use IRQ or critical sections though, so it is safe to invoke its API functions from the
@@ -96,7 +96,7 @@ bool bxCANConfigure(const uint8_t iface_index, const BxCANTimings timings, const
 
 /// Acceptance filter configuration. Unused filters shall be set to {0, 0} (all bits zero); they will reject all frames.
 /// When the interface is reinitialized, hardware acceptance filters are reset, so this function shall be re-invoked.
-/// While reconfiguration is in progress, some received frames may be lost.
+/// While reconfiguration is in progress, some received frames may be lost, and/or undesired frames may be received.
 /// Filters alternate between FIFO0/1 in order to equalize the load: even filters take FIFO0, odd filters take FIFO1.
 /// This will cause occasional priority inversion and frame reordering on reception, but that is acceptable for UAVCAN,
 /// and most other CAN-based protocols will tolerate this too since there will be no reordering within the same CAN ID.
@@ -149,29 +149,29 @@ bool bxCANReapError(const uint8_t iface_index);
 /// One should note that the need for maintaining a separate backlog queue arises out of the limitations of the bxCAN
 /// macrocell. Certain advanced CAN controllers are equipped with a sufficiently deep hardware transmission queue
 /// that relieves the application from manual queue management.
-bool bxCANPush(const uint8_t     iface_index,
-               const uint64_t    current_time,
-               const uint64_t    deadline,
-               const uint32_t    extended_can_id,
-               const size_t      payload_size,
-               const void* const payload);
+bool bxCANPush(const uint8_t iface_index,
+               const uint64_t current_time,
+               const uint64_t deadline,
+               const uint32_t extended_can_id,
+               const size_t payload_size,
+               const void *const payload);
 
 /// Extract one frame from the RX FIFOs. FIFO0 checked first.
 /// The out_payload memory shall be large enough to accommodate the largest CAN frame payload.
 /// Returns true if received; false if both RX FIFOs are empty.
-bool bxCANPop(const uint8_t   iface_index,
-              uint32_t* const out_extended_can_id,
-              size_t* const   out_payload_size,
-              void* const     out_payload);
+bool bxCANPop(const uint8_t iface_index,
+              uint32_t *const out_extended_can_id,
+              size_t *const out_payload_size,
+              void *const out_payload);
 
 /// Given the bxCAN macrocell clock rate and the desired bit rate, compute the optimal timing register configuration.
 /// The solution is optimized per the recommendations given in the specifications of DS-015, DeviceNet, CANOpen.
 /// Units are SI. Typically, CAN is clocked from PCLK1.
 /// Returns false if the requested bit rate cannot be set up at the current clock rate.
 /// Returns true on success.
-bool bxCANComputeTimings(const uint32_t      peripheral_clock_rate,
-                         const uint32_t      target_bitrate,
-                         BxCANTimings* const out_timings);
+bool bxCANComputeTimings(const uint32_t peripheral_clock_rate,
+                         const uint32_t target_bitrate,
+                         BxCANTimings *const out_timings);
 
 #ifdef __cplusplus
 }
