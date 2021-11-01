@@ -102,7 +102,9 @@ def wrap_await(async_def):
 
 def test_restart_node():
     node, _, tracker = wrap_await(make_my_allocator_node())
-    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, wrap_await(get_target_node_id(node)))
+    target_node_id = wrap_await(get_target_node_id(node))
+    assert target_node_id is not None
+    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, )
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
     response = wrap_await(service_client.call(msg))

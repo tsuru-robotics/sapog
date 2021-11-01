@@ -18,7 +18,24 @@
 static CanardRxSubscription AllocationMessageSubscription;
 static board::LEDOverlay led_ctl;
 
-void node::config::plug_and_play_loop(State &state)
+static bool send_plug_and_play_request(State &state);
+
+static bool receive_plug_and_play_response(State &state);
+
+static bool subscribe_to_plug_and_play_response(State &state);
+
+static void save_crc(State &state);
+
+static bool unsubscribe_plug_and_play_response(State &state);
+
+static bool save_node_id(State &state);
+
+namespace node::pnp
+{
+
+}
+
+void plug_and_play_loop(State &state)
 {
     bool already_tried_saving = false;
     save_crc(state);
@@ -35,11 +52,11 @@ void node::config::plug_and_play_loop(State &state)
         switch (state.plug_and_play.status)
         {
             case node::state::PNPStatus::Subscribing:
-                node::config::subscribe_to_plug_and_play_response(state);
+                subscribe_to_plug_and_play_response(state);
                 state.plug_and_play.status = node::state::PNPStatus::TryingToSend;
                 continue;
             case node::state::PNPStatus::TryingToSend:
-                if (node::config::send_plug_and_play_request(state))
+                if (send_plug_and_play_request(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::SentRequest;
                     led_ctl.set_hex_rgb(0x003110);
@@ -54,7 +71,7 @@ void node::config::plug_and_play_loop(State &state)
                 continue;
             case node::state::PNPStatus::SentRequest:
                 // The following should write the received NodeID into the state object
-                if (node::config::receive_plug_and_play_response(state))
+                if (receive_plug_and_play_response(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::ReceivedResponse;
                 }
@@ -73,7 +90,7 @@ void node::config::plug_and_play_loop(State &state)
                     state.plug_and_play.status = node::state::PNPStatus::Done;
                     continue;
                 }
-                if (node::config::save_node_id(state))
+                if (save_node_id(state))
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;
                     printf("NodeID was successfully saved to the configuration.\n");
@@ -81,6 +98,7 @@ void node::config::plug_and_play_loop(State &state)
                 {
                     printf("Failed to save the node_id.\n");
                 }
+                state.plug_and_play.status = node::state::PNPStatus::Done;
                 continue;
             case node::state::PNPStatus::Done:
                 led_ctl.set(board::LEDColor::DARK_GREEN);
@@ -94,7 +112,7 @@ void node::config::plug_and_play_loop(State &state)
 out_of_loop:;
 }
 
-void node::config::save_crc(State &state)
+static void save_crc(State &state)
 {
     auto unique_id = board::read_unique_id();
     auto crc_object = CRC64{};
@@ -102,7 +120,7 @@ void node::config::save_crc(State &state)
     state.plug_and_play.unique_id_hash = crc_object.get();
 }
 
-bool node::config::send_plug_and_play_request(State &state)
+static bool send_plug_and_play_request(State &state)
 {
     // Note that a high-integrity/safety-certified application is unlikely to be able to rely on this feature.
     uavcan_pnp_NodeIDAllocationData_1_0 msg{};
@@ -130,7 +148,7 @@ bool node::config::send_plug_and_play_request(State &state)
     return false;
 }
 
-bool node::config::subscribe_to_plug_and_play_response(State &state)
+static bool subscribe_to_plug_and_play_response(State &state)
 {
     const int8_t res = canardRxSubscribe(&state.canard,
                                          CanardTransferKindMessage,
@@ -140,14 +158,14 @@ bool node::config::subscribe_to_plug_and_play_response(State &state)
     return res;
 }
 
-bool node::config::unsubscribe_plug_and_play_response(State &state)
+static bool unsubscribe_plug_and_play_response(State &state)
 {
     assert(canardRxUnsubscribe(&state.canard, CanardTransferKindMessage,
                                uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_) == 1);
     return true;
 }
 
-bool node::config::receive_plug_and_play_response(State &state)
+static bool receive_plug_and_play_response(State &state)
 {
     std::optional<CanardTransfer> transfer = receive_transfer(state, 0).first;
     if (transfer.has_value())
@@ -178,7 +196,7 @@ bool node::config::receive_plug_and_play_response(State &state)
     return false;
 }
 
-bool node::config::save_node_id(State &state)
+static bool save_node_id(State &state)
 {
     uavcan_register_Value_1_0 data2{};
     uavcan_primitive_array_Integer64_1_0 data{};
