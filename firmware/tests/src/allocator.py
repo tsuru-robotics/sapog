@@ -9,6 +9,7 @@ import json
 import pathlib
 import sys
 import re
+from asyncio import Event
 from typing import Optional
 from itertools import chain
 
@@ -29,7 +30,7 @@ import uavcan.primitive.array
 
 do_update_dsdl = False
 
-from pyuavcan.application import make_node, NodeInfo, Node
+from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
 from pyuavcan.transport import _tracer, Trace, Tracer
@@ -132,45 +133,39 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
 
-def check_and_make_defaults():
-    env_default = {
-        "UAVCAN__CAN__IFACE": "socketcan:slcan0",
-        "UAVCAN__CAN__MTU": "8",
-        "UAVCAN__NODE__ID": "42"
-    }
-    for key, value in env_default.items():
-        if os.environ.get(key) is not None:
-            print(
-                f"Warning, environment variable {key} has already been set, your defaults are overridden by value \"{value}\".")
-        os.environ.setdefault(key, value)
-
-
-async def make_node(name: str):
-    """not for reuse"""
-    node = make_node(NodeInfo(name=name), f"databases/{name}.db")
-    return node
-
-
 def get_ids():
     import_submodules(uavcan)
     return fill_ids()
 
 
-async def make_my_allocator_node(get_info_handler, capture_handler, with_debugging=False) -> Node:
-    check_and_make_defaults()
-    node = make_node("com.zubax.sapog.tests.allocator")
-    if with_debugging:
+get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]], None]
+capture_handler_type = typing.Callable[[_tracer.Capture], None]
 
+
+async def make_complex_node(node_id: str,
+                            get_info_handler_wrapper:
+                            typing.Callable[[Allocator, Event], get_info_handler_type],
+                            capture_handler_wrapper:
+                            typing.Callable[[Tracer, typing.Dict[int, FixedPortObject]], capture_handler_type],
+                            with_debugging=False,
+                            interface: str = "socketcan:slcan0", mtu: str = "MTU") -> Node:
+    allocator_node_name = "com.zubax.sapog.tests.allocator"
+    registry01: register.Registry = register.Register()
+    registry01["UAVCAN__CAN__IFACE"] = interface
+    registry01["UAVCAN__CAN__MTU"] = mtu
+    registry01["UAVCAN__NODE__ID"] = node_id
+    node = make_node(NodeInfo(name=allocator_node_name), f"databases/{allocator_node_name}.db", registry01)
+    if with_debugging:
         tracer = node.presentation.transport.make_tracer()
         if capture_handler:
             node.presentation.transport.begin_capture(capture_handler)
-    t = NodeTracker(node)
+    node_tracker = NodeTracker(node)
     centralized_allocator = CentralizedAllocator(node)
     if get_info_handler:
-        t.add_update_handler(get_info_handler)
+        node_tracker.add_update_handler(get_info_handler())
 
     print("Running")
-    return node, centralized_allocator, t
+    return node, centralized_allocator, node_tracker
 
 
 async def run_allocator(with_debugging=False):
@@ -182,7 +177,7 @@ async def run_allocator(with_debugging=False):
     node.close()
 
 
-async def run_allocator2(time_out: int = None):
+async def run_allocator2(time_out: Optional[int] = None):
     check_and_make_defaults()
     make_handler_for_getinfo_update(centralized_allocator)
     make_capture_handler(tracer, ids)
