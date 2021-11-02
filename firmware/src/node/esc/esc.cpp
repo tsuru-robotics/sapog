@@ -23,7 +23,8 @@ bool sub_esc_rpm_handler(const node::state::State &state, const CanardTransfer *
     if (uavcan_si_unit_angular_velocity_Scalar_1_0_deserialize_(&angular_velocity, (const uint8_t *) transfer->payload,
                                                                 &size) >= 0)
     {
-        unsigned int rpm = (uint64_t) angular_velocity.radian_per_second / 2 / PI;
+        float rotations_per_second = angular_velocity.radian_per_second / 2.0 / PI;
+        unsigned int rpm = rotations_per_second * 60;
         motor_set_rpm(rpm, 100);
     }
     (void) transfer;

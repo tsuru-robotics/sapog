@@ -14,7 +14,7 @@ import pyuavcan
 from pyuavcan.application import Node
 from pyuavcan.presentation._presentation import MessageClass
 
-from allocator import make_my_allocator_node
+from allocator import make_complex_node, ComplexNodeUtilities
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -26,6 +26,8 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 import reg.drone.physics.acoustics.Note_0_1
+
+from allocator import make_complex_node
 
 
 @dataclasses.dataclass
@@ -97,10 +99,14 @@ def configure_note_register():
     print(reg.drone.physics.acoustics.Note_0_1)
 
 
+def test_esc_spin_2_seconds():
+    pass
+
+
 def test_allows_pnp():
-    node, _, tracker = wrap_await(make_my_allocator_node())
+    result: ComplexNodeUtilities = wrap_await(make_complex_node("1"))
     time.sleep(1.2)
-    assert wrap_await(get_target_node_id(node)) is not None
+    assert wrap_await(get_target_node_id(result.node)) is not None
 
 
 def wrap_await(async_def):
@@ -121,7 +127,7 @@ def test_restart_node():
 
 
 def test_has_heartbeat():
-    node, _, node_tracker = wrap_await(make_my_allocator_node())
+    node, _, node_tracker = wrap_await()
     assert wrap_await(get_target_node_id(node)) is not None
 
 

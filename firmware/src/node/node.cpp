@@ -35,6 +35,7 @@
 #include <node/essential/get_info.hpp>
 #include <motor/motor.hpp>
 #include <node/esc/esc.hpp>
+#include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -104,6 +105,7 @@ static THD_WORKING_AREA(_wa_control_thread,
     }
 }
 
+
 // Not all subscriptions come from here, allocation comes from pnp.cpp file and is used there only
 std::pair<const char *, SubscriptionData> subscriptions[] = {
     {uavcan_node_GetInfo_1_0_FULL_NAME_AND_VERSION_,              {CanardTransferKindRequest,
@@ -126,21 +128,21 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_node_ExecuteCommand_Request_1_1_handler}},
-    {"sub.esc.rpm",                                               {CanardTransferKindRequest,
+    {"sub.esc.rpm_direct",                                        {CanardTransferKindRequest,
                                                                       CONFIGURABLE_SUBJECT_ID,
-                                                                      reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
+                                                                      uavcan_si_unit_angular_velocity_Scalar_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &sub_esc_rpm_handler}},
     {"sub.esc.power",                                             {CanardTransferKindRequest,
                                                                       CONFIGURABLE_SUBJECT_ID,
                                                                       reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &sub_esc_rpm_handler}},
+                                                                      &reg_udral_physics_electricity_PowerTs_0_1_handler}},
     {"sub.esc.duty_cycle",                                        {CanardTransferKindRequest,
                                                                       CONFIGURABLE_SUBJECT_ID,
                                                                       reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &sub_esc_rpm_handler}},
+                                                                      &sub_esc_duty_cycle_handler}},
 
 };
 
