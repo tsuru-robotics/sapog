@@ -139,14 +139,14 @@ def get_ids():
 
 
 get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]], None]
+get_info_handler_wrapper_type = typing.Callable[[Allocator, Event], get_info_handler_type]
 capture_handler_type = typing.Callable[[_tracer.Capture], None]
+capture_handler_wrapper_type = typing.Callable[[Tracer, typing.Dict[int, FixedPortObject]], capture_handler_type]
 
 
 async def make_complex_node(node_id: str,
-                            get_info_handler_wrapper:
-                            typing.Callable[[Allocator, Event], get_info_handler_type],
-                            capture_handler_wrapper:
-                            typing.Callable[[Tracer, typing.Dict[int, FixedPortObject]], capture_handler_type],
+                            get_info_handler_wrapper: get_info_handler_wrapper_type,
+                            capture_handler_wrapper: capture_handler_wrapper_type,
                             with_debugging=False,
                             interface: str = "socketcan:slcan0", mtu: str = "MTU") -> Node:
     allocator_node_name = "com.zubax.sapog.tests.allocator"
@@ -154,15 +154,16 @@ async def make_complex_node(node_id: str,
     registry01["UAVCAN__CAN__IFACE"] = interface
     registry01["UAVCAN__CAN__MTU"] = mtu
     registry01["UAVCAN__NODE__ID"] = node_id
+    ids = get_ids()
     node = make_node(NodeInfo(name=allocator_node_name), f"databases/{allocator_node_name}.db", registry01)
     if with_debugging:
         tracer = node.presentation.transport.make_tracer()
-        if capture_handler:
-            node.presentation.transport.begin_capture(capture_handler)
+        if capture_handler_wrapper:
+            node.presentation.transport.begin_capture(capture_handler_wrapper(tracer, ids))
     node_tracker = NodeTracker(node)
     centralized_allocator = CentralizedAllocator(node)
-    if get_info_handler:
-        node_tracker.add_update_handler(get_info_handler())
+    if get_info_handler_wrapper:
+        node_tracker.add_update_handler(get_info_handler_wrapper(centralized_allocator, event))
 
     print("Running")
     return node, centralized_allocator, node_tracker
@@ -178,9 +179,6 @@ async def run_allocator(with_debugging=False):
 
 
 async def run_allocator2(time_out: Optional[int] = None):
-    check_and_make_defaults()
-    make_handler_for_getinfo_update(centralized_allocator)
-    make_capture_handler(tracer, ids)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         import_submodules(uavcan)
         ids = fill_ids()
