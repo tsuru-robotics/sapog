@@ -30,6 +30,12 @@ bool sub_esc_rpm_handler(const node::state::State &state, const CanardTransfer *
     return true;
 }
 
+
+bool sub_esc_duty_cycle_handler(const State &state, const CanardTransfer *const transfer)
+{
+
+}
+
 bool sub_esc_power_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
     (void) state;
