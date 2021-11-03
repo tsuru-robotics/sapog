@@ -93,7 +93,7 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
 
 
 async def is_waiting_pnp() -> bool:
-    pass
+    complex_node_utils = make_complex_node("1")
 
 
 def configure_note_register():

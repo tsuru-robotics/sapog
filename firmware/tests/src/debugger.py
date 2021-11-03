@@ -68,8 +68,11 @@ def format_payload_hex_view(trace: Trace):
     return payload
 
 
-def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
+def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int, debugger_node_id: int,
+                      ignore_traffic_by_debugger=True):
     if ids.get(subject_id) is not None:
+        if ignore_traffic_by_debugger and trace.transfer.metadata.session_specifier.source_node_id == debugger_node_id:
+            return None
         obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
         built_in_representation = pyuavcan.dsdl.to_builtin(obj)
         if "clients" in built_in_representation.keys():
@@ -112,10 +115,13 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
                 except Exception as e:
                     print(e.args[-1])
+                deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id)
+                if deserialized_trace is None:
+                    return
                 if log_to_print:
-                    print(deserialize_trace(transfer_trace, ids, subject_id))
+                    print(deserialized_trace)
                 if log_to_file:
-                    log_file.write(deserialize_trace(transfer_trace, ids, subject_id) + "\n")
+                    log_file.write(deserialized_trace + "\n")
 
     return capture_handler
 
@@ -148,15 +154,17 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
 
 
 async def run_debugger_node(with_debugging=False):
+    debugger_node_id = 42
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
-    os.environ.setdefault("UAVCAN__NODE__ID", "42")
+    os.environ.setdefault("UAVCAN__NODE__ID", str(debugger_node_id))
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
         import_submodules(uavcan)
         ids = fill_ids()
         tracer = node.presentation.transport.make_tracer()
         node.presentation.transport.begin_capture(
-            make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging))
+            make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging,
+                                 debugger_id_for_filtering=debugger_node_id))
         t = NodeTracker(node)
         centralized_allocator = CentralizedAllocator(node)
         t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
