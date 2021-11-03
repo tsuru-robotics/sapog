@@ -42,13 +42,14 @@ from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
 
 
-def make_handler_for_getinfo_update(allocator: Allocator, event: asyncio.Event):
+def make_handler_for_getinfo_update(allocator: Allocator, event: Optional[asyncio.Event] = None):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
                 print("Allocating one node")
                 allocator.register_node(node_id, bytes(next_entry.info.unique_id))
-                event.set()
+                if event:
+                    event.set()
 
         asyncio.get_event_loop().create_task(handle_inner_function())
 
@@ -114,15 +115,8 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
     return capture_handler
 
 
-import os
-
-
 async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
     print(f"Resetting node_id of {current_target_node_id}")
-    global already_ran
-    if already_ran:
-        return
-    already_ran = True
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
     msg = uavcan.register.Access_1_0.Request()
     my_array = uavcan.primitive.array.Integer64_1_0()
@@ -174,6 +168,8 @@ class OneTimeAllocator(Allocator, ABC):
 
             asyncio.get_event_loop().create_task(get_info_handler())
 
+        one_node_allocated_event.wait()
+
 
 get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]], None]
 get_info_handler_wrapper_type = Optional[typing.Callable[[Allocator, Event], get_info_handler_type]]
@@ -208,14 +204,10 @@ class ComplexNodeUtilities:
         return self._tracer
 
 
-async def make_one_time_allocator(node_id: str, target_hw_id: hw_id_type):
-    pass
-
-
 async def make_allocator(node_id: str):
     complex_node_utilities = await make_complex_node(node_id)
     complex_node_utilities.tracker.add_update_handler(
-        make_handler_for_getinfo_update(complex_node_utilities.tracker.centralized_allocator, None))
+        make_handler_for_getinfo_update(complex_node_utilities.centralized_allocator))
 
 
 async def make_complex_node(node_id: str,
