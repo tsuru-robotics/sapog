@@ -12,7 +12,6 @@ import re
 from typing import Optional
 from itertools import chain
 
-import pytest
 import pyuavcan.dsdl
 import typing
 
@@ -42,7 +41,7 @@ def make_handler_for_getinfo_update(allocator: Allocator):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
-                print("Debugger sees an allocation request")
+                # print("Debugger sees an allocation request")
                 await asyncio.sleep(2)
 
         asyncio.get_event_loop().create_task(handle_inner_function())
@@ -50,10 +49,8 @@ def make_handler_for_getinfo_update(allocator: Allocator):
     return handle_getinfo_handler_format
 
 
-def format_trace_view_nicely(trace: Trace, ids: typing.Dict[int, FixedPortObject]):
+def format_payload_hex_view(trace: Trace):
     payload: str = ""
-    count = 0
-    deserialized = str(trace.transfer)
     for memory_view in trace.transfer.fragmented_payload:
         my_list = memory_view.tolist()
         for byte in bytes(my_list):
@@ -68,18 +65,29 @@ def format_trace_view_nicely(trace: Trace, ids: typing.Dict[int, FixedPortObject
             payload += " | "
     else:
         payload = payload[:len(payload) - len(" |")]
-    deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", "\nPAYLOAD\n" + payload, deserialized)
-    deserialized = deserialized.replace("AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(", "transfer(")[:-2]
-    for key, value in ids.items():
-        deserialized = deserialized.replace("subject_id=" + str(key), "subject_id=" + value.__name__ + f"({str(key)})")
-        deserialized = deserialized.replace("service_id=" + str(key), "service_id=" + value.__name__ + f"({str(key)})")
-    return deserialized
+    return payload
 
 
 def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
     if ids.get(subject_id) is not None:
         obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
-        return json.dumps(pyuavcan.dsdl.to_builtin(obj))
+        built_in_representation = pyuavcan.dsdl.to_builtin(obj)
+        if "clients" in built_in_representation.keys():
+            built_in_representation["clients"] = None
+        if "servers" in built_in_representation.keys():
+            built_in_representation["servers"] = None
+        transfer_deserialized = str(trace.transfer)
+        transfer_deserialized = transfer_deserialized.replace(
+            "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(",
+            "transfer(")
+        for key, value in ids.items():
+            transfer_deserialized = transfer_deserialized.replace("subject_id=" + str(key),
+                                                                  "subject_id=" + value.__name__ + f"({str(key)})")
+            transfer_deserialized = transfer_deserialized.replace("service_id=" + str(key),
+                                                                  "service_id=" + value.__name__ + f"({str(key)})")
+        transfer_deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", json.dumps(built_in_representation),
+                                       transfer_deserialized)
+        return transfer_deserialized
     return "missing id"
 
 
@@ -94,7 +102,7 @@ def fill_ids():
     return ids
 
 
-def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject]):
+def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject], log_to_file=True, log_to_print=True):
     def capture_handler(capture: _tracer.Capture):
         with open("rx_frm.txt", "a") as log_file:
             # Checking to see if a transfer has finished, then assigning the value to transfer_trace
@@ -104,8 +112,10 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject])
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
                 except Exception as e:
                     print(e.args[-1])
-                print(deserialize_trace(transfer_trace, ids, subject_id))
-                log_file.write(format_trace_view_nicely(transfer_trace, ids) + "\n")
+                if log_to_print:
+                    print(deserialize_trace(transfer_trace, ids, subject_id))
+                if log_to_file:
+                    log_file.write(deserialize_trace(transfer_trace, ids, subject_id) + "\n")
 
     return capture_handler
 
@@ -137,16 +147,7 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
 
-async def run_allocator(with_debugging=False):
-    if with_debugging:
-        pass
-    node, allocator, tracker = await make_my_allocator_node()
-    while True:
-        await asyncio.sleep(1)
-    node.close()
-
-
-async def run_allocator2(with_debugging=False):
+async def run_debugger_node(with_debugging=False):
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
     os.environ.setdefault("UAVCAN__NODE__ID", "42")
@@ -154,7 +155,8 @@ async def run_allocator2(with_debugging=False):
         import_submodules(uavcan)
         ids = fill_ids()
         tracer = node.presentation.transport.make_tracer()
-        node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
+        node.presentation.transport.begin_capture(
+            make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging))
         t = NodeTracker(node)
         centralized_allocator = CentralizedAllocator(node)
         t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
@@ -164,6 +166,6 @@ async def run_allocator2(with_debugging=False):
 
 if __name__ == "__main__":
     try:
-        asyncio.get_event_loop().run_until_complete(run_allocator2())
+        asyncio.get_event_loop().run_until_complete(run_debugger_node(True))
     except KeyboardInterrupt:
         pass
