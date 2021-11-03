@@ -45,6 +45,8 @@ from pyuavcan.util import import_submodules, iter_descendants
 def make_handler_for_getinfo_update(allocator: Allocator, event: Optional[asyncio.Event] = None):
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
+            if node_id:
+                return
             if node_id and next_entry and next_entry.info is not None:
                 print("Allocating one node")
                 allocator.register_node(node_id, bytes(next_entry.info.unique_id))
@@ -205,9 +207,8 @@ class ComplexNodeUtilities:
 
 
 async def make_allocator(node_id: str):
-    complex_node_utilities = await make_complex_node(node_id)
-    complex_node_utilities.tracker.add_update_handler(
-        make_handler_for_getinfo_update(complex_node_utilities.centralized_allocator))
+    complex_node_utilities = await make_complex_node(node_id, get_info_handler_wrapper=make_handler_for_getinfo_update)
+    # complex_node_utilities.tracker.add_update_handler()
 
 
 async def make_complex_node(node_id: str,
@@ -221,6 +222,8 @@ async def make_complex_node(node_id: str,
     registry01["uavcan.node.id"] = int(node_id)
     ids = get_ids()
     node = make_node(NodeInfo(name=name), registry01)
+    node.add_lifetime_hooks(lambda: print("starting"), lambda: print("closing"))
+    node.start()
     tracer = node.presentation.transport.make_tracer()
     if with_debugging and capture_handler_wrapper:
         node.presentation.transport.begin_capture(capture_handler_wrapper(tracer, ids))
@@ -228,6 +231,7 @@ async def make_complex_node(node_id: str,
     centralized_allocator = CentralizedAllocator(node)
     if get_info_handler_wrapper:
         node_tracker.add_update_handler(get_info_handler_wrapper(centralized_allocator, None))
+
     return ComplexNodeUtilities(node, centralized_allocator, node_tracker, tracer)
 
 
