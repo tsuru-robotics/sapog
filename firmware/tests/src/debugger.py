@@ -68,30 +68,28 @@ def format_payload_hex_view(trace: Trace):
     return payload
 
 
-def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int, debugger_node_id: int,
-                      ignore_traffic_by_debugger=True):
-    if ids.get(subject_id) is not None:
-        if ignore_traffic_by_debugger and trace.transfer.metadata.session_specifier.source_node_id == debugger_node_id:
-            return None
-        obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
-        built_in_representation = pyuavcan.dsdl.to_builtin(obj)
-        if "clients" in built_in_representation.keys():
-            built_in_representation["clients"] = None
-        if "servers" in built_in_representation.keys():
-            built_in_representation["servers"] = None
-        transfer_deserialized = str(trace.transfer)
-        transfer_deserialized = transfer_deserialized.replace(
-            "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(",
-            "transfer(")
-        for key, value in ids.items():
-            transfer_deserialized = transfer_deserialized.replace("subject_id=" + str(key),
-                                                                  "subject_id=" + value.__name__ + f"({str(key)})")
-            transfer_deserialized = transfer_deserialized.replace("service_id=" + str(key),
-                                                                  "service_id=" + value.__name__ + f"({str(key)})")
-        transfer_deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", json.dumps(built_in_representation),
-                                       transfer_deserialized)
-        return transfer_deserialized
-    return "missing id"
+def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
+    if ids.get(subject_id) is None:
+        return f"missing id {subject_id}"
+
+    obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
+    built_in_representation = pyuavcan.dsdl.to_builtin(obj)
+    if "clients" in built_in_representation.keys():
+        built_in_representation["clients"] = None
+    if "servers" in built_in_representation.keys():
+        built_in_representation["servers"] = None
+    transfer_deserialized = str(trace.transfer)
+    transfer_deserialized = transfer_deserialized.replace(
+        "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(",
+        "transfer(")
+    for key, value in ids.items():
+        transfer_deserialized = transfer_deserialized.replace("subject_id=" + str(key),
+                                                              "subject_id=" + value.__name__ + f"({str(key)})")
+        transfer_deserialized = transfer_deserialized.replace("service_id=" + str(key),
+                                                              "service_id=" + value.__name__ + f"({str(key)})")
+    transfer_deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", json.dumps(built_in_representation),
+                                   transfer_deserialized)
+    return transfer_deserialized
 
 
 def fill_ids():
@@ -105,11 +103,15 @@ def fill_ids():
     return ids
 
 
-def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject], log_to_file=True, log_to_print=True):
+def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject], debugger_id_for_filtering: int,
+                         log_to_file=True, log_to_print=True, ignore_traffic_by_debugger=True):
     def capture_handler(capture: _tracer.Capture):
         with open("rx_frm.txt", "a") as log_file:
             # Checking to see if a transfer has finished, then assigning the value to transfer_trace
             if (transfer_trace := tracer.update(capture)) is not None:
+                if ignore_traffic_by_debugger and \
+                        transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering:
+                    return
                 subject_id = None
                 try:
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
