@@ -14,7 +14,8 @@ import pyuavcan
 from pyuavcan.application import Node
 from pyuavcan.presentation._presentation import MessageClass
 
-from allocator import make_complex_node, ComplexNodeUtilities
+from _await_wrap import wrap_await
+from allocator import make_complex_node, ComplexNodeUtilities, OneTimeAllocator
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -104,18 +105,13 @@ def test_esc_spin_2_seconds():
 
 
 def test_allows_pnp():
-    result: ComplexNodeUtilities = wrap_await(make_complex_node("1"))
     time.sleep(1.2)
-    assert wrap_await(get_target_node_id(result.node)) is not None
-
-
-def wrap_await(async_def):
-    """Makes the function given as an argument a synchronous function."""
-    return asyncio.get_event_loop().run_until_complete(async_def)
+    allocator = OneTimeAllocator("1")
+    allocator.allocate_one_node()
 
 
 def test_restart_node():
-    node, _, tracker = wrap_await(make_my_allocator_node())
+    node, _, tracker = wrap_await(make_complex_node("1"))
     target_node_id = wrap_await(get_target_node_id(node))
     assert target_node_id is not None
     service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
@@ -127,7 +123,7 @@ def test_restart_node():
 
 
 def test_has_heartbeat():
-    node, _, node_tracker = wrap_await()
+    node, _, node_tracker = wrap_await(make_complex_node("1"))
     assert wrap_await(get_target_node_id(node)) is not None
 
 

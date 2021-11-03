@@ -137,23 +137,6 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
 
 
-async def make_my_allocator_node(with_debugging=False) -> Node:
-    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
-    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
-    os.environ.setdefault("UAVCAN__NODE__ID", "42")
-    node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db")
-    if with_debugging:
-        import_submodules(uavcan)
-        ids = fill_ids()
-        tracer = node.presentation.transport.make_tracer()
-        node.presentation.transport.begin_capture(make_capture_handler(tracer, ids))
-    t = NodeTracker(node)
-    centralized_allocator = CentralizedAllocator(node)
-    t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
-    print("Running")
-    return node, centralized_allocator, t
-
-
 async def run_allocator(with_debugging=False):
     if with_debugging:
         pass

@@ -20,6 +20,8 @@ import typing
 from pyuavcan.application._node_factory import SimpleNode
 from pyuavcan.dsdl import FixedPortObject
 
+from _await_wrap import wrap_await
+
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
@@ -149,7 +151,7 @@ class OneTimeAllocator(Allocator, ABC):
     It creates a Node that will be used as an allocator."""
 
     def __init__(self, node_id: str):
-        self._complex_node_utilities = await make_complex_node(node_id)
+        self._complex_node_utilities = wrap_await(make_complex_node(node_id))
         self.node = self.complex_node_utilities.node
 
     def __enter__(self):
@@ -183,10 +185,10 @@ capture_handler_wrapper_type = Optional[
 class ComplexNodeUtilities:
     """node, centralized_allocator, node_tracker and tracer to return from functions"""
 
-    def __init__(self, node: Node, centralized_allocator: Allocator, node_tracker: NodeTracker, tracer: Tracer):
+    def __init__(self, node: Node, centralized_allocator: Allocator, tracker: NodeTracker, tracer: Tracer):
         self._node = node
         self._centralized_allocator = centralized_allocator
-        self._node_tracker = node_tracker
+        self._tracker = tracker
         self._tracer = tracer
 
     @property
@@ -198,8 +200,8 @@ class ComplexNodeUtilities:
         return self._centralized_allocator
 
     @property
-    def node_tracker(self):
-        return self._node_tracker
+    def tracker(self):
+        return self._tracker
 
     @property
     def tracer(self):
@@ -210,39 +212,31 @@ async def make_one_time_allocator(node_id: str, target_hw_id: hw_id_type):
     pass
 
 
+async def make_allocator(node_id: str):
+    complex_node_utilities = await make_complex_node(node_id)
+    complex_node_utilities.tracker.add_update_handler(
+        make_handler_for_getinfo_update(complex_node_utilities.tracker.centralized_allocator, None))
+
+
 async def make_complex_node(node_id: str,
                             get_info_handler_wrapper: get_info_handler_wrapper_type = None,
                             capture_handler_wrapper: capture_handler_wrapper_type = None,
                             with_debugging=False,
-                            interface: str = "socketcan:slcan0", mtu: str = "8") -> Node:
-    allocator_node_name = "com.zubax.sapog.tests.allocator"
-    registry01: register.Registry = register.Register()
-    registry01["UAVCAN__CAN__IFACE"] = interface
-    registry01["UAVCAN__CAN__MTU"] = mtu
-    registry01["UAVCAN__NODE__ID"] = node_id
+                            interface: str = "socketcan:slcan0", mtu: str = "8", name: str = "Just a node") -> Node:
+    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01["uavcan.can.iface"] = interface
+    registry01["uavcan.can.mtu"] = int(mtu)
+    registry01["uavcan.node.id"] = int(node_id)
     ids = get_ids()
-    node = make_node(NodeInfo(name=allocator_node_name), f"databases/{allocator_node_name}.db", registry01)
-    if with_debugging:
-        tracer = node.presentation.transport.make_tracer()
-        if capture_handler_wrapper:
-            node.presentation.transport.begin_capture(capture_handler_wrapper(tracer, ids))
+    node = make_node(NodeInfo(name=name), registry01)
+    tracer = node.presentation.transport.make_tracer()
+    if with_debugging and capture_handler_wrapper:
+        node.presentation.transport.begin_capture(capture_handler_wrapper(tracer, ids))
     node_tracker = NodeTracker(node)
     centralized_allocator = CentralizedAllocator(node)
     if get_info_handler_wrapper:
         node_tracker.add_update_handler(get_info_handler_wrapper(centralized_allocator, None))
-    return ComplexNodeUtilities(node, centralized_allocator, node_tracker)
-
-
-async def run_allocator(with_debugging=False):
-    if with_debugging:
-        pass
-    packed = await make_complex_node("1", with_debugging=with_debugging)
-    node = packed.node
-    allocator = packed.centralized_allocator
-    tracker = packed.tracker
-    while True:
-        await asyncio.sleep(1)
-    node.close()
+    return ComplexNodeUtilities(node, centralized_allocator, node_tracker, tracer)
 
 
 async def run_allocator2(time_out: Optional[int] = None):
