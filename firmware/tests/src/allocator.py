@@ -67,7 +67,7 @@ class OneTimeAllocator(Allocator, ABC):
         registry01["uavcan.node.id"] = 1
         self.node = make_node(NodeInfo(name="one_time_allocator_node"), registry01)
         self.tracker = NodeTracker(self.node)
-        centralized_allocator = CentralizedAllocator(self.node)
+        centralized_allocator = CentralizedAllocator(self.node, "databases/allocator_database.db")
 
     def __enter__(self):
         return self
