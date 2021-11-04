@@ -131,11 +131,6 @@ class ComplexNodeUtilities:
         return self._tracer
 
 
-async def make_simple_allocator(node_id: str):
-    complex_node_utilities = await make_complex_node(node_id, get_info_handler_wrapper=make_handler_for_getinfo_update)
-    # complex_node_utilities.tracker.add_update_handler()
-
-
 async def make_complex_node(node_id: str,
                             get_info_handler_wrapper: get_info_handler_wrapper_type = None,
                             capture_handler_wrapper: capture_handler_wrapper_type = None,
