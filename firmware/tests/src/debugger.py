@@ -115,8 +115,11 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
         with open("rx_frm.txt", "a") as log_file:
             # Checking to see if a transfer has finished, then assigning the value to transfer_trace
             if (transfer_trace := tracer.update(capture)) is not None:
+                is_service_request: bool = hasattr(transfer_trace.transfer.metadata.session_specifier.data_specifier,
+                                                   "service_id")
                 if ignore_traffic_by_debugger and \
-                        transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering:
+                        transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering \
+                        and not is_service_request:
                     return
                 subject_id = None
                 try:
