@@ -29,6 +29,8 @@ import uavcan.register.Access_1_0
 import uavcan.primitive.array
 import reg.drone.physics.acoustics.Note_0_1
 
+node_under_testing_hw_id = [49, 255, 213, 5, 77, 84, 49, 52, 81, 71, 5, 67, 144, 228, 1, 8]
+
 
 @dataclasses.dataclass
 class SetupData:
@@ -94,28 +96,32 @@ async def get_any_target_node_id(test_conductor_node: Node):
     return target_node_id
 
 
-async def get_target_node_id(test_conductor_node: Node, target_hw_id: hw_id_type) -> int:
+async def get_target_node_id_by_hw_id(test_conductor_node: Node, target_hw_id: hw_id_type) -> int:
     """Catch any node that is sending a heartbeat, make sure that it isn't the testing node and then return its
     node ID"""
     event = asyncio.Event()
     heartbeat_subscriber = test_conductor_node.make_subscriber(uavcan.node.Heartbeat_1_0)
     target_node_id = None
 
-    async def handle_heartbeats(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
+    def handle_heartbeats(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
+        print("handler called")
         nonlocal target_node_id
         if transfer_from.source_node_id != test_conductor_node.id:
             target_node_id = transfer_from.source_node_id
             get_info_client = test_conductor_node.make_client(uavcan.node.GetInfo_1_0, transfer_from.source_node_id)
             get_info_request = uavcan.node.GetInfo_1_0.Request()
-            get_info_response: uavcan.node.GetInfo_1_0.Response = await get_info_client.call(get_info_request)
+            get_info_response: uavcan.node.GetInfo_1_0.Response = wrap_await(
+                asyncio.wait_for(get_info_client.call(get_info_request)), 1)
             if get_info_response.unique_id == target_hw_id:
                 event.set()
 
-    heartbeat_subscriber.receive_in_background(handle_heartbeats)
-    # stops here and waits for the handler to declare that it has received a fitting node_id
-    # if the timeout sets the event first then None is returned
-    # heartbeat_subscriber.close() This should be cleaned somewhere
-    event.wait()
+            heartbeat_subscriber.receive_in_background(handle_heartbeats)
+            # stops here and waits for the handler to declare that it has received a fitting node_id
+            # if the timeout sets the event first then None is returned
+            # heartbeat_subscriber.close() This should be cleaned somewhere
+
+    await event.wait()
+
     return target_node_id
 
 
@@ -133,14 +139,14 @@ def test_esc_spin_2_seconds():
 
 def test_allows_allocation_of_node_id():
     with OneTimeAllocator("1") as allocator:
-        event = allocator.allocate_one_node([49, 255, 213, 5, 77, 84, 49, 52, 81, 71, 5, 67, 144, 228, 1, 8])
+        event = allocator.allocate_one_node(node_under_testing_hw_id)
         wrap_await(asyncio.wait_for(event.wait(), 3))
 
 
 def test_restart_node():
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-        target_node_id = wrap_await(asyncio.wait_for(get_target_node_id(node), 2))
+        target_node_id = wrap_await(asyncio.wait_for(get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 2))
         assert target_node_id is not None
         service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
         msg = uavcan.node.ExecuteCommand_1_1.Request()
@@ -152,8 +158,11 @@ def test_restart_node():
 
 def test_has_heartbeat():
     registry01 = make_registry(3)
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-        assert wrap_await(get_any_target_node_id(node)) is not None
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+        this_awaitable = asyncio.wait_for(
+            get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 6)  # on a separate line for debugging
+        result = wrap_await(this_awaitable)
+        assert result is not None
 
 
 if __name__ == "__main__":

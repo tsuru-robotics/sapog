@@ -103,6 +103,12 @@ def fill_ids():
     return ids
 
 
+ignore_subjects = [
+    7510,  # port_list
+    7509  # heartbeat
+]
+
+
 def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject], debugger_id_for_filtering: int,
                          log_to_file=True, log_to_print=True, ignore_traffic_by_debugger=True):
     def capture_handler(capture: _tracer.Capture):
@@ -118,6 +124,8 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                 except Exception as e:
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.service_id
                     print(e.args[-1])
+                if subject_id in ignore_subjects:
+                    return
                 deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id)
                 if deserialized_trace is None:
                     return
@@ -158,6 +166,7 @@ async def run_debugger_node(with_debugging=False):
     registry01["uavcan.can.mtu"] = 8
     debugger_node_id = 2
     registry01["uavcan.node.id"] = debugger_node_id
+
     with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
         import_submodules(uavcan)
         ids = fill_ids()
