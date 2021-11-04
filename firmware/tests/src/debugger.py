@@ -29,7 +29,6 @@ import uavcan.primitive.array
 
 from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
-from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
 from pyuavcan.transport import _tracer, Trace, Tracer
 from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
@@ -66,7 +65,7 @@ def format_payload_hex_view(trace: Trace):
     return payload
 
 
-def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
+def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int, debugger_id: int):
     if ids.get(subject_id) is None:
         return f"missing id {subject_id}"
     try:
@@ -78,7 +77,14 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
         built_in_representation["clients"] = None
     if "servers" in built_in_representation.keys():
         built_in_representation["servers"] = None
+
     transfer_deserialized = str(trace.transfer)
+    if trace.transfer.metadata.session_specifier.source_node_id == debugger_id:
+        transfer_deserialized = transfer_deserialized.replace(f"source_node_id={debugger_id}",
+                                                              f"source_node_id={debugger_id} (this debugger)")
+    if trace.transfer.metadata.session_specifier.destination_node_id == debugger_id:
+        transfer_deserialized = transfer_deserialized.replace(f"destination_node_id={debugger_id}",
+                                                              f"destination_node_id={debugger_id} (this debugger)")
     transfer_deserialized = transfer_deserialized.replace(
         "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(",
         "transfer(")
@@ -121,15 +127,13 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                         transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering \
                         and not is_service_request:
                     return
-                subject_id = None
-                try:
-                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
-                except Exception as e:
+                if is_service_request:
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.service_id
-                    print(e.args[-1])
+                else:
+                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
                 if subject_id in ignore_subjects:
                     return
-                deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id)
+                deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id, debugger_id_for_filtering)
                 if deserialized_trace is None:
                     return
                 if log_to_print:
