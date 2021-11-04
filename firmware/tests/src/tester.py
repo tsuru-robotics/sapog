@@ -103,9 +103,13 @@ async def get_target_node_id(test_conductor_node: Node, target_hw_id: hw_id_type
 
     async def handle_heartbeats(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
         nonlocal target_node_id
-        if transfer_from.source_node_id != test_conductor_node.id and:
+        if transfer_from.source_node_id != test_conductor_node.id:
             target_node_id = transfer_from.source_node_id
-            event.set()
+            get_info_client = test_conductor_node.make_client(uavcan.node.GetInfo_1_0, transfer_from.source_node_id)
+            get_info_request = uavcan.node.GetInfo_1_0.Request()
+            get_info_response: uavcan.node.GetInfo_1_0.Response = await get_info_client.call(get_info_request)
+            if get_info_response.unique_id == target_hw_id:
+                event.set()
 
     heartbeat_subscriber.receive_in_background(handle_heartbeats)
     # stops here and waits for the handler to declare that it has received a fitting node_id
@@ -149,7 +153,7 @@ def test_restart_node():
 def test_has_heartbeat():
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-        assert wrap_await(get_target_node_id(node)) is not None
+        assert wrap_await(get_any_target_node_id(node)) is not None
 
 
 if __name__ == "__main__":
