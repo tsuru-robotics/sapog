@@ -42,24 +42,6 @@ from pyuavcan.transport import _tracer, Tracer, Transfer
 from pyuavcan.application.node_tracker import Entry
 
 
-def make_handler_for_getinfo_update(allocator: Allocator, event: Optional[asyncio.Event] = None):
-    """Wraps the actual handler function that needs to have specific parameters and returns the handler with context."""
-
-    def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-        async def handle_inner_function():
-            if node_id:
-                return
-            if node_id and next_entry and next_entry.info is not None:
-                print("Allocating one node")
-                allocator.register_node(node_id, bytes(next_entry.info.unique_id))
-                if event:
-                    event.set()
-
-        asyncio.get_event_loop().create_task(handle_inner_function())
-
-    return handle_getinfo_handler_format
-
-
 async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
     print(f"Resetting node_id of {current_target_node_id}")
     service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
@@ -176,23 +158,22 @@ async def make_complex_node(node_id: str,
     return ComplexNodeUtilities(node, centralized_allocator, node_tracker, tracer)
 
 
-async def run_allocator2(time_out: Optional[int] = None, allocator_id: int = 1, name="com.zubax.sapog.tests.allocator"):
+async def run_continuous_allocator(time_out: Optional[int] = None, allocator_id: int = 1,
+                                   name="com.zubax.sapog.tests.allocator"):
     event = asyncio.Event()
-    complex_node = make_complex_node(allocator_id, get_info_handler_wrapper=make_handler_for_getinfo_update)
-    if time_out:
-        async def time_out_coroutine(time_out_time):
-            nonlocal event
-            await asyncio.sleep(time_out_time)
-            event.set()
-
-        asyncio.get_event_loop().create_task(time_out_coroutine(time_out))
-    while not event.is_set():
-        await asyncio.sleep(0.04)
+    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.mtu"] = 8
+    registry01["uavcan.node.id"] = 1
+    with make_node(NodeInfo(name="allocator_node"), registry01) as node:
+        centralized_allocator = CentralizedAllocator(node)
+        while True:
+            await asyncio.sleep(0.1)
     return True
 
 
 if __name__ == "__main__":
     try:
-        asyncio.get_event_loop().run_until_complete(run_allocator2())
+        asyncio.get_event_loop().run_until_complete(run_continuous_allocator())
     except KeyboardInterrupt:
         pass

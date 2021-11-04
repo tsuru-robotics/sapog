@@ -11,7 +11,7 @@ import sys
 import time
 
 import pyuavcan
-from pyuavcan.application import Node
+from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
 
 from _await_wrap import wrap_await
@@ -105,15 +105,21 @@ def test_allows_allocation_of_node_id():
 
 
 def test_restart_node():
-    complex_node_utils = wrap_await(make_complex_node("1"))
-    target_node_id = wrap_await(asyncio.wait_for(get_target_node_id(complex_node_utils.node), 2))
-    assert target_node_id is not None
-    service_client = complex_node_utils.node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
-    msg = uavcan.node.ExecuteCommand_1_1.Request()
-    msg.command = msg.COMMAND_RESTART
-    response = wrap_await(service_client.call(msg))
-    complex_node_utils.node.close()
-    assert response is not None
+    tester_node_id = 3
+    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.mtu"] = 8
+    registry01["uavcan.node.id"] = tester_node_id
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
+        complex_node_utils = wrap_await(make_complex_node("1"))
+        target_node_id = wrap_await(asyncio.wait_for(get_target_node_id(complex_node_utils.node), 2))
+        assert target_node_id is not None
+        service_client = complex_node_utils.node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
+        msg = uavcan.node.ExecuteCommand_1_1.Request()
+        msg.command = msg.COMMAND_RESTART
+        response = wrap_await(service_client.call(msg))
+        complex_node_utils.node.close()
+        assert response is not None
 
 
 def test_has_heartbeat():
