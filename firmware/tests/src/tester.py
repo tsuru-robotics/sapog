@@ -78,17 +78,11 @@ async def get_target_node_id(test_conductor_node: Node) -> int:
             target_node_id = transfer_from.source_node_id
             event.set()
 
-    async def time_out():
-        nonlocal event
-        await asyncio.sleep(1)
-        event.set()
-
-    asyncio.get_event_loop().create_task(time_out())
     heartbeat_subscriber.receive_in_background(handle_heartbeats)
     # stops here and waits for the handler to declare that it has received a fitting node_id
     # if the timeout sets the event first then None is returned
-    await event.wait()
-    heartbeat_subscriber.close()
+    # heartbeat_subscriber.close() This should be cleaned somewhere
+    event.wait()
     return target_node_id
 
 
@@ -104,21 +98,21 @@ def test_esc_spin_2_seconds():
     pass
 
 
-def test_allows_pnp():
-    time.sleep(1.2)
-    allocator = OneTimeAllocator("1")
-    allocator.allocate_one_node()
+def test_allows_allocation_of_node_id():
+    with OneTimeAllocator("1") as allocator:
+        event = allocator.allocate_one_node([49, 255, 213, 5, 77, 84, 49, 52, 81, 71, 5, 67, 144, 228, 1, 8])
+        wrap_await(asyncio.wait_for(event.wait(), 3))
 
 
 def test_restart_node():
-    node, _, tracker = wrap_await(make_complex_node("1"))
-    target_node_id = wrap_await(get_target_node_id(node))
+    complex_node_utils = wrap_await(make_complex_node("1"))
+    target_node_id = wrap_await(asyncio.wait_for(get_target_node_id(complex_node_utils.node), 2))
     assert target_node_id is not None
-    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
+    service_client = complex_node_utils.node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
     response = wrap_await(service_client.call(msg))
-    node.close()
+    complex_node_utils.node.close()
     assert response is not None
 
 

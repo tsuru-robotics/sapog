@@ -71,9 +71,11 @@ def format_payload_hex_view(trace: Trace):
 def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int):
     if ids.get(subject_id) is None:
         return f"missing id {subject_id}"
-
-    obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
-    built_in_representation = pyuavcan.dsdl.to_builtin(obj)
+    try:
+        obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
+        built_in_representation = pyuavcan.dsdl.to_builtin(obj)
+    except TypeError:
+        built_in_representation = {}
     if "clients" in built_in_representation.keys():
         built_in_representation["clients"] = None
     if "servers" in built_in_representation.keys():
@@ -116,6 +118,7 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                 try:
                     subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
                 except Exception as e:
+                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.service_id
                     print(e.args[-1])
                 deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id)
                 if deserialized_trace is None:

@@ -1,11 +1,11 @@
 import asyncio
 from time import sleep
 from _await_wrap import wrap_await
-from allocator import make_allocator
+from allocator import make_simple_allocator
 
 
 async def main():
-    packed = await make_allocator("1")
+    packed = await make_simple_allocator("1")
 
     while True:
         await asyncio.sleep(0.04)

@@ -38,9 +38,8 @@ do_update_dsdl = False
 from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
-from pyuavcan.transport import _tracer, Trace, Tracer
+from pyuavcan.transport import _tracer, Tracer, Transfer
 from pyuavcan.application.node_tracker import Entry
-from pyuavcan.util import import_submodules, iter_descendants
 
 
 def make_handler_for_getinfo_update(allocator: Allocator, event: Optional[asyncio.Event] = None):
@@ -73,10 +72,6 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
     print(response)
 
 
-def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
-    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
-
-
 hw_id_type = typing.Union[typing.List[int], bytes, bytearray]
 
 
@@ -87,7 +82,7 @@ class OneTimeAllocator(Allocator, ABC):
 
     def __init__(self, node_id: str):
         self._complex_node_utilities = wrap_await(make_complex_node(node_id))
-        self.node = self.complex_node_utilities.node
+        self.node = self._complex_node_utilities.node
 
     def __enter__(self):
         return self
@@ -95,21 +90,30 @@ class OneTimeAllocator(Allocator, ABC):
     def __exit__(self, exc_type, exc_value, traceback):
         self.node.close()
 
-    async def allocate_one_node(self, target_hw_id: hw_id_type):
+    def allocate_one_node(self, target_hw_id: Optional[hw_id_type]) -> asyncio.Event:
         """Returns and event that can be waited for."""
         one_node_allocated_event = asyncio.Event()
 
+        # allocation_data_subscriber = self.node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
+        # def allocation_data_handler(message, transfer: Transfer):
+        #     if transfer.
+        #
+        # allocation_data_subscriber.receive_in_background(allocation_data_handler)
+
         def get_info_handler_wrapper(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            async def get_info_handler():
-                if node_id and next_entry and next_entry.info is not None:
-                    print("Allocating one node")
-                    self._complex_node_utilities.centralized_allocator.register_node(node_id,
-                                                                                     bytes(next_entry.info.unique_id))
-                    one_node_allocated_event.set()
+            print("handler called")
+            if not node_id or not next_entry or not next_entry.info:
+                return
+            if target_hw_id and target_hw_id != next_entry.info.unique_id:
+                print(f"{target_hw_id} != {next_entry.info.unique_id}")
+                return
+            print("Allocating one node")
+            self._complex_node_utilities.centralized_allocator.register_node(node_id,
+                                                                             bytes(next_entry.info.unique_id))
+            one_node_allocated_event.set()
 
-            asyncio.get_event_loop().create_task(get_info_handler())
-
-        one_node_allocated_event.wait()
+        self._complex_node_utilities.tracker.add_update_handler(get_info_handler_wrapper)
+        return one_node_allocated_event
 
 
 get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]], None]
@@ -145,7 +149,7 @@ class ComplexNodeUtilities:
         return self._tracer
 
 
-async def make_allocator(node_id: str):
+async def make_simple_allocator(node_id: str):
     complex_node_utilities = await make_complex_node(node_id, get_info_handler_wrapper=make_handler_for_getinfo_update)
     # complex_node_utilities.tracker.add_update_handler()
 
@@ -154,7 +158,8 @@ async def make_complex_node(node_id: str,
                             get_info_handler_wrapper: get_info_handler_wrapper_type = None,
                             capture_handler_wrapper: capture_handler_wrapper_type = None,
                             with_debugging=False,
-                            interface: str = "socketcan:slcan0", mtu: str = "8", name: str = "Just a node") -> Node:
+                            interface: str = "socketcan:slcan0", mtu: str = "8",
+                            name: str = "Just a node") -> ComplexNodeUtilities:
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = interface
     registry01["uavcan.can.mtu"] = int(mtu)
@@ -171,11 +176,9 @@ async def make_complex_node(node_id: str,
     return ComplexNodeUtilities(node, centralized_allocator, node_tracker, tracer)
 
 
-async def run_allocator2(time_out: Optional[int] = None):
+async def run_allocator2(time_out: Optional[int] = None, allocator_id: int = 1, name="com.zubax.sapog.tests.allocator"):
     event = asyncio.Event()
-    complex_node = make_complex_node("com.zubax.sapog.tests.allocator",
-                                     get_info_handler_wrapper=make_handler_for_getinfo_update)
-
+    complex_node = make_complex_node(allocator_id, get_info_handler_wrapper=make_handler_for_getinfo_update)
     if time_out:
         async def time_out_coroutine(time_out_time):
             nonlocal event
