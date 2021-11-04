@@ -27,8 +27,6 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-do_update_dsdl = False
-
 from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
@@ -154,18 +152,11 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
     print(response)
 
 
-def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
-    service_client = sending_node.make_client(uavcan.register.Access_1_0, current_target_node_id)
-
-
 async def run_debugger_node(with_debugging=False):
-    debugger_node_id = 2
-    os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
-    os.environ.setdefault("UAVCAN__CAN__MTU", "8")
-    os.environ.setdefault("UAVCAN__NODE__ID", str(debugger_node_id))
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = "socketcan:slcan0"
     registry01["uavcan.can.mtu"] = 8
+    debugger_node_id = 2
     registry01["uavcan.node.id"] = debugger_node_id
     with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
         import_submodules(uavcan)

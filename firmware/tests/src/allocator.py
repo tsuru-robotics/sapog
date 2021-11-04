@@ -33,8 +33,6 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-do_update_dsdl = False
-
 from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
@@ -63,8 +61,13 @@ class OneTimeAllocator(Allocator, ABC):
     It creates a Node that will be used as an allocator."""
 
     def __init__(self, node_id: str):
-        self._complex_node_utilities = wrap_await(make_complex_node(node_id))
-        self.node = self._complex_node_utilities.node
+        registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+        registry01["uavcan.can.iface"] = "socketcan:slcan0"
+        registry01["uavcan.can.mtu"] = 8
+        registry01["uavcan.node.id"] = 1
+        self.node = make_node(NodeInfo(name="one_time_allocator_node"), registry01)
+        self.tracker = NodeTracker(self.node)
+        centralized_allocator = CentralizedAllocator(self.node)
 
     def __enter__(self):
         return self
@@ -89,12 +92,10 @@ class OneTimeAllocator(Allocator, ABC):
             if target_hw_id and target_hw_id != next_entry.info.unique_id:
                 print(f"{target_hw_id} != {next_entry.info.unique_id}")
                 return
-            print("Allocating one node")
-            self._complex_node_utilities.centralized_allocator.register_node(node_id,
-                                                                             bytes(next_entry.info.unique_id))
+            print("Detected allocation of one node")
             one_node_allocated_event.set()
 
-        self._complex_node_utilities.tracker.add_update_handler(get_info_handler_wrapper)
+        self.tracker.add_update_handler(get_info_handler_wrapper)
         return one_node_allocated_event
 
 
@@ -103,54 +104,6 @@ get_info_handler_wrapper_type = Optional[typing.Callable[[Allocator, Event], get
 capture_handler_type = typing.Callable[[_tracer.Capture], None]
 capture_handler_wrapper_type = Optional[
     typing.Callable[[Tracer, typing.Dict[int, FixedPortObject]], capture_handler_type]]
-
-
-class ComplexNodeUtilities:
-    """node, centralized_allocator, node_tracker and tracer to return from functions"""
-
-    def __init__(self, node: Node, centralized_allocator: Allocator, tracker: NodeTracker, tracer: Tracer):
-        self._node = node
-        self._centralized_allocator = centralized_allocator
-        self._tracker = tracker
-        self._tracer = tracer
-
-    @property
-    def node(self):
-        return self._node
-
-    @property
-    def centralized_allocator(self):
-        return self._centralized_allocator
-
-    @property
-    def tracker(self):
-        return self._tracker
-
-    @property
-    def tracer(self):
-        return self._tracer
-
-
-async def make_complex_node(node_id: str,
-                            get_info_handler_wrapper: get_info_handler_wrapper_type = None,
-                            capture_handler_wrapper: capture_handler_wrapper_type = None,
-                            with_debugging=False,
-                            interface: str = "socketcan:slcan0", mtu: str = "8",
-                            name: str = "Just a node") -> ComplexNodeUtilities:
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = interface
-    registry01["uavcan.can.mtu"] = int(mtu)
-    registry01["uavcan.node.id"] = int(node_id)
-    node = make_node(NodeInfo(name=name), registry01)
-    node.add_lifetime_hooks(lambda: print("starting"), lambda: print("closing"))
-    node.start()
-    tracer = node.presentation.transport.make_tracer()
-    node_tracker = NodeTracker(node)
-    centralized_allocator = CentralizedAllocator(node)
-    if get_info_handler_wrapper:
-        node_tracker.add_update_handler(get_info_handler_wrapper(centralized_allocator, None))
-
-    return ComplexNodeUtilities(node, centralized_allocator, node_tracker, tracer)
 
 
 async def run_continuous_allocator(time_out: Optional[int] = None, allocator_id: int = 1,
