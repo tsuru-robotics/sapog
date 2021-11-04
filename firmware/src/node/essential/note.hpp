@@ -5,4 +5,7 @@
  */
 #pragma once
 
-bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer);
+#include <node/state.hpp>
+
+bool
+reg_udral_physics_acoustics_Note_0_1_handler(const node::state::State &state, const CanardTransfer *const transfer);

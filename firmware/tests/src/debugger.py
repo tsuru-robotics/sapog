@@ -29,7 +29,7 @@ import uavcan.primitive.array
 
 do_update_dsdl = False
 
-from pyuavcan.application import make_node, NodeInfo, Node
+from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
 from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
 from pyuavcan.transport import _tracer, Trace, Tracer
@@ -37,7 +37,7 @@ from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
 
 
-def make_handler_for_getinfo_update(allocator: Allocator):
+def make_handler_for_getinfo_update():
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
         async def handle_inner_function():
             if node_id and next_entry and next_entry.info is not None:
@@ -159,11 +159,15 @@ def configure_note_on_sapog(sending_node: Node, current_target_node_id: int):
 
 
 async def run_debugger_node(with_debugging=False):
-    debugger_node_id = 42
+    debugger_node_id = 2
     os.environ.setdefault("UAVCAN__CAN__IFACE", "socketcan:slcan0")
     os.environ.setdefault("UAVCAN__CAN__MTU", "8")
     os.environ.setdefault("UAVCAN__NODE__ID", str(debugger_node_id))
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), "databases/node1.db") as node:
+    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.mtu"] = 8
+    registry01["uavcan.node.id"] = debugger_node_id
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
         import_submodules(uavcan)
         ids = fill_ids()
         tracer = node.presentation.transport.make_tracer()
@@ -171,8 +175,7 @@ async def run_debugger_node(with_debugging=False):
             make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging,
                                  debugger_id_for_filtering=debugger_node_id))
         t = NodeTracker(node)
-        centralized_allocator = CentralizedAllocator(node)
-        t.add_update_handler(make_handler_for_getinfo_update(centralized_allocator))
+        t.add_update_handler(make_handler_for_getinfo_update())
         while True:
             await asyncio.sleep(1)
 

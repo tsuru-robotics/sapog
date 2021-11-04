@@ -8,11 +8,12 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <node/units.hpp>
 #include <node/node.hpp>
+#include <cstdio>
+#include <node/time.h>
 #include "port_list.hpp"
 
 void publish_port_list(CanardInstance &canard, node::state::State &state)
 {
-    assert(canard.node_id > CANARD_NODE_ID_MAX);
     uavcan_node_port_List_0_1 m{};
     uavcan_node_port_List_0_1_initialize_(&m);
     uavcan_node_port_SubjectIDList_0_1_select_sparse_list_(&m.publishers);
@@ -46,7 +47,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     if (uavcan_node_port_List_0_1_serialize_(&m, &serialized[0], &serialized_size) >= 0)
     {
         const CanardTransfer transfer = {
-            .timestamp_usec = state.timing.current_time + ONE_SECOND_DEADLINE_usec,
+            .timestamp_usec = get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
             .priority       = CanardPriorityOptional,  // Mind the priority.
             .transfer_kind  = CanardTransferKindMessage,
             .port_id        = uavcan_node_port_List_0_1_FIXED_PORT_ID_,
