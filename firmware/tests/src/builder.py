@@ -3,6 +3,7 @@
 # Distributed under the MIT License, available in the file LICENSE.
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
+import argparse
 import asyncio
 import pathlib
 import sys
@@ -28,12 +29,13 @@ tests_directory = firmware_directory / "tests"
 
 def get_port():
     from glob import glob
-    output = subprocess.check_output(["realpath", "-LPz", glob("/dev/serial/by-id/usb-*Black_Magic_Probe*-if00")[0]]).decode("utf-8")[:-1]
+    output = subprocess.check_output(
+        ["realpath", "-LPz", glob("/dev/serial/by-id/usb-*Black_Magic_Probe*-if00")[0]]).decode("utf-8")[:-1]
     return output
 
 
 def move_directories(destination: pathlib.Path, *source_dirs: pathlib.Path):
-    subprocess.run(["mv", "-t", destination, *source_dirs])
+    subprocess.run(["mv", "-ut", destination, *source_dirs])
 
 
 async def upload_sapog():
@@ -67,7 +69,6 @@ async def build_sapog() -> None:
     name_list = zip_file.namelist()
     extra_parent_directory = name_list[0]
     zip_file.extractall(firmware_directory / downloads_folder_name)
-    print(extra_parent_directory)
     zip_file.close()
     subprocess.run(["mkdir", public_regulated_data_types_directory])
     move_directories(public_regulated_data_types_directory,
@@ -83,15 +84,20 @@ async def start_build_process() -> None:
 
 async def main() -> None:
     await build_sapog()
-    # await upload_compound()
-    # while True:
-    #     await asyncio.sleep(1)
 
 
 already_ran = False
 
 if __name__ == "__main__":
-    try:
-        asyncio.get_event_loop().run_until_complete(main())
-    except KeyboardInterrupt:
-        pass
+    parser = argparse.ArgumentParser(
+        "A script that builds Sapog or uploads the built elf file to the device through"
+        "Blackmagic based Babel-Babel.")
+    parser.add_argument("action", choices=["build", "flash"], nargs="?")
+    args = parser.parse_args()
+    if args.action == "build":
+        asyncio.get_event_loop().run_until_complete(build_sapog())
+    elif args.action == "flash":
+        asyncio.get_event_loop().run_until_complete(upload_sapog())
+    else:
+        parser.print_help()
+        exit(1)

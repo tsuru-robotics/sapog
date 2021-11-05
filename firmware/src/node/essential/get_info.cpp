@@ -39,7 +39,6 @@ namespace node::essential
 {
 bool uavcan_node_GetInfo_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
-    printf("GetInfo handler responding\n");
     const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
     uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
     size_t serialized_size = sizeof(serialized);

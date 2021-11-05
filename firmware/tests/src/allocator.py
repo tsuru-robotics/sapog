@@ -47,15 +47,12 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
     print(response)
 
 
-hw_id_type = typing.Union[typing.List[int], bytes, bytearray]
-
-
 class OneTimeAllocator(Allocator, ABC):
     """This class is used for testing if allocation works on Sapog
 
     It creates a Node that will be used as an allocator."""
 
-    def __init__(self, target_hw_id: Optional[hw_id_type]):
+    def __init__(self, target_name: str):
         print("One time allocator constructed.")
         registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
         registry01["uavcan.can.iface"] = "socketcan:slcan0"
@@ -65,17 +62,18 @@ class OneTimeAllocator(Allocator, ABC):
         self.tracker = NodeTracker(self.node)
         self.one_node_allocated_event = asyncio.Event()
         self.allocated_node_id = None
+        self.allocated_node_name = None
 
         def get_info_handler(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            if not target_hw_id:
-                raise Exception("Target hw_id is missing")
+            if not target_name:
+                raise Exception("Target name is missing")
             if not next_entry or not next_entry.info:
                 return
-            if target_hw_id and hasattr(next_entry, "info") and hasattr(next_entry.info,
-                                                                        "unique_id") and target_hw_id != list(
-                next_entry.info.unique_id):
+            if target_name and hasattr(next_entry, "info") \
+                    and hasattr(next_entry.info, "name") and target_name != next_entry.info.name:
                 return
             self.allocated_node_id = node_id
+            self.allocated_node_name = next_entry.info.name
             self.one_node_allocated_event.set()
 
         self.tracker.add_update_handler(get_info_handler)
