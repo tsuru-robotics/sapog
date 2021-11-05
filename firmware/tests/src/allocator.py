@@ -6,22 +6,17 @@
 #
 
 import asyncio
-import json
 import pathlib
 import sys
-import re
 from abc import ABC
 from asyncio import Event
 from typing import Optional
-from itertools import chain
 
 import pyuavcan.dsdl
 import typing
 
 from pyuavcan.application._node_factory import SimpleNode
 from pyuavcan.dsdl import FixedPortObject
-
-from _await_wrap import wrap_await
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -69,6 +64,7 @@ class OneTimeAllocator(Allocator, ABC):
         self.node = make_node(NodeInfo(name="one_time_allocator_node"), registry01)
         self.tracker = NodeTracker(self.node)
         self.one_node_allocated_event = asyncio.Event()
+        self.allocated_node_id = None
 
         def get_info_handler(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
             print("handler called")
@@ -83,16 +79,11 @@ class OneTimeAllocator(Allocator, ABC):
                 print(f"{target_hw_id} != {list(next_entry.info.unique_id)}")
                 return
             print("Detected allocation of one node")
+            self.allocated_node_id = node_id
             self.one_node_allocated_event.set()
 
         self.tracker.add_update_handler(get_info_handler)
-        centralized_allocator = CentralizedAllocator(self.node, "databases/allocator_database.db")
-
-        # allocation_data_subscriber = self.node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
-        # def allocation_data_handler(message, transfer: Transfer):
-        #     if transfer.
-        #
-        # allocation_data_subscriber.receive_in_background(allocation_data_handler)
+        centralized_allocator = CentralizedAllocator(self.node)
         self.node.start()
 
     def __enter__(self):

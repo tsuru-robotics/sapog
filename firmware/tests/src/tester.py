@@ -113,7 +113,7 @@ async def get_target_node_id_by_hw_id(test_conductor_node: Node, target_hw_id: h
             get_info_request = uavcan.node.GetInfo_1_0.Request()
             get_info_response: uavcan.node.GetInfo_1_0.Response = wrap_await(
                 asyncio.wait_for(get_info_client.call(get_info_request)), 1)
-            if get_info_response.unique_id == target_hw_id:
+            if list(get_info_response.unique_id) == target_hw_id:
                 target_node_id = transfer_from.source_node_id
                 event.set()
 
@@ -139,6 +139,7 @@ def test_esc_spin_2_seconds():
 def allocate_one_node_id():
     with OneTimeAllocator(node_under_testing_hw_id) as allocator:
         wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
+        return allocator.allocated_node_id, node_under_testing_hw_id
 
 
 def test_allows_allocation_of_node_id():
@@ -163,13 +164,20 @@ def test_restart_node():
 
 
 def test_has_heartbeat():
-    allocate_one_node_id()
+    node_id, hw_id = allocate_one_node_id()
     try:
         registry01 = make_registry(3)
         with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-            this_awaitable = asyncio.wait_for(get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 6)
-            result = wrap_await(this_awaitable)
-            assert result is not None
+            subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+            event = asyncio.Event()
+
+            def hb_handler(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                if transfer_from.source_node_id == node_id:
+                    event.set()
+
+            subscriber.receive_in_background(hb_handler)
+            wrap_await(asyncio.wait_for(event.wait(), 2))
+            assert True
     except TimeoutError:
         assert False
 
