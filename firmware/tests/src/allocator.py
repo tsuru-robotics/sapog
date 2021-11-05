@@ -60,43 +60,46 @@ class OneTimeAllocator(Allocator, ABC):
 
     It creates a Node that will be used as an allocator."""
 
-    def __init__(self, node_id: str):
+    def __init__(self, target_hw_id: Optional[hw_id_type]):
+        print("One time allocator constructed.")
         registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
         registry01["uavcan.can.iface"] = "socketcan:slcan0"
         registry01["uavcan.can.mtu"] = 8
         registry01["uavcan.node.id"] = 1
         self.node = make_node(NodeInfo(name="one_time_allocator_node"), registry01)
         self.tracker = NodeTracker(self.node)
+        self.one_node_allocated_event = asyncio.Event()
+
+        def get_info_handler(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
+            print("handler called")
+            if not target_hw_id:
+                print("Target hw_id is missing")
+            if not next_entry or not next_entry.info:
+                return
+            print(f"target_hw_id: {target_hw_id}, next_entry.info.unique_id: {next_entry.info.unique_id}")
+            if target_hw_id and hasattr(next_entry, "info") and hasattr(next_entry.info,
+                                                                        "unique_id") and target_hw_id != list(
+                next_entry.info.unique_id):
+                print(f"{target_hw_id} != {list(next_entry.info.unique_id)}")
+                return
+            print("Detected allocation of one node")
+            self.one_node_allocated_event.set()
+
+        self.tracker.add_update_handler(get_info_handler)
         centralized_allocator = CentralizedAllocator(self.node, "databases/allocator_database.db")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.node.close()
-
-    def allocate_one_node(self, target_hw_id: Optional[hw_id_type]) -> asyncio.Event:
-        """Returns and event that can be waited for."""
-        one_node_allocated_event = asyncio.Event()
 
         # allocation_data_subscriber = self.node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
         # def allocation_data_handler(message, transfer: Transfer):
         #     if transfer.
         #
         # allocation_data_subscriber.receive_in_background(allocation_data_handler)
+        self.node.start()
 
-        def get_info_handler_wrapper(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            print("handler called")
-            if not node_id or not next_entry or not next_entry.info:
-                return
-            if target_hw_id and target_hw_id != next_entry.info.unique_id:
-                print(f"{target_hw_id} != {next_entry.info.unique_id}")
-                return
-            print("Detected allocation of one node")
-            one_node_allocated_event.set()
+    def __enter__(self):
+        return self
 
-        self.tracker.add_update_handler(get_info_handler_wrapper)
-        return one_node_allocated_event
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.node.close()
 
 
 get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]], None]

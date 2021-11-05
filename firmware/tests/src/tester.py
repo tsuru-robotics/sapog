@@ -30,6 +30,8 @@ import uavcan.primitive.array
 import reg.drone.physics.acoustics.Note_0_1
 
 node_under_testing_hw_id = [49, 255, 213, 5, 77, 84, 49, 52, 81, 71, 5, 67, 144, 228, 1, 8]
+node_under_testing_hash_of_hw_id = [49, 255, 213, 5, 77, 84, 49, 52, 81, 71, 5, 67, 240, 233, 1, 8]
+node_under_testing_hw_id = node_under_testing_hash_of_hw_id
 
 
 @dataclasses.dataclass
@@ -134,10 +136,17 @@ def test_esc_spin_2_seconds():
     pass
 
 
+def allocate_one_node_id():
+    with OneTimeAllocator(node_under_testing_hw_id) as allocator:
+        wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
+
+
 def test_allows_allocation_of_node_id():
-    with OneTimeAllocator("1") as allocator:
-        event = allocator.allocate_one_node(node_under_testing_hw_id)
-        wrap_await(asyncio.wait_for(event.wait(), 3))
+    try:
+        allocate_one_node_id()
+        assert True
+    except TimeoutError:
+        assert False
 
 
 def test_restart_node():
@@ -154,12 +163,15 @@ def test_restart_node():
 
 
 def test_has_heartbeat():
-    registry01 = make_registry(3)
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-        this_awaitable = asyncio.wait_for(
-            get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 6)  # on a separate line for debugging
-        result = wrap_await(this_awaitable)
-        assert result is not None
+    allocate_one_node_id()
+    try:
+        registry01 = make_registry(3)
+        with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+            this_awaitable = asyncio.wait_for(get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 6)
+            result = wrap_await(this_awaitable)
+            assert result is not None
+    except TimeoutError:
+        assert False
 
 
 if __name__ == "__main__":
