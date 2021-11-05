@@ -124,7 +124,7 @@ async def get_target_node_id_by_hw_id(test_conductor_node: Node, target_hw_id: h
     return target_node_id
 
 
-async def is_waiting_pnp() -> bool:
+async def is_waiting_allocation(hw_id_hash: hw_id_type) -> bool:
     pass
 
 
@@ -176,7 +176,7 @@ def test_has_heartbeat():
                     event.set()
 
             subscriber.receive_in_background(hb_handler)
-            wrap_await(asyncio.wait_for(event.wait(), 2))
+            wrap_await(asyncio.wait_for(event.wait(), 1.1))
             assert True
     except TimeoutError:
         assert False
