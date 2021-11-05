@@ -67,18 +67,14 @@ class OneTimeAllocator(Allocator, ABC):
         self.allocated_node_id = None
 
         def get_info_handler(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
-            print("handler called")
             if not target_hw_id:
-                print("Target hw_id is missing")
+                raise Exception("Target hw_id is missing")
             if not next_entry or not next_entry.info:
                 return
-            print(f"target_hw_id: {target_hw_id}, next_entry.info.unique_id: {next_entry.info.unique_id}")
             if target_hw_id and hasattr(next_entry, "info") and hasattr(next_entry.info,
                                                                         "unique_id") and target_hw_id != list(
                 next_entry.info.unique_id):
-                print(f"{target_hw_id} != {list(next_entry.info.unique_id)}")
                 return
-            print("Detected allocation of one node")
             self.allocated_node_id = node_id
             self.one_node_allocated_event.set()
 

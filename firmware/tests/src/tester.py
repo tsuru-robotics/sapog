@@ -151,10 +151,10 @@ def test_allows_allocation_of_node_id():
 
 
 def test_restart_node():
+    node_id, hw_id = allocate_one_node_id()
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-        target_node_id = wrap_await(asyncio.wait_for(get_target_node_id_by_hw_id(node, node_under_testing_hw_id), 2))
-        assert target_node_id is not None
+        target_node_id = node_id
         service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
         msg = uavcan.node.ExecuteCommand_1_1.Request()
         msg.command = msg.COMMAND_RESTART
