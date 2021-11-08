@@ -9,7 +9,7 @@ jobs:
       - name: Turning on the USB port
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
-        run: /usr/bin/env -S python firmware/tests/src/builder.py build
+        run: python firmware/tests/src/builder.py build
       - name: Powering on psu
         run: groom_power.py on
       - name: Powering on sapog
