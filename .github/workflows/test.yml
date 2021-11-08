@@ -7,13 +7,13 @@ jobs:
       - name: Turning on the USB port
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
-      	run: python firmware/tests/src/builder.py build
+        run: echo $(pwd) && python firmware/tests/src/builder.py build
       - name: Flashing Sapog
-      	run: python firmware/tests/src/builder.py flash
+        run: python firmware/tests/src/builder.py flash
       - name: Restarting
         run: pytest firmware/tests/src/tester.py
       - name: Cleanup
-    	if: ${{ failure() }}
-    	run: |
-    	  sudo ykushcmd ykush3 -d 1
-    	  groom_power.py poweroff
+        if: ${{ failure() }}
+        run: |
+          sudo ykushcmd ykush3 -d 1
+          groom_power.py poweroff
