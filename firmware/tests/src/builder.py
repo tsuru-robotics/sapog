@@ -51,7 +51,7 @@ quit"""
         arguments.append(f"{line.rstrip()}")  # https://manned.org/arm-none-eabi-gdb/7308522e
     subprocess.run(
         ["/usr/bin/env", "-S", "arm-none-eabi-gdb", firmware_directory / "build" / "compound.elf", *arguments,
-         "--batch"])
+         "--batch"], shell=True, check=True)
 
 
 async def build_sapog() -> None:
