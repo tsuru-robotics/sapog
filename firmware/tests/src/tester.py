@@ -75,15 +75,15 @@ def unplug_power_automatic():
 
 
 def plug_in_power_automatic():
-    subprocess.run(["groom_power", "outputon"])
+    subprocess.run(["groom_power", "-v", "15"])
 
 
 def unplug_power():
-    unplug_power_manual()
+    unplug_power_automatic()
 
 
 def plug_in_power():
-    plug_in_power_manual()
+    plug_in_power_automatic()
 
 
 def unplug_power_manual():
@@ -98,10 +98,18 @@ def plug_in_power_manual():
 def resource():
     print("setup")
     unplug_power()
-    time.sleep(0.4)
     plug_in_power()
-    time.sleep(0.4)
-    yield "resource"
+    yield allocate_nr_of_nodes(2)
+    print("teardown")
+    unplug_power()
+
+
+@pytest.fixture()
+def empty_resource():
+    print("setup")
+    unplug_power()
+    plug_in_power()
+    yield None
     print("teardown")
     unplug_power()
 
@@ -128,47 +136,45 @@ class TestSapog:
     #     pass
 
     @staticmethod
-    def test_allows_allocation_of_node_id(resource):
+    def test_allows_allocation_of_node_id(empty_resource):
         try:
-            allocate_nr_of_nodes(1)
-            assert True
+            required_amount = 2
+            result = allocate_nr_of_nodes(required_amount)
+            assert len(result.keys()) == required_amount
         except TimeoutError:
             assert False
 
-    # def test_restart_node(self):
-    #
-    #     node_id, target_node_name = allocate_one_node_id()
-    #     registry01 = make_registry(3)
-    #     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-    #         target_node_id = node_id
-    #         service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
-    #         msg = uavcan.node.ExecuteCommand_1_1.Request()
-    #         msg.command = msg.COMMAND_RESTART
-    #         response = wrap_await(service_client.call(msg))
-    #         node.close()
-    #         assert response is not None
-    #
-    # def test_has_heartbeat(self):
-    #     node_id, target_node_name = allocate_one_node_id()
-    #     try:
-    #         registry01 = make_registry(3)
-    #         with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-    #             subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-    #             event = asyncio.Event()
-    #
-    #             def hb_handler(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
-    #                 if transfer_from.source_node_id == node_id:
-    #                     event.set()
-    #
-    #             subscriber.receive_in_background(hb_handler)
-    #             wrap_await(asyncio.wait_for(event.wait(), 2))
-    #             assert True
-    #     except TimeoutError:
-    #         assert False
+    @staticmethod
+    def test_restart_node(resource):
+        for node_id in resource.keys():
+            registry01 = make_registry(3)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+                msg = uavcan.node.ExecuteCommand_1_1.Request()
+                msg.command = msg.COMMAND_RESTART
+                response = wrap_await(service_client.call(msg))
+                node.close()
+                assert response is not None
 
+    @staticmethod
+    def test_has_heartbeat(resource):
+        for node_id in resource.keys():
+            try:
+                registry01 = make_registry(3)
+                with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                    subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+                    event = asyncio.Event()
 
-def restart_node_by_name():
-    pass
+                    def hb_handler(message_class: MessageClass,
+                                   transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                        if transfer_from.source_node_id == node_id:
+                            event.set()
+
+                    subscriber.receive_in_background(hb_handler)
+                    wrap_await(asyncio.wait_for(event.wait(), 1.7))
+                    assert True
+            except TimeoutError:
+                assert False
 
 
 if __name__ == "__main__":

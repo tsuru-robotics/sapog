@@ -4,20 +4,14 @@ jobs:
   heartbeat:
     runs-on: [ self-hosted ]
     steps:
-      - name: Powering off Sapog
-        run: groom_power.py outputoff
       - name: Turning on the USB port
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
       	run: python firmware/tests/src/builder.py build
-      - name: Powering off Sapog
-        run: groom_power.py outputoff
-      - name: Powering on Sapog
-        run: groom_power.py outputon
       - name: Flashing Sapog
       	run: python firmware/tests/src/builder.py flash
       - name: Restarting
-        run: python firmware/tests/src/tester.py
+        run: pytest firmware/tests/src/tester.py
       - name: Cleanup
     	if: ${{ failure() }}
     	run: |

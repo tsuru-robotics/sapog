@@ -7,6 +7,7 @@ import pyuavcan
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
+from _await_wrap import wrap_await
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -20,8 +21,9 @@ internal_table = {}
 allocatable_node_ids = []
 
 
-def allocate_nr_of_nodes(nr: int, continuous: bool = False) -> None:
+def allocate_nr_of_nodes(nr: int, continuous: bool = False):
     allocated_nodes = {}
+    allocated_hw_ids = []
     allocation_counter = 0
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = "socketcan:slcan0"
@@ -33,6 +35,8 @@ def allocate_nr_of_nodes(nr: int, continuous: bool = False) -> None:
 
         def allocate_one_node(msg, _):
             nonlocal allocation_counter
+            if msg.unique_id_hash in allocated_hw_ids:
+                return None
             assert isinstance(msg, uavcan.pnp.NodeIDAllocationData_1_0)
             their_unique_id = msg.unique_id_hash
             if (their_node_id := internal_table.get(their_unique_id)) is not None:
@@ -42,16 +46,20 @@ def allocate_nr_of_nodes(nr: int, continuous: bool = False) -> None:
                 new_id = uavcan.node.ID_1_0(assigned_node_id)
                 response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
                 allocated_nodes[assigned_node_id] = msg.unique_id_hash
+                allocated_hw_ids.append(msg.unique_id_hash)
                 allocation_counter += 1
-                await allocate_responder.publish(response)
+                wrap_await(allocate_responder.publish(response))
 
         if continuous:
             while True:
-                message, metadata = allocate_subscription.receive_for(1.3)
+                message, metadata = wrap_await(allocate_subscription.receive_for(1.3))
                 allocate_one_node(message, metadata)
         else:
             while allocation_counter < nr:
-                message, metadata = allocate_subscription.receive_for(1.3)
+                allocate_message = wrap_await(allocate_subscription.receive_for(1.3))
+                if not allocate_message:
+                    break
+                message, metadata = allocate_message
                 allocate_one_node(message, metadata)
     return allocated_nodes
 
