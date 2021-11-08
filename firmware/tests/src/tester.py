@@ -14,7 +14,24 @@ source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 print(f"Namespace path: {namespace_path.absolute()}")
-sys.path.insert(0, namespace_path.absolute())
+
+
+def fix_imports():
+    global namespace_path
+    sys.path.insert(0, namespace_path.absolute())
+    source_path = pathlib.Path(__file__).parent.absolute()
+    dependency_path = source_path.parent / "deps"
+    namespace_path = dependency_path / "namespaces"
+    print(f"Namespace path: {namespace_path.absolute()}")
+    sys.path.insert(0, namespace_path.absolute())
+
+
+fix_imports()
+import uavcan.pnp.NodeIDAllocationData_1_0
+import uavcan.node.ID_1_0
+import uavcan.register.Access_1_0
+import uavcan.primitive.array
+import reg.drone.physics.acoustics.Note_0_1
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
@@ -22,12 +39,6 @@ from pyuavcan.presentation._presentation import MessageClass
 
 from _await_wrap import wrap_await
 from allocator import OneTimeAllocator
-
-import uavcan.pnp.NodeIDAllocationData_1_0
-import uavcan.node.ID_1_0
-import uavcan.register.Access_1_0
-import uavcan.primitive.array
-import reg.drone.physics.acoustics.Note_0_1
 
 
 def make_registry(node_id: int):
@@ -96,6 +107,12 @@ def plug_in_power_manual():
 
 @pytest.fixture()
 def resource():
+    fix_imports()
+    import uavcan.pnp.NodeIDAllocationData_1_0
+    import uavcan.node.ID_1_0
+    import uavcan.register.Access_1_0
+    import uavcan.primitive.array
+    import reg.drone.physics.acoustics.Note_0_1
     print("setup")
     unplug_power()
     plug_in_power()
@@ -106,6 +123,12 @@ def resource():
 
 @pytest.fixture()
 def empty_resource():
+    fix_imports()
+    import uavcan.pnp.NodeIDAllocationData_1_0
+    import uavcan.node.ID_1_0
+    import uavcan.register.Access_1_0
+    import uavcan.primitive.array
+    import reg.drone.physics.acoustics.Note_0_1
     print("setup")
     unplug_power()
     plug_in_power()
