@@ -41,7 +41,7 @@ void plug_and_play_loop(State &state)
     {
         printf("Plug and play activated.\n");
     }
-    bool do_save = false;
+    bool do_save = false; // for testing purposes, it is better to have the device allocate every time
     bool needs_pnp = state.canard.node_id == CANARD_NODE_ID_UNSET;
     while (needs_pnp)
     {

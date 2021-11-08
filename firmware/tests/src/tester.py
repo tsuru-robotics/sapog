@@ -3,12 +3,18 @@
 # Distributed under the MIT License, available in the file LICENSE.
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
-
 import asyncio
-import dataclasses
+import time
+import typing
+
 import pathlib
 import sys
-import typing
+
+source_path = pathlib.Path(__file__).parent.absolute()
+dependency_path = source_path.parent / "deps"
+namespace_path = dependency_path / "namespaces"
+print(f"Namespace path: {namespace_path.absolute()}")
+sys.path.insert(0, namespace_path.absolute())
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
@@ -17,18 +23,11 @@ from pyuavcan.presentation._presentation import MessageClass
 from _await_wrap import wrap_await
 from allocator import OneTimeAllocator
 
-source_path = pathlib.Path(__file__).parent.absolute()
-dependency_path = source_path.parent / "deps"
-namespace_path = dependency_path / "namespaces"
-sys.path.insert(0, namespace_path.absolute())
-
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 import reg.drone.physics.acoustics.Note_0_1
-
-node_under_testing_name = "io.px4.sapog"
 
 
 def make_registry(node_id: int):
@@ -39,18 +38,20 @@ def make_registry(node_id: int):
     return registry01
 
 
-def test_write_register():
-    target_node_id, target_node_name = allocate_one_node_id()
-    registry01 = make_registry(3)
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-        service_client = node.make_client(uavcan.register.Access_1_0, target_node_id)
-        msg = uavcan.register.Access_1_0.Request()
-        my_array = uavcan.primitive.array.Integer64_1_0()
-        my_array.value = [1]
-        msg.name.name = "uavcan_node_id"
-        msg.value.integer64 = my_array
-        response = wrap_await(asyncio.wait_for(service_client.call(msg), 0.5))
-        assert response is not None
+import pytest
+
+sapog_name = "io.px4.sapog"
+
+
+def node_name():
+    return sapog_name
+
+
+@pytest.fixture(scope='session')
+def get_nodes():
+    registry01 = make_registry(8)
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.preparer"), registry01) as node:
+        node.make_subscriber()
 
 
 hw_id_type = typing.Union[typing.List[int], bytes, bytearray]
@@ -60,54 +61,114 @@ def configure_note_register():
     print(reg.drone.physics.acoustics.Note_0_1)
 
 
-def test_esc_spin_2_seconds():
-    pass
-
-
-def allocate_one_node_id():
-    with OneTimeAllocator(node_under_testing_name) as allocator:
+def allocate_one_node_id(node_name):
+    with OneTimeAllocator(node_name) as allocator:
         wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
         return allocator.allocated_node_id, allocator.allocated_node_name
 
 
-def test_allows_allocation_of_node_id():
-    try:
-        allocate_one_node_id()
-        assert True
-    except TimeoutError:
-        assert False
+import subprocess
 
 
-def test_restart_node():
-    node_id, node_name = allocate_one_node_id()
-    registry01 = make_registry(3)
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-        target_node_id = node_id
-        service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_RESTART
-        response = wrap_await(service_client.call(msg))
-        node.close()
-        assert response is not None
+def unplug_power_automatic():
+    subprocess.run(["groom_power", "outputoff"])
 
 
-def test_has_heartbeat():
-    node_id, node_name = allocate_one_node_id()
-    try:
-        registry01 = make_registry(3)
-        with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-            subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-            event = asyncio.Event()
+def plug_in_power_automatic():
+    subprocess.run(["groom_power", "outputon"])
 
-            def hb_handler(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
-                if transfer_from.source_node_id == node_id:
-                    event.set()
 
-            subscriber.receive_in_background(hb_handler)
-            wrap_await(asyncio.wait_for(event.wait(), 2))
+def unplug_power():
+    unplug_power_manual()
+
+
+def plug_in_power():
+    plug_in_power_manual()
+
+
+def unplug_power_manual():
+    subprocess.run(["xterm", "-e", "bash", "-c", "echo Unplug power to boards and press enter when done; read line"])
+
+
+def plug_in_power_manual():
+    subprocess.run(["xterm", "-e", "bash", "-c", "echo Plug in power for boards and press enter when done; read line"])
+
+
+@pytest.fixture()
+def resource():
+    print("setup")
+    unplug_power()
+    time.sleep(0.4)
+    plug_in_power()
+    time.sleep(0.4)
+    yield "resource"
+    print("teardown")
+    unplug_power()
+
+
+from my_simple_test_allocator import allocate_nr_of_nodes
+
+
+class TestSapog:
+    # def test_write_register(self):
+    #     return
+    #     target_node_id, target_node_name = allocate_one_node_id(node_name)
+    #     registry01 = make_registry(3)
+    #     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+    #         service_client = node.make_client(uavcan.register.Access_1_0, target_node_id)
+    #         msg = uavcan.register.Access_1_0.Request()
+    #         my_array = uavcan.primitive.array.Integer64_1_0()
+    #         my_array.value = [1]
+    #         msg.name.name = "uavcan_node_id"
+    #         msg.value.integer64 = my_array
+    #         response = wrap_await(asyncio.wait_for(service_client.call(msg), 0.5))
+    #         assert response is not None
+
+    # def test_esc_spin_2_seconds(self):
+    #     pass
+
+    @staticmethod
+    def test_allows_allocation_of_node_id(resource):
+        try:
+            allocate_nr_of_nodes(1)
             assert True
-    except TimeoutError:
-        assert False
+        except TimeoutError:
+            assert False
+
+    # def test_restart_node(self):
+    #
+    #     node_id, target_node_name = allocate_one_node_id()
+    #     registry01 = make_registry(3)
+    #     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+    #         target_node_id = node_id
+    #         service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, target_node_id)
+    #         msg = uavcan.node.ExecuteCommand_1_1.Request()
+    #         msg.command = msg.COMMAND_RESTART
+    #         response = wrap_await(service_client.call(msg))
+    #         node.close()
+    #         assert response is not None
+    #
+    # def test_has_heartbeat(self):
+    #     node_id, target_node_name = allocate_one_node_id()
+    #     try:
+    #         registry01 = make_registry(3)
+    #         with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+    #             subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+    #             event = asyncio.Event()
+    #
+    #             def hb_handler(message_class: MessageClass, transfer_from: pyuavcan.transport._transfer.TransferFrom):
+    #                 if transfer_from.source_node_id == node_id:
+    #                     event.set()
+    #
+    #             subscriber.receive_in_background(hb_handler)
+    #             wrap_await(asyncio.wait_for(event.wait(), 2))
+    #             assert True
+    #     except TimeoutError:
+    #         assert False
+
+
+def restart_node_by_name():
+    pass
 
 
 if __name__ == "__main__":

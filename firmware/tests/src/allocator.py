@@ -47,6 +47,9 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
     print(response)
 
 
+hw_id_type = typing.Union[typing.List[int], bytes, bytearray]
+
+
 class OneTimeAllocator(Allocator, ABC):
     """This class is used for testing if allocation works on Sapog
 
@@ -67,10 +70,13 @@ class OneTimeAllocator(Allocator, ABC):
         def get_info_handler(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
             if not target_name:
                 raise Exception("Target name is missing")
-            if not next_entry or not next_entry.info:
-                return
-            if target_name and hasattr(next_entry, "info") \
-                    and hasattr(next_entry.info, "name") and target_name != next_entry.info.name:
+
+            if next_entry and next_entry.info is not None:
+                entry = next_entry.info
+            else:
+                entry = self.tracker.registry[node_id]
+            if target_name \
+                    and hasattr(entry.info, "name") and target_name != entry.info.name:
                 return
             self.allocated_node_id = node_id
             self.allocated_node_name = next_entry.info.name

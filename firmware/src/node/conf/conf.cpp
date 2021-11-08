@@ -5,7 +5,7 @@ namespace node::conf
 // Next comment is a header for the "table"
 // os::config::Param<unsigned> Name   {"Name", Default, Min, Max}; // Unit Unit
 /*
-os::config::Param<unsigned> mot_pwm_dt_ns    { "mot_pwm_dt_ns",    ,       400,   800};    // Unit nanosecond
+os::config::Param<unsigned> mot_pwm_dt_ns    { "mot_pwm_dt_ns",    600,       400,   800};    // Unit nanosecond
 os::config::Param<unsigned> mot_pwm_hz       { "mot_pwm_hz",       60000,  20000, 75000};  // Unit hertz
 os::config::Param<unsigned> mot_spup_blnk_pm { "mot_spup_blnk_pm", 100,    1,     300};    // Unit permill
 os::config::Param<unsigned> mot_spup_to_ms   { "mot_spup_to_ms",   5000,   100,   9000};   // Unit millisecond
