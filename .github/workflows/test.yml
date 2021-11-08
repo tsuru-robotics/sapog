@@ -4,6 +4,8 @@ jobs:
   heartbeat:
     runs-on: [ self-hosted ]
     steps:
+      - name: checking out
+        uses: actions/checkout@v2
       - name: Turning on the USB port
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
