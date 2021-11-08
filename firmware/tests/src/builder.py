@@ -50,7 +50,8 @@ quit"""
         arguments.append("-ex")
         arguments.append(f"{line.rstrip()}")  # https://manned.org/arm-none-eabi-gdb/7308522e
     subprocess.run(
-        ["arm-none-eabi-gdb", firmware_directory / "build" / "compound.elf", *arguments,
+        ["/home/zubaxpc/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gdb",
+         firmware_directory / "build" / "compound.elf", *arguments,
          "--batch"], shell=True, check=True)
 
 
@@ -73,11 +74,10 @@ async def build_sapog() -> None:
     zip_file.extractall(firmware_directory / downloads_folder_name)
     zip_file.close()
     subprocess.run(["mkdir", public_regulated_data_types_directory])
+    print("Created the directory for public_regulated_data_types")
     move_directories(public_regulated_data_types_directory,
                      (firmware_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
                      (firmware_directory / downloads_folder_name / extra_parent_directory / "reg").absolute())
-    subprocess.run(["make", "dsdl"], cwd=firmware_directory, check=True, shell=True)
-    subprocess.run(["make", f"-j{cpu_count()}"], cwd=firmware_directory, check=True, shell=True)
 
 
 async def start_build_process() -> None:

@@ -9,7 +9,17 @@ jobs:
       - name: Turning on the USB port
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
-        run: python firmware/tests/src/builder.py build
+        run: |
+          source /home/zubaxpc/.profile
+          source /home/zubaxpc/.bashrc
+          echo $PATH
+          echo $USER
+          python firmware/tests/src/builder.py build
+          cd firmware
+          make dsdl
+          make -j4
+      - name: Building Python DSDL
+        run: yakut compile /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/reg /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/uavcan --output /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces
       - name: Powering on psu
         run: groom_power.py on
       - name: Powering on sapog
