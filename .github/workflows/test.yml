@@ -10,6 +10,10 @@ jobs:
         run: sudo ykushcmd ykush3 -u 1
       - name: Building Sapog
         run: echo $(pwd) && python firmware/tests/src/builder.py build
+      - name: Powering on psu
+        run: groom_power on
+      - name: Powering on sapog
+        run: groom_power -v 15
       - name: Flashing Sapog
         run: python firmware/tests/src/builder.py flash
       - name: Restarting
