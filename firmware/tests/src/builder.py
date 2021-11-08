@@ -49,7 +49,9 @@ quit"""
     for line in temp_file.split("\n"):
         arguments.append("-ex")
         arguments.append(f"{line.rstrip()}")  # https://manned.org/arm-none-eabi-gdb/7308522e
-    subprocess.run(["arm-none-eabi-gdb", firmware_directory / "build" / "compound.elf", *arguments, "--batch"])
+    subprocess.run(
+        ["/usr/bin/env", "-S", "arm-none-eabi-gdb", firmware_directory / "build" / "compound.elf", *arguments,
+         "--batch"])
 
 
 async def build_sapog() -> None:
