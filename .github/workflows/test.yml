@@ -17,7 +17,7 @@ jobs:
       - name: Flashing Sapog
         run: python3 firmware/tests/src/builder.py flash
       - name: Restarting
-        run: PYTHONPATH=$PYTHONPATH:/home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces/ python3 -m pytest tester.py
+        run: PYTHONPATH=$PYTHONPATH:/home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces/ python3 -m pytest /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/src/tester.py
       - name: Cleanup
         if: ${{ failure() }}
         run: |
