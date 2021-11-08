@@ -15,9 +15,9 @@ jobs:
       - name: Powering on sapog
         run: groom_power.py -v 15
       - name: Flashing Sapog
-        run: python firmware/tests/src/builder.py flash
+        run: python3 firmware/tests/src/builder.py flash
       - name: Restarting
-        run: pytest firmware/tests/src/tester.py
+        run: python3 -m pytest firmware/tests/src/tester.py
       - name: Cleanup
         if: ${{ failure() }}
         run: |
