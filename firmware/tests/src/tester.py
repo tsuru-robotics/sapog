@@ -71,11 +71,11 @@ import subprocess
 
 
 def unplug_power_automatic():
-    subprocess.run(["groom_power", "outputoff"])
+    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "outputoff"])
 
 
 def plug_in_power_automatic():
-    subprocess.run(["groom_power", "-v", "15"])
+    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "-v", "15"])
 
 
 def unplug_power():
