@@ -77,7 +77,7 @@ async def build_sapog() -> None:
                      (firmware_directory / downloads_folder_name / extra_parent_directory / "uavcan").absolute(),
                      (firmware_directory / downloads_folder_name / extra_parent_directory / "reg").absolute())
     subprocess.run(["/usr/bin/env", "-S", "make", "dsdl"], cwd=firmware_directory, check=True)
-    subprocess.run(["/usr/bin/env", "-S", "make", f"-j{cpu_count()}"], cwd=firmware_directory, check=True)
+    subprocess.run(["/usr/bin/env", "-S", "make", f"-j{cpu_count()}"], cwd=firmware_directory, check=True, shell=True)
 
 
 async def start_build_process() -> None:
