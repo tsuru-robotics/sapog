@@ -36,3 +36,8 @@ jobs:
           sudo ykushcmd ykush3 -d 1
           groom_power.py poweroff
           sudo ifconfig slcan0 down
+      - name: Cleanup
+        run: |
+          sudo ykushcmd ykush3 -d 1
+          groom_power.py poweroff
+          sudo ifconfig slcan0 down
