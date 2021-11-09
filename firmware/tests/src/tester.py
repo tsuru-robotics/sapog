@@ -31,7 +31,7 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
-import reg.drone.physics.acoustics.Note_0_1
+import reg.udral.physics.acoustics.Note_0_1
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
@@ -112,11 +112,10 @@ def resource():
     import uavcan.node.ID_1_0
     import uavcan.register.Access_1_0
     import uavcan.primitive.array
-    import reg.drone.physics.acoustics.Note_0_1
     print("setup")
     unplug_power()
     plug_in_power()
-    yield allocate_nr_of_nodes(2)
+    yield allocate_nr_of_nodes(1)
     print("teardown")
     unplug_power()
 
@@ -128,7 +127,6 @@ def empty_resource():
     import uavcan.node.ID_1_0
     import uavcan.register.Access_1_0
     import uavcan.primitive.array
-    import reg.drone.physics.acoustics.Note_0_1
     print("setup")
     unplug_power()
     plug_in_power()
@@ -161,7 +159,7 @@ class TestSapog:
     @staticmethod
     def test_allows_allocation_of_node_id(empty_resource):
         try:
-            required_amount = 2
+            required_amount = 1
             result = allocate_nr_of_nodes(required_amount)
             assert len(result.keys()) == required_amount
         except TimeoutError:
