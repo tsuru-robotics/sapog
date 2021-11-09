@@ -90,11 +90,11 @@ def plug_in_power_automatic():
 
 
 def unplug_power():
-    unplug_power_automatic()
+    unplug_power_manual()
 
 
 def plug_in_power():
-    plug_in_power_automatic()
+    plug_in_power_manual()
 
 
 def unplug_power_manual():
