@@ -115,6 +115,7 @@ def resource():
     print("setup")
     unplug_power()
     plug_in_power()
+    time.sleep(10)
     yield allocate_nr_of_nodes(1)
     print("teardown")
     unplug_power()
@@ -130,6 +131,7 @@ def empty_resource():
     print("setup")
     unplug_power()
     plug_in_power()
+    time.sleep(10)
     yield None
     print("teardown")
     unplug_power()
