@@ -4,6 +4,7 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import asyncio
+import os
 import time
 import typing
 
@@ -90,11 +91,19 @@ def plug_in_power_automatic():
 
 
 def unplug_power():
-    unplug_power_manual()
+    is_running_on_my_laptop = os.path.exists("/home/silver")
+    if is_running_on_my_laptop:
+        unplug_power_manual()
+    else:
+        unplug_power_automatic()
 
 
 def plug_in_power():
-    plug_in_power_manual()
+    is_running_on_my_laptop = os.path.exists("/home/silver")
+    if is_running_on_my_laptop:
+        plug_in_power_manual()
+    else:
+        plug_in_power_automatic()
 
 
 def unplug_power_manual():
