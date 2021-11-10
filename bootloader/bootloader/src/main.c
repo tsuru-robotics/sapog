@@ -992,7 +992,7 @@ static int autobaud_and_get_dynamic_node_id(bl_timer_id tboot,
 	board_indicate(autobaud_start);
 
 	int rv = can_autobaud(speed, tboot);
-
+	return CAN_BOOT_TIMEOUT; // change for boot time, Valdvee
 	if (rv != CAN_BOOT_TIMEOUT) {
 		board_indicate(autobaud_end);
 		board_indicate(allocation_start);
@@ -1140,7 +1140,7 @@ int main(int argc, char *argv[])
 		can_init(can_freq2speed(common.bus_speed), CAN_Mode_Normal);
 
 	} else {
-
+        goto boot; // for debugging, Valdvee
 		/*
 		 * It is a regular boot, So we need to autobaud and get a node ID
 		 * If the tBoot was started, we will boot normal if the auto baud
