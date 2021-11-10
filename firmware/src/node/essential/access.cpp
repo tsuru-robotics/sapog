@@ -24,6 +24,8 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     if (configGetDescr(request_name, &param) != 0)
     {
         uavcan_register_Value_1_0_select_empty_(&out_value);
+        out_value.empty = uavcan_primitive_Empty_1_0{0};
+        return;
     }
     float value = configGet(request_name);
     if (param.type == CONFIG_TYPE_FLOAT)

@@ -94,7 +94,7 @@ os::watchdog::Timer init()
     }
 
     // Initializing console after delay to ensure that CLI is flushed
-    usleep(300000);
+    usleep(300000); // 0.3 seconds
     console_init();
 
     return wdt;
@@ -185,7 +185,7 @@ int main()
 
     chThdSetPriority(LOWPRIO);
 
-    do_startup_beep();
+    //do_startup_beep();
 
     motor_confirm_initialization();
 

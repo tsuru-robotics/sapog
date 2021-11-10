@@ -124,7 +124,6 @@ def resource():
     print("setup")
     unplug_power()
     plug_in_power()
-    time.sleep(10)
     yield allocate_nr_of_nodes(1)
     print("teardown")
     unplug_power()
@@ -140,7 +139,6 @@ def empty_resource():
     print("setup")
     unplug_power()
     plug_in_power()
-    time.sleep(10)
     yield None
     print("teardown")
     unplug_power()
@@ -150,19 +148,19 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 
 
 class TestSapog:
-    # def test_write_register(self):
-    #     return
-    #     target_node_id, target_node_name = allocate_one_node_id(node_name)
-    #     registry01 = make_registry(3)
-    #     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-    #         service_client = node.make_client(uavcan.register.Access_1_0, target_node_id)
-    #         msg = uavcan.register.Access_1_0.Request()
-    #         my_array = uavcan.primitive.array.Integer64_1_0()
-    #         my_array.value = [1]
-    #         msg.name.name = "uavcan_node_id"
-    #         msg.value.integer64 = my_array
-    #         response = wrap_await(asyncio.wait_for(service_client.call(msg), 0.5))
-    #         assert response is not None
+    @staticmethod
+    def test_write_register(resource):
+        for node_id in resource.keys():
+            registry01 = make_registry(3)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
+                msg.name.name = "uavcan_node_description"
+                response = wrap_await(asyncio.wait_for(service_client.call(msg), 0.5))
+                print("Response:")
+                print(response)
+                assert response is not None
 
     # def test_esc_spin_2_seconds(self):
     #     pass
