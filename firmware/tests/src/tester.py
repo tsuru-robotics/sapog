@@ -116,6 +116,7 @@ def plug_in_power_manual():
 
 @pytest.fixture()
 def resource():
+    is_running_on_my_laptop = os.path.exists("/home/silver")
     fix_imports()
     import uavcan.pnp.NodeIDAllocationData_1_0
     import uavcan.node.ID_1_0
@@ -124,6 +125,8 @@ def resource():
     print("setup")
     unplug_power()
     plug_in_power()
+    if not is_running_on_my_laptop:
+        time.sleep(4)
     yield allocate_nr_of_nodes(1)
     print("teardown")
     unplug_power()
@@ -131,6 +134,7 @@ def resource():
 
 @pytest.fixture()
 def empty_resource():
+    is_running_on_my_laptop = os.path.exists("/home/silver")
     fix_imports()
     import uavcan.pnp.NodeIDAllocationData_1_0
     import uavcan.node.ID_1_0
@@ -139,6 +143,8 @@ def empty_resource():
     print("setup")
     unplug_power()
     plug_in_power()
+    if not is_running_on_my_laptop:
+        time.sleep(4)
     yield None
     print("teardown")
     unplug_power()
