@@ -186,7 +186,7 @@ static void init_canard()
     state.timing.started_at = get_monotonic_microseconds();
     for (auto &subscription: subscriptions)
     {
-        if (subscription.second.port_id == 0xFFFF)
+        if (subscription.second.port_id == CONFIGURABLE_SUBJECT_ID)
         {
             if (configGetDescr(subscription.first, &_) != -ENOENT)
             {
@@ -204,6 +204,7 @@ static void init_canard()
                               subscription.second.extent_bytes,
                               subscription.second.time_out,
                               &subscription.second.subscription);
+        printf("Created a subscription for %s\n", subscription.first);
         if (subscription.second.handler != nullptr)
         {
             subscription.second.subscription.user_reference = &subscription.second;

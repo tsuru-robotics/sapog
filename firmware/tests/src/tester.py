@@ -11,20 +11,15 @@ import typing
 import pathlib
 import sys
 
-source_path = pathlib.Path(__file__).parent.absolute()
-dependency_path = source_path.parent / "deps"
-namespace_path = dependency_path / "namespaces"
-print(f"Namespace path: {namespace_path.absolute()}")
+is_running_on_my_laptop = os.path.exists("/home/silver")
 
 
 def fix_imports():
-    global namespace_path
-    sys.path.insert(0, namespace_path.absolute())
     source_path = pathlib.Path(__file__).parent.absolute()
     dependency_path = source_path.parent / "deps"
     namespace_path = dependency_path / "namespaces"
     print(f"Namespace path: {namespace_path.absolute()}")
-    sys.path.insert(0, namespace_path.absolute())
+    sys.path.insert(0, str(namespace_path.absolute()))
 
 
 fix_imports()
@@ -91,7 +86,7 @@ def plug_in_power_automatic():
 
 
 def unplug_power():
-    is_running_on_my_laptop = os.path.exists("/home/silver")
+    global is_running_on_my_laptop
     if is_running_on_my_laptop:
         unplug_power_manual()
     else:
@@ -99,7 +94,7 @@ def unplug_power():
 
 
 def plug_in_power():
-    is_running_on_my_laptop = os.path.exists("/home/silver")
+    global is_running_on_my_laptop
     if is_running_on_my_laptop:
         plug_in_power_manual()
     else:
@@ -116,12 +111,8 @@ def plug_in_power_manual():
 
 @pytest.fixture()
 def resource():
-    is_running_on_my_laptop = os.path.exists("/home/silver")
+    global is_running_on_my_laptop
     fix_imports()
-    import uavcan.pnp.NodeIDAllocationData_1_0
-    import uavcan.node.ID_1_0
-    import uavcan.register.Access_1_0
-    import uavcan.primitive.array
     print("setup")
     unplug_power()
     plug_in_power()
@@ -134,12 +125,8 @@ def resource():
 
 @pytest.fixture()
 def empty_resource():
-    is_running_on_my_laptop = os.path.exists("/home/silver")
+    global is_running_on_my_laptop
     fix_imports()
-    import uavcan.pnp.NodeIDAllocationData_1_0
-    import uavcan.node.ID_1_0
-    import uavcan.register.Access_1_0
-    import uavcan.primitive.array
     print("setup")
     unplug_power()
     plug_in_power()
@@ -162,10 +149,12 @@ class TestSapog:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
                 msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
-                msg.name.name = "uavcan_node_description"
-                response = wrap_await(asyncio.wait_for(service_client.call(msg), 0.5))
+                msg.name.name = "uavcan.node.description"
+                response = wrap_await(service_client.call(msg))
                 print("Response:")
+                print(type(response))
                 print(response)
+                node.close()
                 assert response is not None
 
     # def test_esc_spin_2_seconds(self):

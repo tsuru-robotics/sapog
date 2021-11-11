@@ -7,6 +7,7 @@
 #include <uavcan/_register/Access_1_0.h>
 #include <node/units.hpp>
 #include <node/time.h>
+#include <cstdio>
 #include "access.hpp"
 
 template<std::size_t Size>
@@ -25,21 +26,26 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     {
         uavcan_register_Value_1_0_select_empty_(&out_value);
         out_value.empty = uavcan_primitive_Empty_1_0{0};
+        printf("Access returns with empty value\n");
         return;
     }
+    printf("Response value is not empty\n");
     float value = configGet(request_name);
     if (param.type == CONFIG_TYPE_FLOAT)
     {
+        printf("Response value is a float\n");
         uavcan_register_Value_1_0_select_real64_(&out_value);
         out_value.real64.value.elements[0] = value;
         out_value.real64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_INT)
     {
+        printf("Response type is a int\n");
         uavcan_register_Value_1_0_select_integer64_(&out_value);
         out_value.integer64.value.elements[0] = value;
         out_value.integer64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_BOOL)
     {
+        printf("Response type is bool\n");
         uavcan_register_Value_1_0_select_bit_(&out_value);
         nunavutSetBit(out_value.bit.value.bitpacked, out_value.bit.value.count, 0, value != 0);
     }
@@ -58,7 +64,11 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
     int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response, &serialized[0], &serialized_size);
     assert(error >= 0);
     if (error < 0)
-    { return false; }
+    {
+        printf("Failed to serialize access response with code %d\n", error);
+        return false;
+    }
+    printf("Successfully serialized access response.\n");
     const CanardTransfer response_transfer = {
         .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS * 2,
         .priority = transfer->priority,
@@ -70,6 +80,7 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
         .payload = &serialized[0],
     };
     (void) canardTxPush(const_cast<CanardInstance *>(canard), &response_transfer);
+    printf("Sent access response.\n");
     return true;
 }
 
@@ -77,6 +88,7 @@ namespace node::essential
 {
 bool uavcan_register_Access_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
+    printf("Access handler\n");
     uavcan_register_Access_Request_1_0 request{};
     size_t temp_payload_size{transfer->payload_size};
     auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
