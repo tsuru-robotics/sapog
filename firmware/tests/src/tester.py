@@ -113,13 +113,11 @@ def plug_in_power_manual():
 def resource():
     global is_running_on_my_laptop
     fix_imports()
-    print("setup")
     unplug_power()
     plug_in_power()
     if not is_running_on_my_laptop:
         time.sleep(4)
     yield allocate_nr_of_nodes(1)
-    print("teardown")
     unplug_power()
 
 
@@ -127,13 +125,11 @@ def resource():
 def empty_resource():
     global is_running_on_my_laptop
     fix_imports()
-    print("setup")
     unplug_power()
     plug_in_power()
     if not is_running_on_my_laptop:
         time.sleep(4)
     yield None
-    print("teardown")
     unplug_power()
 
 
@@ -142,8 +138,9 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 
 class TestSapog:
     @staticmethod
-    def test_write_register(resource):
-        for node_id in resource.keys():
+    def test_write_register():
+        time.sleep(1)
+        for node_id in [21]:  # resource.keys():
             registry01 = make_registry(3)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
@@ -152,7 +149,6 @@ class TestSapog:
                 msg.name.name = "uavcan.node.description"
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
-                node.close()
                 assert response is not None
 
     # def test_esc_spin_2_seconds(self):

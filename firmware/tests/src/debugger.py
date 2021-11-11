@@ -16,6 +16,7 @@ import pyuavcan.dsdl
 import typing
 
 from pyuavcan.dsdl import FixedPortObject
+from pyuavcan.transport.can import CANErrorTrace
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -31,7 +32,7 @@ import uavcan.primitive.array
 
 from pyuavcan.application import make_node, NodeInfo, Node, register
 from pyuavcan.application.node_tracker import NodeTracker
-from pyuavcan.transport import _tracer, Trace, Tracer
+from pyuavcan.transport import _tracer, Trace, Tracer, TransferTrace
 from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
 
@@ -112,8 +113,8 @@ def fill_ids():
 
 
 ignore_subjects = [
-    7510,  # port_list
-    7509  # heartbeat
+    # 7510,  # port_list
+    # 7509  # heartbeat
 ]
 
 
@@ -123,25 +124,29 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
         with open("rx_frm.txt", "a") as log_file:
             # Checking to see if a transfer has finished, then assigning the value to transfer_trace
             if (transfer_trace := tracer.update(capture)) is not None:
-                is_service_request: bool = hasattr(transfer_trace.transfer.metadata.session_specifier.data_specifier,
-                                                   "service_id")
-                if ignore_traffic_by_debugger and \
-                        transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering \
-                        and not is_service_request:
-                    return
-                if is_service_request:
-                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.service_id
-                else:
-                    subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
-                if subject_id in ignore_subjects:
-                    return
-                deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id, debugger_id_for_filtering)
-                if deserialized_trace is None:
-                    return
-                if log_to_print:
-                    print(deserialized_trace)
-                if log_to_file:
-                    log_file.write(deserialized_trace + "\n")
+                if isinstance(transfer_trace, CANErrorTrace):
+                    print(transfer_trace)
+                elif isinstance(transfer_trace, TransferTrace):
+                    is_service_request: bool = hasattr(
+                        transfer_trace.transfer.metadata.session_specifier.data_specifier,
+                        "service_id")
+                    if ignore_traffic_by_debugger and \
+                            transfer_trace.transfer.metadata.session_specifier.source_node_id == debugger_id_for_filtering \
+                            and not is_service_request:
+                        return
+                    if is_service_request:
+                        subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.service_id
+                    else:
+                        subject_id = transfer_trace.transfer.metadata.session_specifier.data_specifier.subject_id
+                    if subject_id in ignore_subjects:
+                        return
+                    deserialized_trace = deserialize_trace(transfer_trace, ids, subject_id, debugger_id_for_filtering)
+                    if deserialized_trace is None:
+                        return
+                    if log_to_print:
+                        print(deserialized_trace)
+                    if log_to_file:
+                        log_file.write(deserialized_trace + "\n")
 
     return capture_handler
 

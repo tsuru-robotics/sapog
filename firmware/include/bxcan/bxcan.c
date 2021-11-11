@@ -171,7 +171,7 @@ static void processErrorStatus(volatile BxCANType *const bxcan_base,  //
     BXCAN_ASSERT((error_iface == &g_error[0]) || (error_iface == &g_error[1]));  // Valid g_error address.
 
     // Updating error flag.
-    const uint8_t lec = (uint8_t)((bxcan_base->ESR & BXCAN_ESR_LEC_MASK) >> BXCAN_ESR_LEC_SHIFT);
+    const uint8_t lec = (uint8_t)((bxcan_base->ESR & BXCAN_ESR_LEC_MASK) >> BXCAN_ESR_LEC_SHIFT); // last error code
 
     if (lec != 0U)
     {
