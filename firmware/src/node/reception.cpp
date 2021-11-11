@@ -50,8 +50,13 @@ void process_received_transfer(const State &state, const CanardTransfer *const t
     auto a = get_subscriptions();
     auto start = a.first;
     auto end = a.second;
+    printf("Some kind of request received %d\n", transfer->port_id);
     for (auto it = start; it != end; ++it)
     {
+        if (it->second.port_id == 384)
+        {
+            printf("Access request received.\n");
+        }
         if (transfer->port_id == it->second.port_id)
         {
             it->second.handler(const_cast<State &>(state), transfer);

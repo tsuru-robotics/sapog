@@ -175,18 +175,25 @@ async def run_debugger_node(with_debugging=False):
     registry01["uavcan.can.mtu"] = 8
     debugger_node_id = 2
     registry01["uavcan.node.id"] = debugger_node_id
-
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-        import_submodules(uavcan)
-        ids = fill_ids()
-        tracer = node.presentation.transport.make_tracer()
-        node.presentation.transport.begin_capture(
-            make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging,
-                                 debugger_id_for_filtering=debugger_node_id))
-        t = NodeTracker(node)
-        t.add_update_handler(make_handler_for_getinfo_update())
-        while True:
-            await asyncio.sleep(1)
+    while True:
+        try:
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
+                printed_interface = registry01["uavcan.can.iface"]
+                print(f"Debugger successfully connected to {printed_interface}")
+                import_submodules(uavcan)
+                ids = fill_ids()
+                tracer = node.presentation.transport.make_tracer()
+                node.presentation.transport.begin_capture(
+                    make_capture_handler(tracer, ids, log_to_file=with_debugging, log_to_print=with_debugging,
+                                         debugger_id_for_filtering=debugger_node_id))
+                t = NodeTracker(node)
+                t.add_update_handler(make_handler_for_getinfo_update())
+                while True:
+                    await asyncio.sleep(1)
+        except OSError:
+            await asyncio.sleep(2)
+            printed_interface = registry01["uavcan.can.iface"]
+            print(f"Debugger is trying to reconnect to {printed_interface}")
 
 
 if __name__ == "__main__":

@@ -33,11 +33,12 @@ void handle_5_second_loop(node::state::State &state)
     transmit(state);
 }
 
-inline void handle_fast_loop(node::state::State &state)
+void handle_fast_loop(node::state::State &state)
 {
     auto transfer = receive_transfer(state, 0);
     if (transfer.first.has_value())
     {
+        printf("Transfer received.");
         transfer.second->handler(state, &transfer.first.value());
         //process_received_transfer(state, &transfer.value());
     }

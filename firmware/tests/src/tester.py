@@ -150,10 +150,8 @@ class TestSapog:
                 msg = uavcan.register.Access_1_0.Request()
                 msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
                 msg.name.name = "uavcan.node.description"
+                time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
-                print("Response:")
-                print(type(response))
-                print(response)
                 node.close()
                 assert response is not None
 
