@@ -52,6 +52,7 @@ uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const 
                 .payload        = &serialized[0],
             };
             int32_t number_of_frames_enqueued = canardTxPush(&state.canard, &response_transfer);
+            (void) number_of_frames_enqueued;
             assert(number_of_frames_enqueued > 0);
         }
         return true;

@@ -112,6 +112,7 @@ def plug_in_power_manual():
 @pytest.fixture()
 def resource():
     global is_running_on_my_laptop
+    print(f"is_running_on_my_laptop: {is_running_on_my_laptop}")
     fix_imports()
     unplug_power()
     plug_in_power()

@@ -38,12 +38,15 @@
  * ChibiOS supports tickless mode (and it's enabled by default), but it requires a dedicated hardware timer.
  * We don't have any free hardware timers, so we use classic ticked mode.
  */
-#define CH_CFG_ST_TIMEDELTA		0
+#define CH_CFG_ST_TIMEDELTA        0
 #define CH_CFG_ST_FREQUENCY             1000
 
 #define PORT_IDLE_THREAD_STACK_SIZE     64
 #define PORT_INT_REQUIRED_STACK         512
 
 #define OS_USE_CHPRINTF 1
+
+//#define CORTEX_ENABLE_WFI_IDLE FALSE
+//#define ARM_ENABLE_WFI_IDLE FALSE
 
 #include <zubax_chibios/sys/chconf_tail.h>

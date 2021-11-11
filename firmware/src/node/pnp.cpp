@@ -159,8 +159,11 @@ static bool subscribe_to_plug_and_play_response(State &state)
 
 static bool unsubscribe_plug_and_play_response(State &state)
 {
-    assert(canardRxUnsubscribe(&state.canard, CanardTransferKindMessage,
-                               uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_) == 1);
+
+    auto res = canardRxUnsubscribe(&state.canard, CanardTransferKindMessage,
+                                   uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_);
+    (void) res;
+    assert(res == 1);
     return true;
 }
 

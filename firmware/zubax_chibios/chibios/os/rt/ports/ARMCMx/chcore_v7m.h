@@ -219,65 +219,67 @@
 /* The documentation of the following declarations is in chconf.h in order
    to not have duplicated structure names into the documentation.*/
 #if !defined(__DOXYGEN__)
-struct port_extctx {
-  regarm_t      r0;
-  regarm_t      r1;
-  regarm_t      r2;
-  regarm_t      r3;
-  regarm_t      r12;
-  regarm_t      lr_thd;
-  regarm_t      pc;
-  regarm_t      xpsr;
+struct port_extctx
+{
+    regarm_t r0;
+    regarm_t r1;
+    regarm_t r2;
+    regarm_t r3;
+    regarm_t r12;
+    regarm_t lr_thd;
+    regarm_t pc;
+    regarm_t xpsr;
 #if CORTEX_USE_FPU
-  regarm_t      s0;
-  regarm_t      s1;
-  regarm_t      s2;
-  regarm_t      s3;
-  regarm_t      s4;
-  regarm_t      s5;
-  regarm_t      s6;
-  regarm_t      s7;
-  regarm_t      s8;
-  regarm_t      s9;
-  regarm_t      s10;
-  regarm_t      s11;
-  regarm_t      s12;
-  regarm_t      s13;
-  regarm_t      s14;
-  regarm_t      s15;
-  regarm_t      fpscr;
-  regarm_t      reserved;
+    regarm_t      s0;
+    regarm_t      s1;
+    regarm_t      s2;
+    regarm_t      s3;
+    regarm_t      s4;
+    regarm_t      s5;
+    regarm_t      s6;
+    regarm_t      s7;
+    regarm_t      s8;
+    regarm_t      s9;
+    regarm_t      s10;
+    regarm_t      s11;
+    regarm_t      s12;
+    regarm_t      s13;
+    regarm_t      s14;
+    regarm_t      s15;
+    regarm_t      fpscr;
+    regarm_t      reserved;
 #endif /* CORTEX_USE_FPU */
 };
 
-struct port_intctx {
+struct port_intctx
+{
 #if CORTEX_USE_FPU
-  regarm_t      s16;
-  regarm_t      s17;
-  regarm_t      s18;
-  regarm_t      s19;
-  regarm_t      s20;
-  regarm_t      s21;
-  regarm_t      s22;
-  regarm_t      s23;
-  regarm_t      s24;
-  regarm_t      s25;
-  regarm_t      s26;
-  regarm_t      s27;
-  regarm_t      s28;
-  regarm_t      s29;
-  regarm_t      s30;
-  regarm_t      s31;
+    regarm_t      s16;
+    regarm_t      s17;
+    regarm_t      s18;
+    regarm_t      s19;
+    regarm_t      s20;
+    regarm_t      s21;
+    regarm_t      s22;
+    regarm_t      s23;
+    regarm_t      s24;
+    regarm_t      s25;
+    regarm_t      s26;
+    regarm_t      s27;
+    regarm_t      s28;
+    regarm_t      s29;
+    regarm_t      s30;
+    regarm_t      s31;
 #endif /* CORTEX_USE_FPU */
-  regarm_t      r4;
-  regarm_t      r5;
-  regarm_t      r6;
-  regarm_t      r7;
-  regarm_t      r8;
-  regarm_t      r9;
-  regarm_t      r10;
-  regarm_t      r11;
-  regarm_t      lr;
+    regarm_t r4;
+    regarm_t r5;
+    regarm_t r6;
+    regarm_t r7;
+    regarm_t r8;
+    regarm_t r9;
+    regarm_t r10;
+    regarm_t r11;
+    regarm_t lr;
 };
 #endif /* !defined(__DOXYGEN__) */
 
@@ -364,11 +366,11 @@ struct port_intctx {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void _port_irq_epilogue(void);
-  void _port_switch(thread_t *ntp, thread_t *otp);
-  void _port_thread_start(void);
-  void _port_switch_from_isr(void);
-  void _port_exit_from_isr(void);
+void _port_irq_epilogue(void);
+void _port_switch(thread_t *ntp, thread_t *otp);
+void _port_thread_start(void);
+void _port_switch_from_isr(void);
+void _port_exit_from_isr(void);
 #ifdef __cplusplus
 }
 #endif
@@ -380,26 +382,27 @@ extern "C" {
 /**
  * @brief   Port-related initialization code.
  */
-static inline void port_init(void) {
+static inline void port_init(void)
+{
 
-  /* Initialization of the vector table and priority related settings.*/
-  SCB->VTOR = CORTEX_VTOR_INIT;
+    /* Initialization of the vector table and priority related settings.*/
+    SCB->VTOR = CORTEX_VTOR_INIT;
 
-  /* Initializing priority grouping.*/
-  NVIC_SetPriorityGrouping(CORTEX_PRIGROUP_INIT);
+    /* Initializing priority grouping.*/
+    NVIC_SetPriorityGrouping(CORTEX_PRIGROUP_INIT);
 
-  /* DWT cycle counter enable, note, the M7 requires DWT unlocking.*/
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    /* DWT cycle counter enable, note, the M7 requires DWT unlocking.*/
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 #if CORTEX_MODEL == 7
-  DWT->LAR = 0xC5ACCE55U;
+    DWT->LAR = 0xC5ACCE55U;
 #endif
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-  /* Initialization of the system vectors used by the port.*/
+    /* Initialization of the system vectors used by the port.*/
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
-  NVIC_SetPriority(SVCall_IRQn, CORTEX_PRIORITY_SVCALL);
+    NVIC_SetPriority(SVCall_IRQn, CORTEX_PRIORITY_SVCALL);
 #endif
-  NVIC_SetPriority(PendSV_IRQn, CORTEX_PRIORITY_PENDSV);
+    NVIC_SetPriority(PendSV_IRQn, CORTEX_PRIORITY_PENDSV);
 }
 
 /**
@@ -407,15 +410,16 @@ static inline void port_init(void) {
  *
  * @return              The interrupts status.
  */
-static inline syssts_t port_get_irq_status(void) {
-  syssts_t sts;
+static inline syssts_t port_get_irq_status(void)
+{
+    syssts_t sts;
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
-  sts = (syssts_t)__get_BASEPRI();
+    sts = (syssts_t) __get_BASEPRI();
 #else /* CORTEX_SIMPLIFIED_PRIORITY */
-  sts = (syssts_t)__get_PRIMASK();
+    sts = (syssts_t)__get_PRIMASK();
 #endif /* CORTEX_SIMPLIFIED_PRIORITY */
-  return sts;
+    return sts;
 }
 
 /**
@@ -427,12 +431,13 @@ static inline syssts_t port_get_irq_status(void) {
  * @retvel false        the word specified a disabled interrupts status.
  * @retvel true         the word specified an enabled interrupts status.
  */
-static inline bool port_irq_enabled(syssts_t sts) {
+static inline bool port_irq_enabled(syssts_t sts)
+{
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
-  return sts == (syssts_t)CORTEX_BASEPRI_DISABLED;
+    return sts == (syssts_t) CORTEX_BASEPRI_DISABLED;
 #else /* CORTEX_SIMPLIFIED_PRIORITY */
-  return (sts & (syssts_t)1) == (syssts_t)0;
+    return (sts & (syssts_t)1) == (syssts_t)0;
 #endif /* CORTEX_SIMPLIFIED_PRIORITY */
 }
 
@@ -443,9 +448,10 @@ static inline bool port_irq_enabled(syssts_t sts) {
  * @retval false        not running in ISR mode.
  * @retval true         running in ISR mode.
  */
-static inline bool port_is_isr_context(void) {
+static inline bool port_is_isr_context(void)
+{
 
-  return (bool)((__get_IPSR() & 0x1FFU) != 0U);
+    return (bool) ((__get_IPSR() & 0x1FFU) != 0U);
 }
 
 /**
@@ -453,22 +459,23 @@ static inline bool port_is_isr_context(void) {
  * @details In this port this function raises the base priority to kernel
  *          level.
  */
-static inline void port_lock(void) {
+static inline void port_lock(void)
+{
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
 #if defined(__CM7_REV)
 #if __CM7_REV <= 1
-  __disable_irq();
+    __disable_irq();
 #endif
 #endif
-  __set_BASEPRI(CORTEX_BASEPRI_KERNEL);
+    __set_BASEPRI(CORTEX_BASEPRI_KERNEL);
 #if defined(__CM7_REV)
 #if __CM7_REV <= 1
-  __enable_irq();
+    __enable_irq();
 #endif
 #endif
 #else /* CORTEX_SIMPLIFIED_PRIORITY */
-  __disable_irq();
+    __disable_irq();
 #endif /* CORTEX_SIMPLIFIED_PRIORITY */
 }
 
@@ -477,12 +484,13 @@ static inline void port_lock(void) {
  * @details In this port this function lowers the base priority to user
  *          level.
  */
-static inline void port_unlock(void) {
+static inline void port_unlock(void)
+{
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
-  __set_BASEPRI(CORTEX_BASEPRI_DISABLED);
+    __set_BASEPRI(CORTEX_BASEPRI_DISABLED);
 #else /* CORTEX_SIMPLIFIED_PRIORITY */
-  __enable_irq();
+    __enable_irq();
 #endif /* CORTEX_SIMPLIFIED_PRIORITY */
 }
 
@@ -492,9 +500,10 @@ static inline void port_unlock(void) {
  *          level.
  * @note    Same as @p port_lock() in this port.
  */
-static inline void port_lock_from_isr(void) {
+static inline void port_lock_from_isr(void)
+{
 
-  port_lock();
+    port_lock();
 }
 
 /**
@@ -503,9 +512,10 @@ static inline void port_lock_from_isr(void) {
  *          level.
  * @note    Same as @p port_unlock() in this port.
  */
-static inline void port_unlock_from_isr(void) {
+static inline void port_unlock_from_isr(void)
+{
 
-  port_unlock();
+    port_unlock();
 }
 
 /**
@@ -513,9 +523,10 @@ static inline void port_unlock_from_isr(void) {
  * @note    In this port it disables all the interrupt sources by raising
  *          the priority mask to level 0.
  */
-static inline void port_disable(void) {
+static inline void port_disable(void)
+{
 
-  __disable_irq();
+    __disable_irq();
 }
 
 /**
@@ -523,13 +534,14 @@ static inline void port_disable(void) {
  * @note    Interrupt sources above kernel level remains enabled.
  * @note    In this port it raises/lowers the base priority to kernel level.
  */
-static inline void port_suspend(void) {
+static inline void port_suspend(void)
+{
 
 #if (CORTEX_SIMPLIFIED_PRIORITY == FALSE) || defined(__DOXYGEN__)
-  __set_BASEPRI(CORTEX_BASEPRI_KERNEL);
-  __enable_irq();
+    __set_BASEPRI(CORTEX_BASEPRI_KERNEL);
+    __enable_irq();
 #else
-  __disable_irq();
+    __disable_irq();
 #endif
 }
 
@@ -537,12 +549,13 @@ static inline void port_suspend(void) {
  * @brief   Enables all the interrupt sources.
  * @note    In this port it lowers the base priority to user level.
  */
-static inline void port_enable(void) {
+static inline void port_enable(void)
+{
 
 #if (CORTEX_SIMPLIFIED_PRIORITY == FALSE) || defined(__DOXYGEN__)
-  __set_BASEPRI(CORTEX_BASEPRI_DISABLED);
+    __set_BASEPRI(CORTEX_BASEPRI_DISABLED);
 #endif
-  __enable_irq();
+    __enable_irq();
 }
 
 /**
@@ -553,10 +566,11 @@ static inline void port_enable(void) {
  *          modes.
  * @note    Implemented as an inlined @p WFI instruction.
  */
-static inline void port_wait_for_interrupt(void) {
+static inline void port_wait_for_interrupt(void)
+{
 
 #if CORTEX_ENABLE_WFI_IDLE == TRUE
-  __WFI();
+    //__WFI();
 #endif
 }
 
@@ -565,9 +579,10 @@ static inline void port_wait_for_interrupt(void) {
  *
  * @return              The realtime counter value.
  */
-static inline rtcnt_t port_rt_get_counter_value(void) {
+static inline rtcnt_t port_rt_get_counter_value(void)
+{
 
-  return DWT->CYCCNT;
+    return DWT->CYCCNT;
 }
 
 #endif /* !defined(_FROM_ASM_) */

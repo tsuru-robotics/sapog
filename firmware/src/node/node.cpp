@@ -36,6 +36,7 @@
 #include <motor/motor.hpp>
 #include <node/esc/esc.hpp>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
+#include <bxcan/bxcan_registers.h>
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -67,6 +68,7 @@ static State state{};
 static THD_WORKING_AREA(_wa_control_thread,
                         1024 * 4);
 
+
 [[noreturn]] static void control_thread(void *arg)
 {
     using namespace node::loops;
@@ -77,14 +79,31 @@ static THD_WORKING_AREA(_wa_control_thread,
     state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
     node::pnp::plug_and_play_loop(state);
     // Loops are created
+
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-                        Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
+        //Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     // Loops begin running
+    CanardMicrosecond last_loop_time = get_monotonic_microseconds();
+    int counter = 0;
     while (true)
     {
+        CanardMicrosecond delay = (get_monotonic_microseconds() - last_loop_time);
+        counter++;
+        printf("delay is %ld\n", (uint32_t) delay);
+        if (delay > 192 && counter > 1000)
+        {
+            counter = 0;
+
+        }
+        last_loop_time = get_monotonic_microseconds();
+        uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
+        if (error_code != 0)
+        {
+            printf("%ld\n", error_code);
+        }
         if (state.is_restart_required && !os::isRebootRequested())
         {
             printf("Sent %d remaining frames before restarting\n", transmit(state));
@@ -101,7 +120,6 @@ static THD_WORKING_AREA(_wa_control_thread,
             {
             }
         }
-        chThdSleep(1);
     }
 }
 
@@ -212,6 +230,7 @@ static void init_canard()
         {
             printf("Subscription %s had no handler set.\n", subscription.first);
         }
+        (void) res;
         assert(res > 0); // This is to make sure that the subscription was successful.
     }
     printf("Canard initialized\n");
@@ -220,7 +239,7 @@ static void init_canard()
 
 int UAVCANNode::init()
 {
-    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO - 1, control_thread, nullptr))
+    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO, control_thread, nullptr))
     {
         return -1;
     }

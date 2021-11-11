@@ -33,6 +33,7 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
             .payload        = &serialized[0],
         };
         int32_t number_of_frames_enqueued = canardTxPush(&canard, &transfer);
+        (void) number_of_frames_enqueued;
         assert(number_of_frames_enqueued > 0);
     }
 }
