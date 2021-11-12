@@ -4,6 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #include "wrapper.hpp"
+#include "../../../generated/nunavut_out/uavcan/_register/Value_1_0.h"
 
 converter_type find_converter(const char *name)
 {
@@ -23,8 +24,43 @@ converter_type find_converter(const char *name)
         return value_type{};
     };
 }
+
 namespace conversion
 {
+
+std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value)
+{
+    if (uavcan_register_Value_1_0_is_integer16_(&value))
+    {
+        return {(float) value.integer16.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_integer32_(&value))
+    {
+        return {(float) value.integer32.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_integer64_(&value))
+    {
+        return {(float) value.integer64.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_natural16_(&value))
+    {
+        return {(float) value.natural16.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_natural32_(&value))
+    {
+        return {(float) value.natural32.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_natural64_(&value))
+    {
+        return {(float) value.natural64.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_real16_(&value))
+    {
+        return {(float) value.real16.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_real32_(&value))
+    {
+        return {(float) value.real32.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_real64_(&value))
+    {
+        return {(float) value.real64.value.elements[0]};
+    }
+    return {};
+}
+
 std::optional<float> extract(const uavcan_primitive_array_Integer64_1_0 &integer)
 {
     if (integer.value.count == 0)

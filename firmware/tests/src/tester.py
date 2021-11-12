@@ -140,7 +140,7 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 
 class TestSapog:
     @staticmethod
-    def test_write_register():
+    def test_write_unsupported_sapog_register():
         time.sleep(1)
         for node_id in [21]:  # resource.keys():
             registry01 = make_registry(7)
@@ -152,7 +152,7 @@ class TestSapog:
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(response)
-                assert response is not None
+                assert response is not None and response[0].value.empty is not None
 
     # def test_esc_spin_2_seconds(self):
     #     pass

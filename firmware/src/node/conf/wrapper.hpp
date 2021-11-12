@@ -18,21 +18,21 @@ using converter_type = std::function<function_type>;
 using convert_pair = std::pair<const char *, converter_type>;
 using value_type = uavcan_register_Value_1_0;
 convert_pair converters[2]{ // NOLINT(bugprone-dynamic-static-initializers)
-        {"uavcan.pub.esc.status.id",
-                [](float in) {
-                    value_type value{};
-                    uavcan_register_Value_1_0_select_natural16_(&value);
-                    value.natural16.value.elements[0] = static_cast<std::uint16_t>(in);
-                    value.natural16.value.count = 1;
-                    return value;
-                }},
-        {"uavcan.node.id",
-                [](float in) {
-                    value_type value{};
-                    uavcan_register_Value_1_0_select_natural16_(&value);
-                    value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
-                    return value;
-                }}
+    {"uavcan.pub.esc.status.id",
+        [](float in) {
+            value_type value{};
+            uavcan_register_Value_1_0_select_natural16_(&value);
+            value.natural16.value.elements[0] = static_cast<std::uint16_t>(in);
+            value.natural16.value.count = 1;
+            return value;
+        }},
+    {"uavcan.node.id",
+        [](float in) {
+            value_type value{};
+            uavcan_register_Value_1_0_select_natural16_(&value);
+            value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
+            return value;
+        }}
 };
 }
 
@@ -41,6 +41,8 @@ converter_type find_converter(const char *name);
 
 namespace conversion
 {
+std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value);
+
 std::optional<float> extract(const uavcan_primitive_array_Bit_1_0 &bit);
 
 std::optional<float> extract(const uavcan_primitive_array_Integer64_1_0 &integer);
