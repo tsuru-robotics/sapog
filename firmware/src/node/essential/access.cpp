@@ -70,7 +70,7 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
     }
     printf("Successfully serialized access response.\n");
     const CanardTransfer response_transfer = {
-        .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS * 2,
+        .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS * 1,
         .priority = transfer->priority,
         .transfer_kind = CanardTransferKindResponse,
         .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
@@ -109,10 +109,14 @@ bool uavcan_register_Access_1_0_handler(const node::state::State &state, const C
     // Going to write a value to the register.
     if (does_request_provide_value)
     {
+        printf("Request provides a value\n");
         float received_value = (float) request.value.integer64.value.elements[0];
         char *request_name_c = request_name.data();
+        printf("Request name: %s\n", request_name_c);
+        printf("Received value: %d\n", (double) received_value);
         configSet(request_name_c, received_value);
         configSave();
+        printf("Saved configuration.\n");
     }
     // The client is going to get a response with the actual value of the register
     assert(request_name.data() != nullptr);

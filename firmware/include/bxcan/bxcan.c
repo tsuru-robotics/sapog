@@ -43,14 +43,14 @@ extern uint32_t SystemCoreClock;
 
 /// Error trackers, one for each possible CAN interface.
 /// As the bxCANReapError() function only returns a bool, we can keep this as a simple flag.
-static bool g_error[2] = {false};
+static bool g_error[2] = {false};  // NOLINT mutable global
 
 /// Time stamps for TX time-out management. There are three TX mailboxes for each CAN interface.
 /// An UINT64_MAX value means the time stamp is not set (mailbox is not in use). Zero initialization
 /// will work, as the value will be re-set to UINT64_MAX in abortExpiredTxMailboxes() and set to the
 /// required value in bxCANPush(). This way, any inadvertently busy mailboxes will still be aborted
 /// automatically, making this more robust than initializing to UINT64_MAX from the onset.
-static uint64_t g_tx_deadline[(1 + BXCAN_MAX_IFACE_INDEX) * 3] = {0};
+static uint64_t g_tx_deadline[(1 + BXCAN_MAX_IFACE_INDEX) * 3] = {0};  // NOLINT mutable global
 
 /// Converts an extended-ID frame format into the bxCAN TX ID register format.
 static uint32_t convertFrameIDToRegister(const uint32_t id)
@@ -103,8 +103,7 @@ static bool waitMSRINAKBitStateChange(volatile const BxCANType *const bxcan_base
         // The counter variable is declared volatile to prevent the compiler from optimizing it away.
         volatile size_t nticks = BXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK / 7000U;
         while (--nticks)
-        {
-        }
+        {}
     }
 
     return out_status;
@@ -171,7 +170,7 @@ static void processErrorStatus(volatile BxCANType *const bxcan_base,  //
     BXCAN_ASSERT((error_iface == &g_error[0]) || (error_iface == &g_error[1]));  // Valid g_error address.
 
     // Updating error flag.
-    const uint8_t lec = (uint8_t)((bxcan_base->ESR & BXCAN_ESR_LEC_MASK) >> BXCAN_ESR_LEC_SHIFT); // last error code
+    const uint8_t lec = (uint8_t)((bxcan_base->ESR & BXCAN_ESR_LEC_MASK) >> BXCAN_ESR_LEC_SHIFT);
 
     if (lec != 0U)
     {
@@ -335,7 +334,7 @@ bool bxCANConfigure(const uint8_t iface_index,  //
             // Configure one "accept all" filter and enable it.
             BXCAN1->FilterRegister[0].FR1 = 0U;
             BXCAN1->FilterRegister[0].FR2 = 0U;
-            BXCAN1->FA1R |= (1U << 0);
+            BXCAN1->FA1R |= (1U << 0U);
 
             BXCAN1->FMR &= ~BXCAN_FMR_FINIT;  // Leave initialization mode.
         }
@@ -367,11 +366,17 @@ void bxCANConfigureFilters(const uint8_t iface_index,  //
     // Only modify the registers if the filter register index offset is valid.
     if (filter_index_offset != 0xFF)
     {
+        BXCAN1->FMR |= BXCAN_FMR_FINIT;  // This is required for disabling filters.
         // Having filters disabled we can update the configuration.
         // Register mapping: FR1 - ID, FR2 - Mask
         for (uint8_t i = 0U; i < (uint8_t) BXCAN_NUM_ACCEPTANCE_FILTERS; i++)
         {
-            // Converting the ID and the Mask into the representation that can be chewed by the hardware.
+            const BxCANFilterParams *const cfg = params + i;
+            const uint8_t filter_index = i + filter_index_offset;
+
+            BXCAN1->FA1R &= ~(1U << filter_index);  // Disable the filter first. Only re-enable later if needed.
+
+            // Convert the filter to the register format.
             //
             // The logic of the hardware acceptance filters can be described as follows:
             //
@@ -405,36 +410,25 @@ void bxCANConfigureFilters(const uint8_t iface_index,  //
             //  1   1   0   0
             //  1   0   1   0
             //  1   1   1   1
-            uint32_t id = 0;
-            uint32_t mask = 0;
-
-            const BxCANFilterParams *const cfg = params + i;
-            const uint8_t filter_index = i + filter_index_offset;
-
-            // Convert the filter to the register format.
+            //
             // The special case of a filter entry set to {0, 0} (all bits zero) signifies that the filter should block
             // all traffic. This is done to improve the API, avoiding a magic number. Detect this, and leave that filter
             // disabled to block all traffic as there is no set of filter values that achieves this. Eg: {0, 0x1FFFFFFF}
             // will still allow data with ID = 0 to pass. (Setting a {0, 0} filter in the registers as-such would
             // actually pass all traffic.)
-            if ((cfg->extended_id != 0U) ||
-                (cfg->extended_mask != 0U))  // Only configure and enable non-{0, 0} filters.
+            if ((cfg->extended_id != 0U) || (cfg->extended_mask != 0U))
             {
-                id = (cfg->extended_id & BXCAN_FRAME_EXT_ID_MASK) << 3U;
-                mask = (cfg->extended_mask & BXCAN_FRAME_EXT_ID_MASK) << 3U;
-                id |=
-                    BXCAN_RIR_IDE;  // Must be set to accept extended-ID frames. (The mask bit for IDE is already zero.)
+                const uint32_t id = ((cfg->extended_id & BXCAN_FRAME_EXT_ID_MASK) << 3U) | BXCAN_RIR_IDE;
+                const uint32_t mask =
+                    ((cfg->extended_mask & BXCAN_FRAME_EXT_ID_MASK) << 3U) | BXCAN_RIR_IDE | BXCAN_RIR_RTR;
 
-                // Applying the converted representation to the registers.
                 BXCAN1->FilterRegister[filter_index].FR1 = id;
                 BXCAN1->FilterRegister[filter_index].FR2 = mask;
 
                 BXCAN1->FA1R |= (1U << filter_index);  // Enable the filter.
-            } else
-            {
-                BXCAN1->FA1R &= ~(1U << filter_index);
             }
         }
+        BXCAN1->FMR &= ~BXCAN_FMR_FINIT;
     }
 }
 

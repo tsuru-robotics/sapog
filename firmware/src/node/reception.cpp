@@ -11,6 +11,7 @@
 
 std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(State &state, int if_index)
 {
+    palWritePad(GPIOC, 11, ~palReadPad(GPIOC, 11));
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
     std::array<std::uint8_t, 8> payload_array{};
@@ -28,6 +29,7 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
         // assign the transfer to the given CanardTransfer object. Not a bug!
         CanardTransfer transfer{};
         CanardRxSubscription *this_subscription;
+
         const int8_t canard_result = canardRxAcceptEx(&state.canard, &frame, if_index, &transfer, &this_subscription);
         //this_subscription->
         if (canard_result > 0)
@@ -47,6 +49,8 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer)
 {
+    palWritePad(GPIOB, 15, 1);
+    palWritePad(GPIOC, 12, 1);
     auto a = get_subscriptions();
     auto start = a.first;
     auto end = a.second;

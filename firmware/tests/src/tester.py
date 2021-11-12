@@ -143,7 +143,7 @@ class TestSapog:
     def test_write_register():
         time.sleep(1)
         for node_id in [21]:  # resource.keys():
-            registry01 = make_registry(3)
+            registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
@@ -151,6 +151,7 @@ class TestSapog:
                 msg.name.name = "uavcan.node.description"
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
+                print(response)
                 assert response is not None
 
     # def test_esc_spin_2_seconds(self):

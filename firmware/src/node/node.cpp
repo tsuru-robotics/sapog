@@ -88,7 +88,7 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Loops begin running
     while (true)
     {
-        palWritePad(GPIOC, 14, 1);
+        palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
         uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
         if (error_code != 0)
         {
@@ -99,7 +99,6 @@ static THD_WORKING_AREA(_wa_control_thread,
             printf("Sent %d remaining frames before restarting\n", transmit(state));
             os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
         }
-        palWritePad(GPIOC, 14, 0);
         CanardMicrosecond current_time = get_monotonic_microseconds();
         for (Loop &loop: loops)
         {
