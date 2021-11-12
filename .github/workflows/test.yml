@@ -8,9 +8,10 @@ jobs:
         uses: actions/checkout@v2
       - name: installing dependencies
         run: |
-          pip install -U nunavut
+          python -m pip install -U nunavut
           sudo apt install libjack-jackd2-dev libasound2-dev
-          pip install yakut
+          python -m pip install yakut
+          python -m pip install pytest
       - name: Calling the begin mechanism
         run: groom_begin.py sapog
       - name: Building Sapog
@@ -32,7 +33,7 @@ jobs:
       - name: Flashing Sapog
         run: /home/zubaxpc/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gdb /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/build/compound.elf -ex "target extended-remote $(realpath /dev/serial/by-id/usb-Black*-if00)" -ex "mon swdp_scan" -ex "attach 1" -ex "load" -ex "kill" -ex "quit" -nh --batch
       - name: Running tests
-        run: PYTHONPATH=$PYTHONPATH:/home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces/ python3 -m pytest /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/src/tester.py
+        run: PYTHONPATH=$PYTHONPATH:/home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces/ python -m pytest /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/src/tester.py
       - name: Cleanup of a failure
         if: ${{ failure() }}
         run: |
