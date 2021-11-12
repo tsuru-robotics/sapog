@@ -82,23 +82,13 @@ static THD_WORKING_AREA(_wa_control_thread,
 
     static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
                         Loop{&handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-        //Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
+                        Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     // Loops begin running
-    CanardMicrosecond last_loop_time = get_monotonic_microseconds();
-    int counter = 0;
     while (true)
     {
-        CanardMicrosecond delay = (get_monotonic_microseconds() - last_loop_time);
-        counter++;
-        printf("delay is %ld\n", (uint32_t) delay);
-        if (delay > 192 && counter > 1000)
-        {
-            counter = 0;
-
-        }
-        last_loop_time = get_monotonic_microseconds();
+        palWritePad(GPIOC, 14, 1);
         uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
         if (error_code != 0)
         {
@@ -109,6 +99,7 @@ static THD_WORKING_AREA(_wa_control_thread,
             printf("Sent %d remaining frames before restarting\n", transmit(state));
             os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
         }
+        palWritePad(GPIOC, 14, 0);
         CanardMicrosecond current_time = get_monotonic_microseconds();
         for (Loop &loop: loops)
         {

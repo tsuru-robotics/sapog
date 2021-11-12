@@ -6,8 +6,8 @@ jobs:
     steps:
       - name: checking out
         uses: actions/checkout@v2
-      - name: Turning on the USB port
-        run: sudo ykushcmd ykush3 -u 1
+      - name: Calling the begin mechanism
+        run: groom_begin.py sapog
       - name: Building Sapog
         run: |
           source /home/zubaxpc/.profile
@@ -22,8 +22,6 @@ jobs:
         run: sudo slcand -o -s8 -t hw -S 3000000 $(realpath /dev/serial/by-id/usb-Zubax*Babel*-if00) && sudo ifconfig slcan0 up && sudo ifconfig slcan0 txqueuelen 100
       - name: Building Python DSDL
         run: yakut compile /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/reg /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/uavcan --output /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces
-      - name: Powering on psu
-        run: groom_power.py on
       - name: Powering on sapog
         run: groom_power.py -v 15 && sleep 10 # boot time
       - name: Flashing Sapog
@@ -33,9 +31,7 @@ jobs:
       - name: Cleanup of a failure
         if: ${{ failure() }}
         run: |
-          sudo ykushcmd ykush3 -d 1
-          groom_power.py poweroff
+          groom_end.py sapog
       - name: Cleanup after sucessful tests
         run: |
-          sudo ykushcmd ykush3 -d 1
-          groom_power.py poweroff
+          groom_end.py sapog
