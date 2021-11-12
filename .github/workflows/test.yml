@@ -6,6 +6,11 @@ jobs:
     steps:
       - name: checking out
         uses: actions/checkout@v2
+      - name: installing dependencies
+        run: |
+          pip install -U nunavut
+          sudo apt install libjack-jackd2-dev libasound2-dev
+          pip install yakut
       - name: Calling the begin mechanism
         run: groom_begin.py sapog
       - name: Building Sapog
