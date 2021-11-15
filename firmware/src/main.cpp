@@ -183,7 +183,7 @@ int main()
 {
     auto wdt = init();
 
-    chThdSetPriority(LOWPRIO);
+    chThdSetPriority(NORMALPRIO);
 
     //do_startup_beep();
 
@@ -196,9 +196,12 @@ int main()
      */
     BackgroundConfigManager bg_config_manager;
     uavcan_node_1_0::UAVCANNode node{};
+    (void) node;
     node.init();
+    printf("Node init done, thread launched.\n");
     while (!os::isRebootRequested())
     {
+        palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
         wdt.reset();
 
         if (motor_is_blocked() || !temperature_sensor::is_ok())
@@ -211,10 +214,10 @@ int main()
 
         bg_config_manager.poll();
 
-        ::usleep(10 * 1000);
+        ::usleep(10 * 1000); // 10 milliseconds
     }
-
-    ::usleep(100 * 1000);
+    printf("Preparing for a restart\n");
+    ::usleep(100 * 1000); // 100 milliseconds
     motor_stop();
     board::reboot();
     return 0;

@@ -88,7 +88,6 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Loops begin running
     while (true)
     {
-        palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
         uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
         if (error_code != 0)
         {
@@ -229,7 +228,7 @@ static void init_canard()
 
 int UAVCANNode::init()
 {
-    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), HIGHPRIO, control_thread, nullptr))
+    if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), NORMALPRIO, control_thread, nullptr))
     {
         return -1;
     }

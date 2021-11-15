@@ -3,6 +3,7 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
+#include <sys/unistd.h>
 #include "node/reception.hpp"
 #include "uavcan/_register/Name_1_0.h"
 #include "zubax_chibios/zubax_chibios/config/config.h"
@@ -22,7 +23,10 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
                                                &frame.extended_can_id,
                                                &frame.payload_size, payload_array.data());
         if (!bxCanQueueHadSomething)
-        { return {}; }
+        {
+            ::usleep(1); // 10 milliseconds
+            return {};
+        }
         // The transfer is actually not stored here in this narrow scoped variable
         // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
         // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
