@@ -6,6 +6,8 @@
 #include <bxcan/bxcan.h>
 #include <assert.h>
 #include <cstdio>
+#include <stm32f105xc.h>
+#include <hal.h>
 #include "transmit.hpp"
 #include "state.hpp"
 #include "libcanard/canard.h"
@@ -25,6 +27,7 @@ void remove_frame(State &state, int if_index, const CanardFrame *txf)
 /// Uses bxCAN to send all frames that have been queued in canard, returns the amount of frames that were sent
 int transmit(State &state)
 {
+    palWritePad(GPIOB, 15, 0);
     int count_sent_frames = 0;
     for (const CanardFrame *txf = NULL;
          (txf = canardTxPeek(&state.canard, 0)) != nullptr;)  // Look at the top of the TX queue.
@@ -42,5 +45,6 @@ int transmit(State &state)
         } else
         { break; }
     }
+    palWritePad(GPIOB, 15, 1);
     return count_sent_frames;
 }

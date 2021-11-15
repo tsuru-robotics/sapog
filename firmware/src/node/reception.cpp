@@ -12,7 +12,6 @@
 
 std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(State &state, int if_index)
 {
-    palWritePad(GPIOC, 11, ~palReadPad(GPIOC, 11));
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
     std::array<std::uint8_t, 8> payload_array{};
@@ -52,28 +51,6 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
         }
     }
     return {};
-}
-
-void process_received_transfer(const State &state, const CanardTransfer *const transfer)
-{
-    palWritePad(GPIOB, 15, 1);
-    palWritePad(GPIOC, 12, 1);
-    auto a = get_subscriptions();
-    auto start = a.first;
-    auto end = a.second;
-    printf("Some kind of request received %d\n", transfer->port_id);
-    for (auto it = start; it != end; ++it)
-    {
-        if (it->second.port_id == 384)
-        {
-            printf("Access request received.\n");
-        }
-        if (transfer->port_id == it->second.port_id)
-        {
-            it->second.handler(const_cast<State &>(state), transfer);
-            return;
-        }
-    }
 }
 
 bool not_implemented_handler(const State &state, const CanardTransfer *const transfer)

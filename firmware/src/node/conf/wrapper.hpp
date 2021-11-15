@@ -10,6 +10,7 @@
 #include <functional>
 #include <uavcan/_register/Value_1_0.h>
 #include <cstring>
+#include <zubax_chibios/config/config.h>
 
 namespace
 {
@@ -41,7 +42,7 @@ converter_type find_converter(const char *name);
 
 namespace conversion
 {
-std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value);
+std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param);
 
 std::optional<float> extract(const uavcan_primitive_array_Bit_1_0 &bit);
 

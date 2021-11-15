@@ -28,35 +28,38 @@ converter_type find_converter(const char *name)
 namespace conversion
 {
 
-std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value)
+std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param)
 {
-    if (uavcan_register_Value_1_0_is_integer16_(&value))
+    if (uavcan_register_Value_1_0_is_integer16_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.integer16.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_integer32_(&value))
+    } else if (uavcan_register_Value_1_0_is_integer32_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.integer32.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_integer64_(&value))
+    } else if (uavcan_register_Value_1_0_is_integer64_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.integer64.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_natural16_(&value))
+    } else if (uavcan_register_Value_1_0_is_natural16_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.natural16.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_natural32_(&value))
+    } else if (uavcan_register_Value_1_0_is_natural32_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.natural32.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_natural64_(&value))
+    } else if (uavcan_register_Value_1_0_is_natural64_(&value) && param == CONFIG_TYPE_INT)
     {
         return {(float) value.natural64.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_real16_(&value))
+    } else if (uavcan_register_Value_1_0_is_real16_(&value) && param == CONFIG_TYPE_FLOAT)
     {
         return {(float) value.real16.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_real32_(&value))
+    } else if (uavcan_register_Value_1_0_is_real32_(&value) && param == CONFIG_TYPE_FLOAT)
     {
         return {(float) value.real32.value.elements[0]};
-    } else if (uavcan_register_Value_1_0_is_real64_(&value))
+    } else if (uavcan_register_Value_1_0_is_real64_(&value) && param == CONFIG_TYPE_FLOAT)
     {
         return {(float) value.real64.value.elements[0]};
+    } else if (uavcan_register_Value_1_0_is_bit_(&value) && param == CONFIG_TYPE_BOOL)
+    {
+        return {(float) value.bit.value.bitpacked[0]};
     }
     return {};
 }

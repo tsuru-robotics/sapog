@@ -106,23 +106,29 @@ bool uavcan_register_Access_1_0_handler(const node::state::State &state, const C
     }
     std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
     get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
-
-    std::optional<float> sapog_acceptable_value = ::conversion::extract_any_number(request.value);
-    // Going to write a value to the register.
-    if (sapog_acceptable_value.has_value())
+    ConfigParam entry_config_params{};
+    bool register_has_entry_for_name = configGetDescr(request_name.data(), &param) == 0;
+    if (register_has_entry_for_name)
     {
-        printf("Request provides a value\n");
-        float received_value = sapog_acceptable_value.value();
-        char *request_name_c = request_name.data();
-        printf("Request name: %s\n", request_name_c);
-        printf("Received (int) value: %d\n", (int) received_value);
-        configSet(request_name_c, received_value);
-        configSave();
-        printf("Saved configuration.\n");
-    } else
-    {
-        printf("Received a value that cannot be stored in Sapog.\n");
+        std::optional<float> sapog_acceptable_value = ::conversion::extract_any_number(request.value,
+                                                                                       entry_config_params.type);
+        // Going to write a value to the register.
+        if (sapog_acceptable_value.has_value())
+        {
+            printf("Request provides a value\n");
+            float received_value = sapog_acceptable_value.value();
+            char *request_name_c = request_name.data();
+            printf("Request name: %s\n", request_name_c);
+            printf("Received (int) value: %d\n", (int) received_value);
+            configSet(request_name_c, received_value);
+            configSave();
+            printf("Saved configuration.\n");
+        } else
+        {
+            printf("Received a value that cannot be stored in Sapog.\n");
+        }
     }
+
     // The client is going to get a response with the actual value of the register
     assert(request_name.data() != nullptr);
     // We are silently losing precision, but it shouldn't matter for this application
