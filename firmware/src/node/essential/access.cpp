@@ -107,7 +107,7 @@ bool uavcan_register_Access_1_0_handler(const node::state::State &state, const C
     std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
     get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
     ConfigParam entry_config_params{};
-    bool register_has_entry_for_name = configGetDescr(request_name.data(), &param) == 0;
+    bool register_has_entry_for_name = configGetDescr(request_name.data(), &entry_config_params) == 0;
     if (register_has_entry_for_name)
     {
         std::optional<float> sapog_acceptable_value = ::conversion::extract_any_number(request.value,

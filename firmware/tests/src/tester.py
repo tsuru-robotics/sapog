@@ -4,6 +4,7 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import asyncio
+import math
 import os
 import time
 import typing
@@ -230,6 +231,39 @@ class TestSapog:
                             print(f"Size should be 1 but is {bit_value.value.size}")
                     else:
                         print("response[0].value.bit is None")
+                else:
+                    print("Response is None")
+                assert False
+
+    @staticmethod
+    def test_read_existing_register(resource):
+        time.sleep(1)
+        for node_id in resource.keys():  # resource.keys():
+            registry01 = make_registry(7)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
+                msg.name.name = "rpmctl_p"
+                time.sleep(0.5)
+                response = wrap_await(service_client.call(msg))
+                print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
+                print(response)
+                if response:
+                    real_value = response[0].value.real64
+                    if real_value:
+                        if real_value.value.size == 1:
+                            returned_value = response[0].value.real.value.tolist()[0]
+                            print(type(returned_value))
+                            if math.isclose(returned_value, 0.0001):
+                                assert True
+                                return
+                            else:
+                                print(f"Returned value should be 0.0001 but is {returned_value}")
+                        else:
+                            print(f"Size should be 1 but is {real_value.value.size}")
+                    else:
+                        print("response[0].value.real is None")
                 else:
                     print("Response is None")
                 assert False
