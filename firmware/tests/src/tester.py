@@ -129,6 +129,9 @@ def is_device_with_node_id_running(node_id):
         return True
 
 
+from debugger import format_payload_hex_view
+
+
 @pytest.fixture()
 def resource():
     global is_running_on_my_laptop
@@ -164,7 +167,7 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 
 class TestSapog:
     @staticmethod
-    def test_write_supported_sapog_register(resource):
+    def test_write_supported_sapog_register_bit(resource):
         time.sleep(1)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
@@ -176,14 +179,17 @@ class TestSapog:
                 msg.name.name = "pwm_enable"
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
+                print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
                     bit_value = response[0].value.bit
                     if bit_value:
                         if bit_value.value.size == 1:
                             returned_value = response[0].value.bit.value.tolist()[0]
-                            if returned_value == 1:
+                            print(type(returned_value))
+                            if returned_value:
                                 assert True
+                                return
                             else:
                                 print(f"Returned value should be 1 but is {returned_value}")
                         else:
@@ -194,62 +200,62 @@ class TestSapog:
                     print("Response is None")
                 assert False
 
-        @staticmethod
-        def test_write_unsupported_sapog_register(resource):
-            time.sleep(1)
-            for node_id in resource.keys():  # resource.keys():
-                registry01 = make_registry(7)
-                with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                    service_client = node.make_client(uavcan.register.Access_1_0, node_id)
-                    msg = uavcan.register.Access_1_0.Request()
-                    msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
-                    msg.name.name = "uavcan.node.description"
-                    time.sleep(0.5)
-                    response = wrap_await(service_client.call(msg))
-                    print(response)
-                    is_result_good = response is not None and response[0].value.empty is not None
-                    assert is_result_good
+    @staticmethod
+    def test_write_unsupported_sapog_register(resource):
+        time.sleep(1)
+        for node_id in resource.keys():  # resource.keys():
+            registry01 = make_registry(7)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
+                msg.name.name = "uavcan.node.description"
+                time.sleep(0.5)
+                response = wrap_await(service_client.call(msg))
+                print(response)
+                is_result_good = response is not None and response[0].value.empty is not None
+                assert is_result_good
 
-        # def test_esc_spin_2_seconds(self):
-        #     pass
+    # def test_esc_spin_2_seconds(self):
+    #     pass
 
-        @staticmethod
-        def test_allows_allocation_of_node_id(empty_resource):
+    @staticmethod
+    def test_allows_allocation_of_node_id(empty_resource):
+        try:
+            required_amount = 1
+            result = allocate_nr_of_nodes(required_amount)
+            assert len(result.keys()) == required_amount
+        except TimeoutError:
+            assert False
+
+    @staticmethod
+    def test_restart_node(resource):
+        for node_id in resource.keys():
+            registry01 = make_registry(3)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+                msg = uavcan.node.ExecuteCommand_1_1.Request()
+                msg.command = msg.COMMAND_RESTART
+                response = wrap_await(service_client.call(msg))
+                node.close()
+                assert response is not None
+
+    @staticmethod
+    def test_has_heartbeat(resource):
+        for node_id in resource.keys():
             try:
-                required_amount = 1
-                result = allocate_nr_of_nodes(required_amount)
-                assert len(result.keys()) == required_amount
-            except TimeoutError:
-                assert False
-
-        @staticmethod
-        def test_restart_node(resource):
-            for node_id in resource.keys():
                 registry01 = make_registry(3)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-                    msg = uavcan.node.ExecuteCommand_1_1.Request()
-                    msg.command = msg.COMMAND_RESTART
-                    response = wrap_await(service_client.call(msg))
-                    node.close()
-                    assert response is not None
+                    subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+                    event = asyncio.Event()
 
-        @staticmethod
-        def test_has_heartbeat(resource):
-            for node_id in resource.keys():
-                try:
-                    registry01 = make_registry(3)
-                    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                        subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-                        event = asyncio.Event()
+                    def hb_handler(message_class: MessageClass,
+                                   transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                        if transfer_from.source_node_id == node_id:
+                            event.set()
 
-                        def hb_handler(message_class: MessageClass,
-                                       transfer_from: pyuavcan.transport._transfer.TransferFrom):
-                            if transfer_from.source_node_id == node_id:
-                                event.set()
-
-                        subscriber.receive_in_background(hb_handler)
-                        wrap_await(asyncio.wait_for(event.wait(), 1.7))
-                        assert True
-                except TimeoutError:
-                    assert False
+                    subscriber.receive_in_background(hb_handler)
+                    wrap_await(asyncio.wait_for(event.wait(), 1.7))
+                    assert True
+            except TimeoutError:
+                assert False

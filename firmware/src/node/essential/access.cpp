@@ -50,6 +50,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
         uavcan_register_Value_1_0_select_bit_(&out_value);
         printf("The value that is being saved into a boolean: %d\n", (int) value);
         printf("nunavutSetBit %d", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
+        out_value.bit.value.count = 1;
     }
 }
 

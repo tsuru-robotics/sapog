@@ -51,6 +51,7 @@ def make_handler_for_getinfo_update():
 
 def format_payload_hex_view(fragmented_payload: typing.Sequence[memoryview]) -> str:
     payload: str = ""
+    count = 0
     for memory_view in fragmented_payload:
         my_list = memory_view.tolist()
         for byte in bytes(my_list):
