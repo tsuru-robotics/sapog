@@ -10,6 +10,7 @@ import typing
 
 import pathlib
 import sys
+from asyncio import exceptions
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -109,17 +110,41 @@ def plug_in_power_manual():
     subprocess.run(["xterm", "-e", "bash", "-c", "echo Plug in power for boards and press enter when done; read line"])
 
 
+def is_device_with_node_id_running(node_id):
+    registry01 = make_registry(3)
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+        subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+        event = asyncio.Event()
+
+        def hb_handler(message_class: MessageClass,
+                       transfer_from: pyuavcan.transport._transfer.TransferFrom):
+            if transfer_from.source_node_id == node_id:
+                event.set()
+
+        subscriber.receive_in_background(hb_handler)
+        try:
+            wrap_await(asyncio.wait_for(event.wait(), 1.7))
+        except exceptions.TimeoutError as e:
+            return False
+        return True
+
+
 @pytest.fixture()
 def resource():
     global is_running_on_my_laptop
     print(f"is_running_on_my_laptop: {is_running_on_my_laptop}")
     fix_imports()
-    unplug_power()
-    plug_in_power()
+
     if not is_running_on_my_laptop:
+        unplug_power()
+        plug_in_power()
         time.sleep(4)
-    yield allocate_nr_of_nodes(1)
-    unplug_power()
+
+    if is_device_with_node_id_running(21) and is_running_on_my_laptop:
+        print("Device with node id 21 is already running so I will use that.")
+        yield {21: "idk"}
+    else:
+        yield allocate_nr_of_nodes(1)
 
 
 @pytest.fixture()
@@ -134,66 +159,97 @@ def empty_resource():
     unplug_power()
 
 
-# anothe
 from my_simple_test_allocator import allocate_nr_of_nodes
 
 
 class TestSapog:
     @staticmethod
-    def test_write_unsupported_sapog_register():
+    def test_write_supported_sapog_register(resource):
         time.sleep(1)
-        for node_id in [21]:  # resource.keys():
+        for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
+
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
-                msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
-                msg.name.name = "uavcan.node.description"
+                msg.value = uavcan.register.Value_1_0(integer32=uavcan.primitive.array.Integer32_1_0(1))
+                msg.name.name = "pwm_enable"
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(response)
-                assert response is not None and response[0].value.empty is not None
+                if response:
+                    bit_value = response[0].value.bit
+                    if bit_value:
+                        if bit_value.value.size == 1:
+                            returned_value = response[0].value.bit.value.tolist()[0]
+                            if returned_value == 1:
+                                assert True
+                            else:
+                                print(f"Returned value should be 1 but is {returned_value}")
+                        else:
+                            print(f"Size should be 1 but is {bit_value.value.size}")
+                    else:
+                        print("response[0].value.bit is None")
+                else:
+                    print("Response is None")
+                assert False
 
-    # def test_esc_spin_2_seconds(self):
-    #     pass
-
-    @staticmethod
-    def test_allows_allocation_of_node_id(empty_resource):
-        try:
-            required_amount = 1
-            result = allocate_nr_of_nodes(required_amount)
-            assert len(result.keys()) == required_amount
-        except TimeoutError:
-            assert False
-
-    @staticmethod
-    def test_restart_node(resource):
-        for node_id in resource.keys():
-            registry01 = make_registry(3)
-            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-                msg = uavcan.node.ExecuteCommand_1_1.Request()
-                msg.command = msg.COMMAND_RESTART
-                response = wrap_await(service_client.call(msg))
-                node.close()
-                assert response is not None
-
-    @staticmethod
-    def test_has_heartbeat(resource):
-        for node_id in resource.keys():
-            try:
-                registry01 = make_registry(3)
+        @staticmethod
+        def test_write_unsupported_sapog_register(resource):
+            time.sleep(1)
+            for node_id in resource.keys():  # resource.keys():
+                registry01 = make_registry(7)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                    subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-                    event = asyncio.Event()
+                    service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                    msg = uavcan.register.Access_1_0.Request()
+                    msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
+                    msg.name.name = "uavcan.node.description"
+                    time.sleep(0.5)
+                    response = wrap_await(service_client.call(msg))
+                    print(response)
+                    is_result_good = response is not None and response[0].value.empty is not None
+                    assert is_result_good
 
-                    def hb_handler(message_class: MessageClass,
-                                   transfer_from: pyuavcan.transport._transfer.TransferFrom):
-                        if transfer_from.source_node_id == node_id:
-                            event.set()
+        # def test_esc_spin_2_seconds(self):
+        #     pass
 
-                    subscriber.receive_in_background(hb_handler)
-                    wrap_await(asyncio.wait_for(event.wait(), 1.7))
-                    assert True
+        @staticmethod
+        def test_allows_allocation_of_node_id(empty_resource):
+            try:
+                required_amount = 1
+                result = allocate_nr_of_nodes(required_amount)
+                assert len(result.keys()) == required_amount
             except TimeoutError:
                 assert False
+
+        @staticmethod
+        def test_restart_node(resource):
+            for node_id in resource.keys():
+                registry01 = make_registry(3)
+                with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+                    msg = uavcan.node.ExecuteCommand_1_1.Request()
+                    msg.command = msg.COMMAND_RESTART
+                    response = wrap_await(service_client.call(msg))
+                    node.close()
+                    assert response is not None
+
+        @staticmethod
+        def test_has_heartbeat(resource):
+            for node_id in resource.keys():
+                try:
+                    registry01 = make_registry(3)
+                    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                        subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+                        event = asyncio.Event()
+
+                        def hb_handler(message_class: MessageClass,
+                                       transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                            if transfer_from.source_node_id == node_id:
+                                event.set()
+
+                        subscriber.receive_in_background(hb_handler)
+                        wrap_await(asyncio.wait_for(event.wait(), 1.7))
+                        assert True
+                except TimeoutError:
+                    assert False

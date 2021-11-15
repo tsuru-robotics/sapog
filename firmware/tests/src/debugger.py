@@ -49,9 +49,9 @@ def make_handler_for_getinfo_update():
     return handle_getinfo_handler_format
 
 
-def format_payload_hex_view(trace: Trace):
+def format_payload_hex_view(fragmented_payload: typing.Sequence[memoryview]) -> str:
     payload: str = ""
-    for memory_view in trace.transfer.fragmented_payload:
+    for memory_view in fragmented_payload:
         my_list = memory_view.tolist()
         for byte in bytes(my_list):
             payload += '{:02X} '.format(byte)
@@ -66,6 +66,10 @@ def format_payload_hex_view(trace: Trace):
     else:
         payload = payload[:len(payload) - len(" |")]
     return payload
+
+
+def format_payload_hex_view_trace(trace: Trace):
+    return format_payload_hex_view(trace.transfer.fragmented_payload)
 
 
 def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int, debugger_id: int):

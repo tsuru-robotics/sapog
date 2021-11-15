@@ -48,7 +48,8 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     {
         printf("Response type is bool\n");
         uavcan_register_Value_1_0_select_bit_(&out_value);
-        nunavutSetBit(out_value.bit.value.bitpacked, out_value.bit.value.count, 0, value != 0);
+        printf("The value that is being saved into a boolean: %d\n", (int) value);
+        printf("nunavutSetBit %d", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
     }
 }
 
@@ -113,7 +114,7 @@ bool uavcan_register_Access_1_0_handler(const node::state::State &state, const C
         float received_value = sapog_acceptable_value.value();
         char *request_name_c = request_name.data();
         printf("Request name: %s\n", request_name_c);
-        printf("Received value: %f\n", (double) received_value);
+        printf("Received (int) value: %d\n", (int) received_value);
         configSet(request_name_c, received_value);
         configSave();
         printf("Saved configuration.\n");
