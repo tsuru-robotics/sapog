@@ -24,7 +24,10 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
                                                &frame.payload_size, payload_array.data());
         if (!bxCanQueueHadSomething)
         {
-            ::usleep(1); // 10 milliseconds
+            //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
+            palWritePad(GPIOC, 14, 1);
+            ::usleep(1); // 1 millisecond
+            palWritePad(GPIOC, 14, 0);
             return {};
         }
         // The transfer is actually not stored here in this narrow scoped variable

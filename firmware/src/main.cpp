@@ -201,7 +201,6 @@ int main()
     printf("Node init done, thread launched.\n");
     while (!os::isRebootRequested())
     {
-        palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
         wdt.reset();
 
         if (motor_is_blocked() || !temperature_sensor::is_ok())
@@ -213,7 +212,6 @@ int main()
         }
 
         bg_config_manager.poll();
-
         ::usleep(10 * 1000); // 10 milliseconds
     }
     printf("Preparing for a restart\n");
