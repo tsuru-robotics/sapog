@@ -168,7 +168,7 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 
 class TestSapog:
     @staticmethod
-    def test_write_supported_sapog_register_float(resource):
+    def test_write_supported_sapog_register_int(resource):
         time.sleep(1)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
@@ -176,25 +176,42 @@ class TestSapog:
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
-                msg.value = uavcan.register.Value_1_0(integer32=uavcan.primitive.array.Integer32_1_0(1))
+                msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60001))
                 msg.name.name = "mot_pwm_hz"
                 time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
-                    bit_value = response[0].value.bit
-                    if bit_value:
-                        if bit_value.value.size == 1:
-                            returned_value = response[0].value.bit.value.tolist()[0]
+                    int_value = response[0].value.integer64
+                    if int_value:
+                        if int_value.value.size == 1:
+                            returned_value = response[0].value.integer64.value.tolist()[0]
                             print(type(returned_value))
-                            if returned_value:
-                                assert True
-                                return
-                            else:
-                                print(f"Returned value should be 1 but is {returned_value}")
+                            assert returned_value == 60001
                         else:
-                            print(f"Size should be 1 but is {bit_value.value.size}")
+                            print(f"Size should be 1 but is {int_value.value.size}")
+                    else:
+                        print("response[0].value.bit is None")
+                else:
+                    print("Response is None")
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60000))
+                msg.name.name = "mot_pwm_hz"
+                time.sleep(0.5)
+                response = wrap_await(service_client.call(msg))
+                print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
+                print(response)
+                if response:
+                    int_value = response[0].value.integer64
+                    if int_value:
+                        if int_value.value.size == 1:
+                            returned_value = response[0].value.integer64.value.tolist()[0]
+                            print(type(returned_value))
+                            assert returned_value == 60000
+                            return
+                        else:
+                            print(f"Size should be 1 but is {int_value.value.size}")
                     else:
                         print("response[0].value.bit is None")
                 else:
@@ -236,7 +253,7 @@ class TestSapog:
                 assert False
 
     @staticmethod
-    def test_read_existing_register(resource):
+    def test_read_existing_register_float(resource):
         time.sleep(1)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
@@ -256,6 +273,66 @@ class TestSapog:
                             returned_value = response[0].value.real64.value.tolist()[0]
                             print(type(returned_value))
                             assert math.isclose(returned_value, 0.000099999, abs_tol=1e-09)
+                            return
+                        else:
+                            print(f"Size should be 1 but is {real_value.value.size}")
+                    else:
+                        print("response[0].value.real is None")
+                else:
+                    print("Response is None")
+                assert False
+
+    @staticmethod
+    def test_read_existing_register_bool(resource):
+        time.sleep(1)
+        for node_id in resource.keys():  # resource.keys():
+            registry01 = make_registry(7)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
+                msg.name.name = "pwm_enable"
+                time.sleep(0.5)
+                response = wrap_await(service_client.call(msg))
+                print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
+                print(response)
+                if response:
+                    real_value = response[0].value.real64
+                    if real_value:
+                        if real_value.value.size == 1:
+                            returned_value = response[0].value.bit.value.tolist()[0]
+                            print(type(returned_value))
+                            assert math.isclose(returned_value, 0.000099999, abs_tol=1e-09)
+                            return
+                        else:
+                            print(f"Size should be 1 but is {real_value.value.size}")
+                    else:
+                        print("response[0].value.real is None")
+                else:
+                    print("Response is None")
+                assert False
+
+    @staticmethod
+    def test_read_existing_register_int(resource):
+        time.sleep(1)
+        for node_id in resource.keys():  # resource.keys():
+            registry01 = make_registry(7)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+                msg = uavcan.register.Access_1_0.Request()
+                msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
+                msg.name.name = "mot_tim_adv_min"
+                time.sleep(0.5)
+                response = wrap_await(service_client.call(msg))
+                print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
+                print(response)
+                if response:
+                    real_value = response[0].value.integer64
+                    if real_value:
+                        if real_value.value.size == 1:
+                            returned_value = response[0].value.integer64.value.tolist()[0]
+                            print(type(returned_value))
+                            assert math.isclose(returned_value, 5, abs_tol=1e-09)
                             return
                         else:
                             print(f"Size should be 1 but is {real_value.value.size}")

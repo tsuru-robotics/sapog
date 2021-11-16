@@ -40,7 +40,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
         out_value.real64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_INT)
     {
-        printf("Response type is a int\n");
+        printf("Response type is an int: %d\n", (uint16_t) value);
         uavcan_register_Value_1_0_select_integer64_(&out_value);
         out_value.integer64.value.elements[0] = value;
         out_value.integer64.value.count = 1;
