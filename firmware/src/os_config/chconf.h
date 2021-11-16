@@ -41,6 +41,8 @@
 #define CH_CFG_ST_TIMEDELTA        0
 #define CH_CFG_ST_FREQUENCY             1000
 
+#define CHPRINTF_USE_FLOAT          TRUE
+
 #define PORT_IDLE_THREAD_STACK_SIZE     64
 #define PORT_INT_REQUIRED_STACK         512
 

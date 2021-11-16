@@ -34,7 +34,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     float value = configGet(request_name);
     if (param.type == CONFIG_TYPE_FLOAT)
     {
-        printf("Response value is a float\n");
+        printf("Response value is a float: %f\n", value);
         uavcan_register_Value_1_0_select_real64_(&out_value);
         out_value.real64.value.elements[0] = value;
         out_value.real64.value.count = 1;

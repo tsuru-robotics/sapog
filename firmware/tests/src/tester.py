@@ -253,13 +253,10 @@ class TestSapog:
                     real_value = response[0].value.real64
                     if real_value:
                         if real_value.value.size == 1:
-                            returned_value = response[0].value.real.value.tolist()[0]
+                            returned_value = response[0].value.real64.value.tolist()[0]
                             print(type(returned_value))
-                            if math.isclose(returned_value, 0.0001):
-                                assert True
-                                return
-                            else:
-                                print(f"Returned value should be 0.0001 but is {returned_value}")
+                            assert math.isclose(returned_value, 0.000099999, abs_tol=1e-09)
+                            return
                         else:
                             print(f"Size should be 1 but is {real_value.value.size}")
                     else:
