@@ -88,11 +88,11 @@ static THD_WORKING_AREA(_wa_control_thread,
     // Loops begin running
     while (true)
     {
-        uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
-        if (error_code != 0)
-        {
-            printf("%ld\n", error_code);
-        }
+//        uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
+//        if (error_code != 0)
+//        {
+//            printf("%ld\n", error_code);
+//        }
         if (state.is_restart_required && !os::isRebootRequested())
         {
             printf("Sent %d remaining frames before restarting\n", transmit(state));

@@ -25,7 +25,7 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
         {
             //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
             palWritePad(GPIOC, 14, 1);
-            ::usleep(1); // 1 millisecond
+            chThdSleepMicroseconds(400); // 0.4 ms
             palWritePad(GPIOC, 14, 0);
             return {};
         }

@@ -212,7 +212,7 @@ int main()
         }
 
         bg_config_manager.poll();
-        ::usleep(10 * 1000); // 10 milliseconds
+        ::usleep(500 * 1000); // 500 milliseconds
     }
     printf("Preparing for a restart\n");
     ::usleep(100 * 1000); // 100 milliseconds

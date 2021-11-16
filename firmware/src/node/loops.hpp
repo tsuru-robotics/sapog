@@ -35,6 +35,7 @@ void handle_5_second_loop(node::state::State &state)
 
 void handle_fast_loop(node::state::State &state)
 {
+
     auto transfer = receive_transfer(state, 0);
     if (transfer.first.has_value())
     {

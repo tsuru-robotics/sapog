@@ -39,7 +39,7 @@
  * We don't have any free hardware timers, so we use classic ticked mode.
  */
 #define CH_CFG_ST_TIMEDELTA        0
-#define CH_CFG_ST_FREQUENCY             1000
+#define CH_CFG_ST_FREQUENCY             5000
 
 #define CHPRINTF_USE_FLOAT          TRUE
 
