@@ -140,7 +140,7 @@ std::pair<const char *, SubscriptionData> subscriptions[] = {
                                                                       uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
                                                                       &uavcan_node_ExecuteCommand_Request_1_1_handler}},
-    {"sub.esc.rpm_direct",                                        {CanardTransferKindRequest,
+    {"uavcan.sub.esc_rpm_direct.id",                              {CanardTransferKindRequest,
                                                                       CONFIGURABLE_SUBJECT_ID,
                                                                       uavcan_si_unit_angular_velocity_Scalar_1_0_EXTENT_BYTES_,
                                                                       CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
