@@ -150,6 +150,12 @@ def prepared_sapogs():
 
 
 @pytest.fixture()
+def restarted_sapogs():
+    global is_running_on_my_laptop
+    return allocate_nr_of_nodes(1)
+
+
+@pytest.fixture()
 def resource():
     global is_running_on_my_laptop
     if not is_interface_up_and_running():
@@ -175,7 +181,23 @@ def empty_resource():
     unplug_power()
 
 
+def restart_node(node_id_to_restart):
+    registry01 = make_registry(3)
+    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+        service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
+        msg = uavcan.node.ExecuteCommand_1_1.Request()
+        msg.command = msg.COMMAND_RESTART
+        response = wrap_await(service_client.call(msg))
+        node.close()
+        return response
+
+
 from my_simple_test_allocator import allocate_nr_of_nodes
+
+
+class TestESC:
+    def test_rpm_run_2_sec(self):
+        pass
 
 
 class TestRegisters:
@@ -378,31 +400,30 @@ class TestRegisters:
             assert False
 
 
+def test_restart_node(prepared_node, prepared_sapogs):
+    for node_id in prepared_sapogs.keys():
+        service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+        msg = uavcan.node.ExecuteCommand_1_1.Request()
+        msg.command = msg.COMMAND_RESTART
+        response = wrap_await(service_client.call(msg))
+        assert response is not None
+
+
 class TestEssential:
     @staticmethod
-    def test_allows_allocation_of_node_id(empty_resource):
-        try:
-            required_amount = 1
-            result = allocate_nr_of_nodes(required_amount)
-            assert len(result.keys()) == required_amount
-        except TimeoutError:
-            assert False
+    def test_allows_allocation_of_node_id():
+        if restart_node(21):
+            time.sleep(2)
+            try:
+                required_amount = 1
+                result = allocate_nr_of_nodes(required_amount)
+                assert len(result.keys()) == required_amount
+            except TimeoutError:
+                assert False
 
     @staticmethod
-    def test_restart_node(resource):
-        for node_id in resource.keys():
-            registry01 = make_registry(3)
-            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-                msg = uavcan.node.ExecuteCommand_1_1.Request()
-                msg.command = msg.COMMAND_RESTART
-                response = wrap_await(service_client.call(msg))
-                node.close()
-                assert response is not None
-
-    @staticmethod
-    def test_has_heartbeat(resource):
-        for node_id in resource.keys():
+    def test_has_heartbeat(restarted_sapogs):
+        for node_id in restarted_sapogs.keys():
             try:
                 registry01 = make_registry(3)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
