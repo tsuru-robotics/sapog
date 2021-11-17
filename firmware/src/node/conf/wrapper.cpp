@@ -27,8 +27,6 @@ converter_type find_converter(const char *name)
 
 namespace conversion
 {
-
-
 ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param)
 {
     if (uavcan_register_Value_1_0_is_integer16_(&value))
@@ -38,7 +36,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
             return {ConversionStatus::SUCCESS, (float) value.integer16.value.elements[0]};
         }
         return {ConversionStatus::WRONG_TYPE, 0};
-        
+
     } else if (uavcan_register_Value_1_0_is_integer32_(&value))
     {
         if (param == CONFIG_TYPE_INT)

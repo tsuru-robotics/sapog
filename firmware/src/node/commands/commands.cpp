@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <node/units.hpp>
 #include <node/time.h>
+#include <motor/motor.hpp>
 #include "node/state.hpp"
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
@@ -31,8 +32,14 @@ uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const 
                 response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
                 break;
             case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_STORE_PERSISTENT_STATES:
-                state.is_save_requested = true;
-                response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+                if (motor_is_idle())
+                {
+                    state.is_save_requested = true;
+                    response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+                } else
+                {
+                    response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_STATE;
+                }
                 break;
             default:
                 response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_COMMAND;

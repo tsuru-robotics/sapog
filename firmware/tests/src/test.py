@@ -155,32 +155,6 @@ def restarted_sapogs():
     return allocate_nr_of_nodes(1)
 
 
-@pytest.fixture()
-def resource():
-    global is_running_on_my_laptop
-    if not is_interface_up_and_running():
-        raise Exception("slcan0 interface is not available")
-    print(f"is_running_on_my_laptop: {is_running_on_my_laptop}")
-    fix_imports()
-
-    if not is_running_on_my_laptop:
-        unplug_power()
-        plug_in_power()
-        time.sleep(4)
-
-
-@pytest.fixture()
-def empty_resource():
-    global is_running_on_my_laptop
-    fix_imports()
-    unplug_power()
-    plug_in_power()
-    if not is_running_on_my_laptop:
-        time.sleep(4)
-    yield None
-    unplug_power()
-
-
 def restart_node(node_id_to_restart):
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
