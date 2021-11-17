@@ -42,7 +42,19 @@ converter_type find_converter(const char *name);
 
 namespace conversion
 {
-std::optional<float> extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param);
+enum class ConversionStatus
+{
+    NOT_SUPPORTED,
+    WRONG_TYPE,
+    SUCCESS
+};
+struct ConversionResponse
+{
+    ConversionStatus conversion_status;
+    float value;
+};
+
+ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param);
 
 std::optional<float> extract(const uavcan_primitive_array_Bit_1_0 &bit);
 

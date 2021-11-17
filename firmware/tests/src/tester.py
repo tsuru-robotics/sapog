@@ -176,7 +176,10 @@ from my_simple_test_allocator import allocate_nr_of_nodes
 class TestRegisters:
     @staticmethod
     def test_write_unsupported_sapog_register(resource):
-        time.sleep(2)
+        """Checks if the response is empty when writing to a register that doesn't exit on Sapog.
+        uavcan.node.description is a register that would exist on other nodes but on this node, only storage of floats
+        is implemented and string storage is not supported."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -184,7 +187,6 @@ class TestRegisters:
                 msg = uavcan.register.Access_1_0.Request()
                 msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
                 msg.name.name = "uavcan.node.description"
-                time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(response)
                 is_result_good = response is not None and response[0].value.empty is not None
@@ -192,7 +194,9 @@ class TestRegisters:
 
     @staticmethod
     def test_write_supported_sapog_register_int(resource):
-        time.sleep(1)
+        """Writes a non-default value and checks if it was successfully saved. Then writes back the default value and
+        checks if that was saved."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -201,7 +205,6 @@ class TestRegisters:
                 msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60001))
                 msg.name.name = "mot_pwm_hz"
                 response = wrap_await(service_client.call(msg))
-                time.sleep(0.5)
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
@@ -221,7 +224,6 @@ class TestRegisters:
                 msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60000))
                 msg.name.name = "mot_pwm_hz"
                 response = wrap_await(service_client.call(msg))
-                time.sleep(0.5)
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
@@ -242,7 +244,9 @@ class TestRegisters:
 
     @staticmethod
     def test_write_supported_sapog_register_bit(resource):
-        time.sleep(1)
+        """Writes to a register and checks the value to match what was written, then writes the opposite value and
+        checks again to see if it was saved correctly."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -251,7 +255,6 @@ class TestRegisters:
                 msg.value = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1))
                 msg.name.name = "pwm_enable"
                 response = wrap_await(service_client.call(msg))
-                time.sleep(0.5)
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
@@ -274,7 +277,6 @@ class TestRegisters:
                 msg.value = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(0))
                 msg.name.name = "pwm_enable"
                 response = wrap_await(service_client.call(msg))
-                time.sleep(0.5)
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
@@ -298,7 +300,9 @@ class TestRegisters:
 
     @staticmethod
     def test_read_existing_register_float(resource):
-        time.sleep(1)
+        """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
+        there is one of it."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -307,7 +311,6 @@ class TestRegisters:
                 msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
                 msg.name.name = "rpmctl_p"
                 response = wrap_await(service_client.call(msg))
-                time.sleep(0.5)
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
                 if response:
@@ -328,7 +331,9 @@ class TestRegisters:
 
     @staticmethod
     def test_read_existing_register_bool(resource):
-        time.sleep(1)
+        """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
+        there is one of it."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -336,7 +341,6 @@ class TestRegisters:
                 msg = uavcan.register.Access_1_0.Request()
                 msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
                 msg.name.name = "pwm_enable"
-                time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)
@@ -357,7 +361,9 @@ class TestRegisters:
 
     @staticmethod
     def test_read_existing_register_int(resource):
-        time.sleep(1)
+        """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
+        there is one of it."""
+        time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
             registry01 = make_registry(7)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -365,7 +371,6 @@ class TestRegisters:
                 msg = uavcan.register.Access_1_0.Request()
                 msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
                 msg.name.name = "mot_tim_adv_min"
-                time.sleep(0.5)
                 response = wrap_await(service_client.call(msg))
                 print(f"Response fragmented payload: {format_payload_hex_view(response[1].fragmented_payload)}")
                 print(response)

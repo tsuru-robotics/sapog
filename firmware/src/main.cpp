@@ -194,7 +194,7 @@ int main()
      * TODO: Refactor.
      * TODO: Report status flags via vendor-specific status field.
      */
-    BackgroundConfigManager bg_config_manager;
+    //BackgroundConfigManager bg_config_manager;
     uavcan_node_1_0::UAVCANNode node{};
     (void) node;
     node.init();
@@ -211,7 +211,7 @@ int main()
             led_ctl.set(board::LEDColor::DARK_GREEN);
         }
 
-        bg_config_manager.poll();
+        //bg_config_manager.poll();
         ::usleep(500 * 1000); // 500 milliseconds
     }
     printf("Preparing for a restart\n");

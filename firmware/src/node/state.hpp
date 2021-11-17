@@ -45,5 +45,6 @@ struct State
     PlugAndPlay plug_and_play;
     CanardInstance canard;
     int reduntant_interfaces[2] = {0, 1};
+    bool is_save_requested = false;
 };
 }

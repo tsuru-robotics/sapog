@@ -39,7 +39,6 @@ void handle_fast_loop(node::state::State &state)
     auto transfer = receive_transfer(state, 0);
     if (transfer.first.has_value())
     {
-        printf("Transfer received.");
         palWritePad(GPIOC, 11, 0);
         transfer.second->handler(state, &transfer.first.value());
         palWritePad(GPIOC, 11, 1);
