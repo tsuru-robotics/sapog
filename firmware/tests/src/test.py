@@ -185,6 +185,7 @@ class TestRegisters:
         is implemented and string storage is not supported."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.1
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
             msg.name.name = "uavcan.node.description"
@@ -198,6 +199,7 @@ class TestRegisters:
         checks if that was saved."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.1
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60001))
             msg.name.name = "mot_pwm_hz"
@@ -244,6 +246,7 @@ class TestRegisters:
         checks again to see if it was saved correctly."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.1
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1))
             msg.name.name = "pwm_enable"
@@ -296,6 +299,7 @@ class TestRegisters:
         there is one of it."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.1
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
             msg.name.name = "rpmctl_p"
@@ -323,6 +327,7 @@ class TestRegisters:
         there is one of it."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.1
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
             msg.name.name = "pwm_enable"
@@ -349,6 +354,7 @@ class TestRegisters:
         there is one of it."""
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 0.2
             msg = uavcan.register.Access_1_0.Request()
             msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
             msg.name.name = "mot_tim_adv_min"
