@@ -400,6 +400,8 @@ class TestRegisters:
             assert False
 
 
+# t
+
 def test_restart_node(prepared_node, prepared_sapogs):
     for node_id in prepared_sapogs.keys():
         service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
