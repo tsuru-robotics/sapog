@@ -90,6 +90,7 @@ namespace node::essential
 {
 bool uavcan_register_Access_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer)
 {
+    (void) state;
     printf("\n\nAccess handler\n");
     uavcan_register_Access_Request_1_0 request{};
     size_t temp_payload_size{transfer->payload_size};
@@ -125,25 +126,27 @@ bool uavcan_register_Access_1_0_handler(const node::state::State &state, const C
                 break;
             }
             case conversion::ConversionStatus::NOT_SUPPORTED:
-                printf("Received a value of type that cannot be stored in any register.\n");
+                if (uavcan_register_Value_1_0_is_empty_(&request.value))
+                {
+                    printf("Read requested.\n");
+                } else
+                {
+                    printf("Received a value of type that cannot be stored in any register.\n");
+                }
                 break;
             case conversion::ConversionStatus::WRONG_TYPE:
                 printf("Received a value of type that cannot be stored in this register.\n");
                 break;
         }
-
-
     }
-}
+    // The client is going to get a response with the actual value of the register
+    assert(request_name.data() != nullptr);
+    // We are silently losing precision, but it shouldn't matter for this application
+    respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.
 
-// The client is going to get a response with the actual value of the register
-assert(request_name.data() != nullptr);
-// We are silently losing precision, but it shouldn't matter for this application
-respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.
+        data(), transfer
 
-data(), transfer
-
-);
-return true;
+    );
+    return true;
 }
 }

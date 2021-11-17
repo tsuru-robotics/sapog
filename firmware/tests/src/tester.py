@@ -198,7 +198,7 @@ class TestRegisters:
         checks if that was saved."""
         time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
-            registry01 = make_registry(7)
+            registry01 = make_registry(3)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
@@ -333,9 +333,9 @@ class TestRegisters:
     def test_read_existing_register_bool(resource):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
-        time.sleep(0.003)
+        time.sleep(0.1)
         for node_id in resource.keys():  # resource.keys():
-            registry01 = make_registry(7)
+            registry01 = make_registry(6)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
@@ -365,7 +365,7 @@ class TestRegisters:
         there is one of it."""
         time.sleep(0.003)
         for node_id in resource.keys():  # resource.keys():
-            registry01 = make_registry(7)
+            registry01 = make_registry(4)
             with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                 service_client = node.make_client(uavcan.register.Access_1_0, node_id)
                 msg = uavcan.register.Access_1_0.Request()
