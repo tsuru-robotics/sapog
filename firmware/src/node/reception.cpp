@@ -10,7 +10,7 @@
 #include "transmit.hpp"
 #include "node.hpp"
 
-std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(State &state, int if_index)
+std::pair<std::optional<CanardTransfer>, RegisteredPort *> receive_transfer(State &state, int if_index)
 {
     CanardFrame frame{};
     frame.timestamp_usec = get_monotonic_microseconds();
@@ -40,7 +40,7 @@ std::pair<std::optional<CanardTransfer>, SubscriptionData *> receive_transfer(St
         //this_subscription->
         if (canard_result > 0)
         {
-            return {transfer, static_cast<SubscriptionData *>(this_subscription->user_reference)};
+            return {transfer, static_cast<RegisteredPort *>(this_subscription->user_reference)};
             //state.canard.memory_free(&state.canard, (void *) transfer.payload);
         } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
         { ;  // Zero means that the frame did not complete a transfer so there is nothing to do.

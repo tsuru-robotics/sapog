@@ -34,7 +34,7 @@ struct RegisteredPort
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array
-std::pair<SubscriptionData *, SubscriptionData *>
-get_subscriptions();
+std::pair<RegisteredPort *, RegisteredPort *>
+get_ports_info_iterators();
 
 #endif //SAPOG_UAVCAN_NODE_1_0_HPP

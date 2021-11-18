@@ -120,34 +120,7 @@ static THD_WORKING_AREA(_wa_control_thread,
 
 
 // Not all subscriptions come from here, allocation comes from pnp.cpp file and is used there only
-/* {
-     uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
-     uavcan_node_GetInfo_1_0_FULL_NAME_AND_VERSION_,
-     CanardTransferKindRequest,
-     uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &node::essential::uavcan_node_GetInfo_1_0_handler},
- {
-     uavcan_register_Access_1_0_FIXED_PORT_ID_,
-     uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,
-     CanardTransferKindRequest,
-     uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &node::essential::uavcan_register_Access_1_0_handler},
- {
-     CONFIGURABLE_SUBJECT_ID,
-     reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_,
-     CanardTransferKindMessage,
-     reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &reg_udral_physics_acoustics_Note_0_1_handler},
- {
-     uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
-     CanardTransferKindRequest,
-     uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,
-     uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &uavcan_node_ExecuteCommand_Request_1_1_handler},
+/*
  {
      CONFIGURABLE_SUBJECT_ID,
      "uavcan.sub.esc_rpm_direct.id",
@@ -172,8 +145,14 @@ static THD_WORKING_AREA(_wa_control_thread,
 };*/
 
 
+#define str(x) #x
+
 #define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
 {.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
+.type=str(nunavut_type##_Request_##version_major##_##version_minor),                       \
+.name=str(nunavut_type##_##version_major##_##version_minor##_FULL_NAME_),                  \
+                                                                                           \
+                                                                                           \
 .transfer_kind=CanardTransferKindRequest,                                                  \
 .subscription = {.user_reference=(void *) handler,                                         \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
@@ -181,17 +160,18 @@ static THD_WORKING_AREA(_wa_control_thread,
 
 #define FIXED_ID_MESSAGE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
 {.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
+.type=str(nunavut_type##_Request_##version_major##_##version_minor),                                                                                  \
+.name=str(nunavut_type##_##version_major##_##version_minor##_FULL_NAME_),                                                                                  \
 .transfer_kind=CanardTransferKindMessage,                                                  \
 .subscription = {.user_reference=(void *) handler,                                         \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
 ._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
 
-#define str(x) #x
 
 #define REGISTER_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
 {.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
 .type=str(nunavut_type),                                                                                 \
-.name=str(port_name),                                                                                    \
+.name=str(uavcan.sub.port_name.id),                                                                                    \
 .transfer_kind=CanardTransferKindRequest,                                                                \
 .subscription = {.user_reference=(void *) handler,                                                       \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
@@ -201,7 +181,7 @@ static THD_WORKING_AREA(_wa_control_thread,
 #define REGISTER_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
 {.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
 .type=str(nunavut_type),                                                                                 \
-.name=str(port_name),                                                                                    \
+.name=str(uavcan.sub.port_name.id),                                                                                    \
 .transfer_kind=CanardTransferKindMessage,                                                                \
 .subscription = {.user_reference=(void *) handler,                                                       \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
@@ -211,6 +191,8 @@ RegisteredPort registered_ports[] =
     {
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, node::essential::uavcan_node_GetInfo_1_0_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1, uavcan_node_ExecuteCommand_Request_1_1_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
+                                      node::essential::uavcan_register_Access_1_0_handler),
         REGISTER_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                          0, 1,
                                          reg_udral_physics_acoustics_Note_0_1_handler)
@@ -218,9 +200,9 @@ RegisteredPort registered_ports[] =
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 std::pair<RegisteredPort *, RegisteredPort *>
-get_fixed_id_subscriptions()
+get_ports_info_iterators()
 {
-    return {std::begin(fixed_id_service_subscriptions), std::end(fixed_id_service_subscriptions)};
+    return {std::begin(registered_ports), std::end(registered_ports)};
 }
 
 static void init_canard()
@@ -254,11 +236,11 @@ static void init_canard()
         state.canard.node_id = stored_node_id;
     }
     state.timing.started_at = get_monotonic_microseconds();
-    for (auto &subscription: fixed_id_service_subscriptions)
+    for (auto &registered_port: registered_ports)
     {
-        /*if (subscription.second.id == CONFIGURABLE_SUBJECT_ID)
+        if (registered_port.id == CONFIGURABLE_SUBJECT_ID)
         {
-            if (configGetDescr(subscription.first, &_) != -ENOENT)
+            if (configGetDescr(registered_port.name, &_) != -ENOENT)
             {
                 subscription.second.id = configGet(subscription.first);
             } else
@@ -266,24 +248,23 @@ static void init_canard()
                 printf("Subscription for %s had no subject port id configured\n", subscription.first);
                 continue;
             }
-        }*/
+        }
         const int8_t res =  //
             canardRxSubscribe(&state.canard,
                               CanardTransferKindRequest,
-                              subscription.id,
-                              subscription.subscription._extent,
-                              subscription.subscription._transfer_id_timeout_usec,
-                              &subscription.subscription);
-        printf("Created a subscription for %s\n", subscription.first);
-        if (subscription.second.handler != nullptr)
+                              registered_port.id,
+                              registered_port.subscription._extent,
+                              registered_port.subscription._transfer_id_timeout_usec,
+                              &registered_port.subscription);
+
+        if (registered_port.subscription.user_reference == nullptr)
         {
-            subscription.second.subscription.user_reference = &subscription.second;
-        } else
-        {
-            printf("Subscription %s had no handler set.\n", subscription.first);
+            printf("Subscription %s had no handler set.\n", registered_port.name);
+            continue;
         }
         (void) res;
         assert(res > 0); // This is to make sure that the subscription was successful.
+        printf("Created a subscription for %s\n", registered_port.name);
     }
     printf("Canard initialized\n");
 }
