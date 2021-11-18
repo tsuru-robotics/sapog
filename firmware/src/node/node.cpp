@@ -69,6 +69,14 @@ static State state{};
 static THD_WORKING_AREA(_wa_control_thread,
                         1024 * 4);
 
+void print_can_error_if_exists()
+{
+    uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
+    if (error_code != 0)
+    {
+        printf("%ld\n", error_code);
+    }
+}
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -81,19 +89,15 @@ static THD_WORKING_AREA(_wa_control_thread,
     node::pnp::plug_and_play_loop(state);
     // Loops are created
 
-    static Loop loops[]{//Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
-        Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-        //Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
+    static Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
+                        Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
+                        Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     // Loops begin running
     while (true)
     {
-//        uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
-//        if (error_code != 0)
-//        {
-//            printf("%ld\n", error_code);
-//        }
+//        print_can_error_if_exists()
         if (state.is_save_requested)
         {
             state.is_save_requested = false;

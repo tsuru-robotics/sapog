@@ -20,19 +20,26 @@
 
 namespace node::loops
 {
-//void handle_1hz_loop(node::state::State &state)
-//{
-//    node::essential::publish_heartbeat(state.canard, state);
-//    transmit(state);
-//    // Before code below is uncommented, make sure that the node has an id.
-//    // communications::publish_port_list(state.canard, state);
-//}
-//
-//void handle_5_second_loop(node::state::State &state)
-//{
-//    publish_port_list(state.canard, state);
-//    transmit(state);
-//}
+struct : ILoopMethod
+{
+    void operator()(node::state::State &state)
+    {
+        node::essential::publish_heartbeat(state.canard, state);
+        transmit(state);
+        // Before code below is uncommented, make sure that the node has an id.
+        // communications::publish_port_list(state.canard, state);
+    }
+} handle_1hz_loop;
+
+struct : ILoopMethod
+{
+    void operator()(node::state::State &state)
+    {
+        publish_port_list(state.canard, state);
+        transmit(state);
+    }
+} handle_5_second_loop;
+
 
 struct : ILoopMethod
 {
