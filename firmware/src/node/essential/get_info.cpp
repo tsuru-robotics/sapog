@@ -9,6 +9,8 @@
 #include <uavcan/node/GetInfo_1_0.h>
 #include <board/unique_id.h>
 #include <node/units.hpp>
+#include <node/interfaces/IHandler.hpp>
+#include <node/stop_gap.hpp>
 #include "get_info.hpp"
 
 
@@ -34,32 +36,32 @@ static uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
     return resp;
 }
 
-
+UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_GetInfo, 1, 0);
 namespace node::essential
 {
-bool uavcan_node_GetInfo_1_0_handler(const node::state::State &state, const CanardTransfer *const transfer)
+class uavcan_node_GetInfo_1_0_handler : IHandler
 {
-    const uavcan_node_GetInfo_Response_1_0 resp = process_request_node_get_info();
-    uint8_t serialized[uavcan_node_GetInfo_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_] = {0};
-    size_t serialized_size = sizeof(serialized);
-    const int8_t res = uavcan_node_GetInfo_Response_1_0_serialize_(&resp, &serialized[0], &serialized_size);
-    if (res >= 0)
+    bool operator()(const node::state::State &state, const CanardTransfer *const transfer)
     {
-        CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
-        if (transfer->timestamp_usec > 0)
+        uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
+        auto res = serializer.serialize(process_request_node_get_info());
+        if (res.has_value())
         {
-            rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
+            CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
+            if (transfer->timestamp_usec > 0)
+            {
+                rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
+            }
+            rt.transfer_kind = CanardTransferKindResponse;
+            rt.payload_size = res.value();
+            rt.payload = serializer.getBuffer();
+            (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
+        } else
+        {
+            assert(false);
         }
-        rt.transfer_kind = CanardTransferKindResponse;
-        rt.payload_size = serialized_size;
-        rt.payload = &serialized[0];
-        (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
-    } else
-    {
-        assert(false);
+        return true;
     }
-    return true;
-}
-
+};
 }
 

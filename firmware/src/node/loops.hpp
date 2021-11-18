@@ -8,6 +8,7 @@
 
 #include <uavcan/pnp/NodeIDAllocationData_2_0.h>
 #include <uavcan/pnp/NodeIDAllocationData_1_0.h>
+#include <node/interfaces/IHandler.hpp>
 #include "node/pnp.hpp"
 #include "node/time.h"
 #include "state.hpp"
@@ -19,31 +20,36 @@
 
 namespace node::loops
 {
-void handle_1hz_loop(node::state::State &state)
-{
-    node::essential::publish_heartbeat(state.canard, state);
-    transmit(state);
-    // Before code below is uncommented, make sure that the node has an id.
-    // communications::publish_port_list(state.canard, state);
-}
+//void handle_1hz_loop(node::state::State &state)
+//{
+//    node::essential::publish_heartbeat(state.canard, state);
+//    transmit(state);
+//    // Before code below is uncommented, make sure that the node has an id.
+//    // communications::publish_port_list(state.canard, state);
+//}
+//
+//void handle_5_second_loop(node::state::State &state)
+//{
+//    publish_port_list(state.canard, state);
+//    transmit(state);
+//}
 
-void handle_5_second_loop(node::state::State &state)
-{
-    publish_port_list(state.canard, state);
-    transmit(state);
-}
-
-void handle_fast_loop(node::state::State &state)
+struct : ILoopMethod
 {
 
-    auto transfer = receive_transfer(state, 0);
-    if (transfer.first.has_value())
+    void operator()(node::state::State &state)
     {
-        palWritePad(GPIOC, 11, 0);
-        transfer.second->handler(state, &transfer.first.value());
-        palWritePad(GPIOC, 11, 1);
-        //process_received_transfer(state, &transfer.value());
+
+        auto transfer = receive_transfer(state, 0);
+        if (transfer.first.has_value())
+        {
+            palWritePad(GPIOC, 11, 0);
+            static_cast<IHandler *>(transfer.second->subscription.user_reference)->operator()(state,
+                                                                                              transfer.first.value());
+            palWritePad(GPIOC, 11, 1);
+            //process_received_transfer(state, &transfer.value());
+        }
+        transmit(state);
     }
-    transmit(state);
-}
+} handle_fast_loop;
 }

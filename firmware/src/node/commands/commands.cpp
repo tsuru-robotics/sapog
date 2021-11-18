@@ -12,20 +12,22 @@
 #include "node/state.hpp"
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
+#include <node/stop_gap.hpp>
+
+UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
+                            1, 1);
 
 bool
 uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const CanardTransfer *const transfer)
 {
     (void) state;
     printf("Handling execute command\n");
-    uavcan_node_ExecuteCommand_Request_1_1 request{};
-    size_t size = transfer->payload_size;
-
-    if (uavcan_node_ExecuteCommand_Request_1_1_deserialize_(&request,
-                                                            (const uint8_t *) transfer->payload, &size) >= 0)
+    auto request = uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Request_1_1>::deserialize(transfer->payload_size,
+                                                                                        static_cast<const uint8_t *>(transfer->payload));
+    if (request.has_value())
     {
         uavcan_node_ExecuteCommand_Response_1_1 response{};
-        switch (request.command)
+        switch (request.value().command)
         {
             case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
                 state.is_restart_required = true;
@@ -44,12 +46,10 @@ uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const 
             default:
                 response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_COMMAND;
         }
-        uint8_t serialized[uavcan_node_ExecuteCommand_Response_1_1_EXTENT_BYTES_];
-        size_t serialized_size = sizeof(serialized);
-        const int8_t error = uavcan_node_ExecuteCommand_Response_1_1_serialize_(&response, &serialized[0],
-                                                                                &serialized_size);
-        assert(error >= 0);
-        if (error >= 0)
+        uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
+        auto res = serializer.serialize(response);
+        assert(res.has_value());
+        if (res.has_value())
         {
             const CanardTransfer response_transfer = {
                 .timestamp_usec = get_monotonic_microseconds() +
@@ -59,8 +59,8 @@ uavcan_node_ExecuteCommand_Request_1_1_handler(node::state::State &state, const 
                 .port_id        = uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
                 .remote_node_id = transfer->remote_node_id,
                 .transfer_id    = transfer->transfer_id,
-                .payload_size   = serialized_size,
-                .payload        = &serialized[0],
+                .payload_size   = res.value(),
+                .payload        = serializer.getBuffer(),
             };
             int32_t number_of_frames_enqueued = canardTxPush(&state.canard, &response_transfer);
             (void) number_of_frames_enqueued;

@@ -23,19 +23,18 @@ public:
     static int init();
 };
 }
-struct SubscriptionData
+struct RegisteredPort
 {
+    CanardPortID id;   // uavcan.pub.PORT_NAME.id
+    const char *type;  // uavcan.pub.PORT_NAME.type
+    const char *name;
     CanardTransferKind transfer_kind;
-    CanardPortID port_id;
-    size_t extent_bytes;
-    CanardMicrosecond time_out;
     CanardRxSubscription subscription;
-    std::function<bool(node::state::State &, const CanardTransfer *const)> handler;
 };
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array
-std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>
+std::pair<SubscriptionData *, SubscriptionData *>
 get_subscriptions();
 
 #endif //SAPOG_UAVCAN_NODE_1_0_HPP

@@ -37,6 +37,7 @@
 #include <node/esc/esc.hpp>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include <bxcan/bxcan_registers.h>
+#include "stop_gap.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -80,9 +81,9 @@ static THD_WORKING_AREA(_wa_control_thread,
     node::pnp::plug_and_play_loop(state);
     // Loops are created
 
-    static Loop loops[]{Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
-                        Loop{&handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-                        Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
+    static Loop loops[]{//Loop{&handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
+        Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
+        //Loop{&handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
     };
     printf("Has this node_id after pnp: %d\n", state.canard.node_id);
     // Loops begin running
@@ -106,9 +107,9 @@ static THD_WORKING_AREA(_wa_control_thread,
         CanardMicrosecond current_time = get_monotonic_microseconds();
         for (Loop &loop: loops)
         {
-            if (loop.do_execute(current_time))
+            if (loop.is_time_to_execute(current_time))
             {
-                loop.execution_function(state);
+                loop.handler(state);
                 loop.increment_next_execution();
             } else
             {
@@ -119,50 +120,107 @@ static THD_WORKING_AREA(_wa_control_thread,
 
 
 // Not all subscriptions come from here, allocation comes from pnp.cpp file and is used there only
-std::pair<const char *, SubscriptionData> subscriptions[] = {
-    {uavcan_node_GetInfo_1_0_FULL_NAME_AND_VERSION_,              {CanardTransferKindRequest,
-                                                                      uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
-                                                                      uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &node::essential::uavcan_node_GetInfo_1_0_handler}},
-    {uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,           {CanardTransferKindRequest,
-                                                                      uavcan_register_Access_1_0_FIXED_PORT_ID_,
-                                                                      uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &node::essential::uavcan_register_Access_1_0_handler}},
-    {reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_, {CanardTransferKindMessage,
-                                                                      CONFIGURABLE_SUBJECT_ID,
-                                                                      reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &reg_udral_physics_acoustics_Note_0_1_handler}},
-    {uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,       {CanardTransferKindRequest,
-                                                                      uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
-                                                                      uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &uavcan_node_ExecuteCommand_Request_1_1_handler}},
-    {"uavcan.sub.esc_rpm_direct.id",                              {CanardTransferKindRequest,
-                                                                      CONFIGURABLE_SUBJECT_ID,
-                                                                      uavcan_si_unit_angular_velocity_Scalar_1_0_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &sub_esc_rpm_handler}},
-    {"sub.esc.power",                                             {CanardTransferKindRequest,
-                                                                      CONFIGURABLE_SUBJECT_ID,
-                                                                      reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &reg_udral_physics_electricity_PowerTs_0_1_handler}},
-    {"sub.esc.duty_cycle",                                        {CanardTransferKindRequest,
-                                                                      CONFIGURABLE_SUBJECT_ID,
-                                                                      reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
-                                                                      CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-                                                                      &sub_esc_duty_cycle_handler}},
+/* {
+     uavcan_node_GetInfo_1_0_FIXED_PORT_ID_,
+     uavcan_node_GetInfo_1_0_FULL_NAME_AND_VERSION_,
+     CanardTransferKindRequest,
+     uavcan_node_GetInfo_Request_1_0_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &node::essential::uavcan_node_GetInfo_1_0_handler},
+ {
+     uavcan_register_Access_1_0_FIXED_PORT_ID_,
+     uavcan_register_Access_1_0_FULL_NAME_AND_VERSION_,
+     CanardTransferKindRequest,
+     uavcan_register_Access_Request_1_0_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &node::essential::uavcan_register_Access_1_0_handler},
+ {
+     CONFIGURABLE_SUBJECT_ID,
+     reg_udral_physics_acoustics_Note_0_1_FULL_NAME_AND_VERSION_,
+     CanardTransferKindMessage,
+     reg_udral_physics_acoustics_Note_0_1_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &reg_udral_physics_acoustics_Note_0_1_handler},
+ {
+     uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
+     CanardTransferKindRequest,
+     uavcan_node_ExecuteCommand_1_1_FULL_NAME_AND_VERSION_,
+     uavcan_node_ExecuteCommand_Request_1_1_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &uavcan_node_ExecuteCommand_Request_1_1_handler},
+ {
+     CONFIGURABLE_SUBJECT_ID,
+     "uavcan.sub.esc_rpm_direct.id",
+     CanardTransferKindRequest,
+     uavcan_si_unit_angular_velocity_Scalar_1_0_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &sub_esc_rpm_handler},
+ {
+     CONFIGURABLE_SUBJECT_ID,
+     "sub.esc.power",
+     CanardTransferKindRequest,
+     reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &reg_udral_physics_electricity_PowerTs_0_1_handler},
+ {
+     CONFIGURABLE_SUBJECT_ID,
+     "sub.esc.duty_cycle",
+     CanardTransferKindRequest,
+     reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
+     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
+     &sub_esc_duty_cycle_handler},
+};*/
 
-};
+
+#define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
+{.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
+.transfer_kind=CanardTransferKindRequest,                                                  \
+.subscription = {.user_reference=(void *) handler,                                         \
+._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
+._extent = nunavut_type##_Request_##version_major##_##version_minor##_EXTENT_BYTES_}}
+
+#define FIXED_ID_MESSAGE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
+{.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
+.transfer_kind=CanardTransferKindMessage,                                                  \
+.subscription = {.user_reference=(void *) handler,                                         \
+._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
+._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+
+#define str(x) #x
+
+#define REGISTER_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
+{.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
+.type=str(nunavut_type),                                                                                 \
+.name=str(port_name),                                                                                    \
+.transfer_kind=CanardTransferKindRequest,                                                                \
+.subscription = {.user_reference=(void *) handler,                                                       \
+._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
+._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+
+
+#define REGISTER_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
+{.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
+.type=str(nunavut_type),                                                                                 \
+.name=str(port_name),                                                                                    \
+.transfer_kind=CanardTransferKindMessage,                                                                \
+.subscription = {.user_reference=(void *) handler,                                                       \
+._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
+._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+
+RegisteredPort registered_ports[] =
+    {
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, node::essential::uavcan_node_GetInfo_1_0_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1, uavcan_node_ExecuteCommand_Request_1_1_handler),
+        REGISTER_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
+                                         0, 1,
+                                         reg_udral_physics_acoustics_Note_0_1_handler)
+    };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
-std::pair<const std::pair<const char *, SubscriptionData> *, const std::pair<const char *, SubscriptionData> *>
-get_subscriptions()
+std::pair<RegisteredPort *, RegisteredPort *>
+get_fixed_id_subscriptions()
 {
-    return {std::begin(subscriptions), std::end(subscriptions)};
+    return {std::begin(fixed_id_service_subscriptions), std::end(fixed_id_service_subscriptions)};
 }
 
 static void init_canard()
@@ -196,26 +254,26 @@ static void init_canard()
         state.canard.node_id = stored_node_id;
     }
     state.timing.started_at = get_monotonic_microseconds();
-    for (auto &subscription: subscriptions)
+    for (auto &subscription: fixed_id_service_subscriptions)
     {
-        if (subscription.second.port_id == CONFIGURABLE_SUBJECT_ID)
+        /*if (subscription.second.id == CONFIGURABLE_SUBJECT_ID)
         {
             if (configGetDescr(subscription.first, &_) != -ENOENT)
             {
-                subscription.second.port_id = configGet(subscription.first);
+                subscription.second.id = configGet(subscription.first);
             } else
             {
                 printf("Subscription for %s had no subject port id configured\n", subscription.first);
                 continue;
             }
-        }
+        }*/
         const int8_t res =  //
             canardRxSubscribe(&state.canard,
-                              subscription.second.transfer_kind,
-                              subscription.second.port_id,
-                              subscription.second.extent_bytes,
-                              subscription.second.time_out,
-                              &subscription.second.subscription);
+                              CanardTransferKindRequest,
+                              subscription.id,
+                              subscription.subscription._extent,
+                              subscription.subscription._transfer_id_timeout_usec,
+                              &subscription.subscription);
         printf("Created a subscription for %s\n", subscription.first);
         if (subscription.second.handler != nullptr)
         {
