@@ -45,7 +45,7 @@ struct : ILoopMethod
         {
             palWritePad(GPIOC, 11, 0);
             static_cast<IHandler *>(transfer.second->subscription.user_reference)->operator()(state,
-                                                                                              transfer.first.value());
+                                                                                              &transfer.first.value());
             palWritePad(GPIOC, 11, 1);
             //process_received_transfer(state, &transfer.value());
         }

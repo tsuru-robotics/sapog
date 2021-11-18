@@ -22,7 +22,6 @@
 #include "node/conf/conf.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
 #include "node/commands/commands.hpp"
-
 #include <reg/udral/service/common/Readiness_0_1.h>
 #include <reg/udral/service/actuator/common/__0_1.h>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
@@ -38,6 +37,7 @@
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include <bxcan/bxcan_registers.h>
 #include "stop_gap.hpp"
+#include "node/essential/note.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -154,9 +154,10 @@ static THD_WORKING_AREA(_wa_control_thread,
 
 
 #define ANY_SUBSCRIPTION(_id, _type, _name, __extent, __kind, handler)                     \
-{.id = _id,                                                                                \
+{                                                                                          \
+.id = _id,                                                                                 \
 .type=str(_type),                                                                          \
-.name=str(_name),                                                                          \
+.name=_name,                                                                               \
 .transfer_kind=__kind,                                                                     \
 .subscription = {                                                                          \
 ._next = nullptr,                                                                          \
@@ -189,7 +190,7 @@ FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, Canar
 ANY_SUBSCRIPTION(                                                                                 \
 CONFIGURABLE_SUBJECT_ID,                                                                          \
 nunavut_type,                                                                                     \
-uavcan.sub.port_name.id,                                                                          \
+str(uavcan.sub.port_name.id),                                                                     \
 nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_,                                 \
 kind,                                                                                             \
 handler                                                                                          \
@@ -203,13 +204,14 @@ CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_min
 
 RegisteredPort registered_ports[] =
     {
-        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, node::essential::uavcan_node_GetInfo_1_0_handler),
-        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1, uavcan_node_ExecuteCommand_Request_1_1_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
+                                      &uavcan_node_ExecuteCommand_Request_1_1_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
-                                      node::essential::uavcan_register_Access_1_0_handler),
+                                      &node::essential::uavcan_register_Access_1_0_handler),
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                              0, 1,
-                                             reg_udral_physics_acoustics_Note_0_1_handler)
+                                             &reg_udral_physics_acoustics_Note_0_1_handler)
     };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
@@ -256,10 +258,10 @@ static void init_canard()
         {
             if (configGetDescr(registered_port.name, &_) != -ENOENT)
             {
-                subscription.second.id = configGet(subscription.first);
+                registered_port.id = configGet(registered_port.name);
             } else
             {
-                printf("Subscription for %s had no subject port id configured\n", subscription.first);
+                printf("Subscription for %s had no subject port id configured\n", registered_port.type);
                 continue;
             }
         }

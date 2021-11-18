@@ -26,6 +26,4 @@ void process_received_transfer(const State &state, const CanardTransfer *const t
 
 std::pair<std::optional<CanardTransfer>, RegisteredPort *> receive_transfer(State &state, int if_index);
 
-bool reg_udral_physics_acoustics_Note_0_1_handler(const State &state, const CanardTransfer *const transfer);
-
 bool not_implemented_handler(const State &state, const CanardTransfer *const transfer);
