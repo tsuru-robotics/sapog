@@ -147,45 +147,59 @@ static THD_WORKING_AREA(_wa_control_thread,
 
 #define str(x) #x
 
-#define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
-{.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
-.type=str(nunavut_type##_Request_##version_major##_##version_minor),                       \
-.name=str(nunavut_type##_##version_major##_##version_minor##_FULL_NAME_),                  \
-                                                                                           \
-                                                                                           \
-.transfer_kind=CanardTransferKindRequest,                                                  \
-.subscription = {.user_reference=(void *) handler,                                         \
+#define defaults \
+._sessions={},                                                                             \
+._next = nullptr,                                                                          \
+._port_id=0,
+
+
+#define ANY_SUBSCRIPTION(_id, _type, _name, __extent, __kind, handler)                     \
+{.id = _id,                                                                                \
+.type=str(_type),                                                                          \
+.name=str(_name),                                                                          \
+.transfer_kind=__kind,                                                                     \
+.subscription = {                                                                          \
+._next = nullptr,                                                                          \
+._sessions={},                                                                             \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
-._extent = nunavut_type##_Request_##version_major##_##version_minor##_EXTENT_BYTES_}}
+._extent = __extent,                                                                       \
+._port_id=0,                                                                               \
+.user_reference=(void *) handler                                                           \
+}}
+
+#define FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, kind, sep)   \
+ANY_SUBSCRIPTION(                                                                               \
+nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                              \
+nunavut_type##sep##version_major##_##version_minor,                                             \
+nunavut_type##_##version_major##_##version_minor##_FULL_NAME_,                                  \
+nunavut_type##sep##version_major##_##version_minor##_EXTENT_BYTES_,                             \
+kind,                                                                                           \
+handler                                                                                         \
+)
+
+#define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
+FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler,                 \
+CanardTransferKindRequest, _Request_)
 
 #define FIXED_ID_MESSAGE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
-{.id = nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                  \
-.type=str(nunavut_type##_Request_##version_major##_##version_minor),                                                                                  \
-.name=str(nunavut_type##_##version_major##_##version_minor##_FULL_NAME_),                                                                                  \
-.transfer_kind=CanardTransferKindMessage,                                                  \
-.subscription = {.user_reference=(void *) handler,                                         \
-._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
-._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, CanardTransferKindMessage, _)
 
 
-#define REGISTER_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
-{.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
-.type=str(nunavut_type),                                                                                 \
-.name=str(uavcan.sub.port_name.id),                                                                                    \
-.transfer_kind=CanardTransferKindRequest,                                                                \
-.subscription = {.user_reference=(void *) handler,                                                       \
-._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
-._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+#define CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, kind)   \
+ANY_SUBSCRIPTION(                                                                                 \
+CONFIGURABLE_SUBJECT_ID,                                                                          \
+nunavut_type,                                                                                     \
+uavcan.sub.port_name.id,                                                                          \
+nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_,                                 \
+kind,                                                                                             \
+handler                                                                                          \
+)
 
+#define CONFIGURABLE_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
+CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindRequest)
 
-#define REGISTER_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
-{.id = CONFIGURABLE_SUBJECT_ID,                                                                          \
-.type=str(nunavut_type),                                                                                 \
-.name=str(uavcan.sub.port_name.id),                                                                                    \
-.transfer_kind=CanardTransferKindMessage,                                                                \
-.subscription = {.user_reference=(void *) handler,                                                       \
-._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                                    \
-._extent = nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_}}
+#define CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
+CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindMessage)
 
 RegisteredPort registered_ports[] =
     {
@@ -193,9 +207,9 @@ RegisteredPort registered_ports[] =
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1, uavcan_node_ExecuteCommand_Request_1_1_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
                                       node::essential::uavcan_register_Access_1_0_handler),
-        REGISTER_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
-                                         0, 1,
-                                         reg_udral_physics_acoustics_Note_0_1_handler)
+        CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
+                                             0, 1,
+                                             reg_udral_physics_acoustics_Note_0_1_handler)
     };
 
 // Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
