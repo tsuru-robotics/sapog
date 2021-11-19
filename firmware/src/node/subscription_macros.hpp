@@ -44,13 +44,13 @@ FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, Canar
 
 
 #define CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, kind)   \
-ANY_SUBSCRIPTION(                                                                                 \
-CONFIGURABLE_SUBJECT_ID,                                                                          \
-nunavut_type,                                                                                     \
-str(uavcan.sub.port_name.id),                                                                     \
-nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_,                                 \
-kind,                                                                                             \
-handler                                                                                          \
+ANY_SUBSCRIPTION(                                                                                            \
+CONFIGURABLE_SUBJECT_ID,                                                                                     \
+nunavut_type,                                                                                                \
+str(uavcan.sub.port_name.id),                                                                                \
+nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_,                                            \
+kind,                                                                                                        \
+handler                                                                                                      \
 )
 
 #define CONFIGURABLE_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \

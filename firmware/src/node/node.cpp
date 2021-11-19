@@ -19,7 +19,6 @@
 #include "loops.hpp"
 #include <node/loops/loop.hpp>
 #include "board/board.hpp"
-#include "node/conf/conf.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
 #include "node/commands/commands.hpp"
 #include <reg/udral/service/common/Readiness_0_1.h>
@@ -162,12 +161,12 @@ RegisteredPort registered_ports[] =
                                              &reg_udral_physics_acoustics_Note_0_1_handler)
     };
 
-// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
-std::pair<RegisteredPort *, RegisteredPort *>
-get_ports_info_iterators()
-{
-    return {std::begin(registered_ports), std::end(registered_ports)};
-}
+//// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
+//std::pair<RegisteredPort *, RegisteredPort *>
+//get_ports_info_iterators()
+//{
+//    return {std::begin(registered_ports), std::end(registered_ports)};
+//}
 
 static void init_canard()
 {

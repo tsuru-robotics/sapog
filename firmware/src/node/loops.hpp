@@ -43,10 +43,8 @@ struct : ILoopMethod
 
 struct : ILoopMethod
 {
-
     void operator()(node::state::State &state)
     {
-
         std::pair<std::optional<CanardTransfer>, void *> transfer = receive_transfer(state, 0);
         if (transfer.first.has_value())
         {
