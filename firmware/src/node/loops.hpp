@@ -47,14 +47,18 @@ struct : ILoopMethod
     void operator()(node::state::State &state)
     {
 
-        auto transfer = receive_transfer(state, 0);
+        std::pair<std::optional<CanardTransfer>, void *> transfer = receive_transfer(state, 0);
         if (transfer.first.has_value())
         {
-            palWritePad(GPIOC, 11, 0);
-            static_cast<IHandler *>(transfer.second->subscription.user_reference)->operator()(state,
-                                                                                              &transfer.first.value());
-            palWritePad(GPIOC, 11, 1);
-            //process_received_transfer(state, &transfer.value());
+            CanardTransfer *canard_transfer = &transfer.first.value();
+            if (transfer.second != nullptr)
+            {
+                palWritePad(GPIOC, 11, 0);
+                IHandler *handler = static_cast<IHandler *>(transfer.second);
+                handler->operator()(state, canard_transfer);
+                palWritePad(GPIOC, 11, 1);
+            }
+            board::deallocate(static_cast<const uint8_t *>(transfer.first.value().payload));
         }
         transmit(state);
     }

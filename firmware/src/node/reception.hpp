@@ -24,6 +24,6 @@ using namespace node::state;
 
 void process_received_transfer(const State &state, const CanardTransfer *const transfer);
 
-std::pair<std::optional<CanardTransfer>, RegisteredPort *> receive_transfer(State &state, int if_index);
+std::pair<std::optional<CanardTransfer>, void *> receive_transfer(State &state, int if_index);
 
 bool not_implemented_handler(const State &state, const CanardTransfer *const transfer);

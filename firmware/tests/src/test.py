@@ -179,6 +179,7 @@ class TestRegisters:
         """Checks if the response is empty when writing to a register that doesn't exit on Sapog.
         uavcan.node.description is a register that would exist on other nodes but on this node, only storage of floats
         is implemented and string storage is not supported."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.1
@@ -189,10 +190,13 @@ class TestRegisters:
             print(response)
             is_result_good = response is not None and response[0].value.empty is not None
             assert is_result_good
+            if not is_result_good:
+                return
 
     def test_write_supported_sapog_register_int(self, prepared_node, prepared_sapogs):
         """Writes a non-default value and checks if it was successfully saved. Then writes back the default value and
         checks if that was saved."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.1
@@ -240,6 +244,7 @@ class TestRegisters:
     def test_write_supported_sapog_register_bit(self, prepared_node, prepared_sapogs):
         """Writes to a register and checks the value to match what was written, then writes the opposite value and
         checks again to see if it was saved correctly."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.1
@@ -293,6 +298,7 @@ class TestRegisters:
     def test_read_existing_register_float(self, prepared_node, prepared_sapogs):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.1
@@ -321,6 +327,7 @@ class TestRegisters:
     def test_read_existing_register_bool(self, prepared_node, prepared_sapogs):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.1
@@ -348,6 +355,7 @@ class TestRegisters:
     def test_read_existing_register_int(self, prepared_node, prepared_sapogs):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
+        assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
             service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
             service_client.response_timeout = 0.2
@@ -374,8 +382,6 @@ class TestRegisters:
             assert False
 
 
-# e
-
 def test_restart_node(prepared_node, prepared_sapogs):
     for node_id in prepared_sapogs.keys():
         service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
@@ -390,12 +396,12 @@ class TestEssential:
     def test_allows_allocation_of_node_id():
         if restart_node(21):
             time.sleep(2)
-            try:
-                required_amount = 1
-                result = allocate_nr_of_nodes(required_amount)
-                assert len(result.keys()) == required_amount
-            except TimeoutError:
-                assert False
+        try:
+            required_amount = 1
+            result = allocate_nr_of_nodes(required_amount)
+            assert len(result.keys()) == required_amount
+        except TimeoutError:
+            assert False
 
     @staticmethod
     def test_has_heartbeat(restarted_sapogs):
