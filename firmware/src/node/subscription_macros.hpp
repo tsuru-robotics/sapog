@@ -12,7 +12,6 @@
 
 #define ANY_SUBSCRIPTION(_id, _type, _name, __extent, __kind, handler)                     \
 {                                                                                          \
-.id = _id,                                                                                 \
 .type=str(_type),                                                                          \
 .name=_name,                                                                               \
 .transfer_kind=__kind,                                                                     \
@@ -21,7 +20,7 @@
 ._sessions={},                                                                             \
 ._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
 ._extent = __extent,                                                                       \
-._port_id=0,                                                                               \
+._port_id=_id,                                                                             \
 .user_reference=(void *) handler                                                           \
 }}
 

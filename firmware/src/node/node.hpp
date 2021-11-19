@@ -25,7 +25,7 @@ public:
 }
 struct RegisteredPort
 {
-    CanardPortID id;   // uavcan.pub.PORT_NAME.id
+    // uavcan.pub.PORT_NAME.id
     const char *type;  // uavcan.pub.PORT_NAME.type
     const char *name;
     CanardTransferKind transfer_kind;

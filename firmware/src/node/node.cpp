@@ -21,21 +21,12 @@
 #include "board/board.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
 #include "node/commands/commands.hpp"
-#include <reg/udral/service/common/Readiness_0_1.h>
-#include <reg/udral/service/actuator/common/__0_1.h>
-#include <reg/udral/service/actuator/common/Feedback_0_1.h>
-#include <reg/udral/service/actuator/common/Status_0_1.h>
-#include <reg/udral/physics/dynamics/translation/LinearTs_0_1.h>
-#include <reg/udral/physics/electricity/PowerTs_0_1.h>
-#include <reg/udral/service/actuator/common/sp/Scalar_0_1.h>
 #include <uavcan/node/ExecuteCommand_1_1.h>
 #include <node/essential/access.hpp>
 #include <node/essential/get_info.hpp>
-#include <motor/motor.hpp>
 #include <node/esc/esc.hpp>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include <bxcan/bxcan_registers.h>
-#include "stop_gap.hpp"
 #include "node/essential/note.hpp"
 #include "node/subscription_macros.hpp"
 
@@ -148,6 +139,10 @@ void print_can_error_if_exists()
      &sub_esc_duty_cycle_handler},
 };*/
 
+bool is_port_configurable(RegisteredPort &reg)
+{
+    return reg.subscription._port_id == CONFIGURABLE_SUBJECT_ID;
+}
 
 RegisteredPort registered_ports[] =
     {
@@ -158,7 +153,10 @@ RegisteredPort registered_ports[] =
                                       &node::essential::uavcan_register_Access_1_0_handler),
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                              0, 1,
-                                             &reg_udral_physics_acoustics_Note_0_1_handler)
+                                             &reg_udral_physics_acoustics_Note_0_1_handler),
+        CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(radians_in_second_velocity, uavcan_si_unit_angular_velocity_Scalar,
+                                             1, 0,
+                                             &sub_esc_rpm_handler)
     };
 
 //// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
@@ -201,11 +199,11 @@ static void init_canard()
     state.timing.started_at = get_monotonic_microseconds();
     for (auto &registered_port: registered_ports)
     {
-        if (registered_port.id == CONFIGURABLE_SUBJECT_ID)
+        if (registered_port.subscription._port_id == CONFIGURABLE_SUBJECT_ID)
         {
             if (configGetDescr(registered_port.name, &_) != -ENOENT)
             {
-                registered_port.id = configGet(registered_port.name);
+                registered_port.subscription._port_id = configGet(registered_port.name);
             } else
             {
                 printf("Subscription for %s had no subject port id configured\n", registered_port.type);
@@ -215,7 +213,7 @@ static void init_canard()
         const int8_t res =  //
             canardRxSubscribe(&state.canard,
                               CanardTransferKindRequest,
-                              registered_port.id,
+                              registered_port.subscription._port_id,
                               registered_port.subscription._extent,
                               registered_port.subscription._transfer_id_timeout_usec,
                               &registered_port.subscription);
