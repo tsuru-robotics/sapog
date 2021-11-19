@@ -4,7 +4,6 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #include "wrapper.hpp"
-#include "../../../generated/nunavut_out/uavcan/_register/Value_1_0.h"
 
 converter_type find_converter(const char *name)
 {
@@ -25,13 +24,17 @@ converter_type find_converter(const char *name)
     };
 }
 
+#define CHECK_PARAM_IF_GIVEN(type) \
+!param.has_value() || param.value() == type
+
+
 namespace conversion
 {
-ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param)
+ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, std::optional<ConfigDataType> param)
 {
     if (uavcan_register_Value_1_0_is_integer16_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.integer16.value.elements[0]};
         }
@@ -39,7 +42,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_integer32_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.integer32.value.elements[0]};
         }
@@ -47,7 +50,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_integer64_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.integer64.value.elements[0]};
         }
@@ -55,7 +58,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_natural16_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.natural16.value.elements[0]};
         }
@@ -63,7 +66,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_natural32_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.natural32.value.elements[0]};
         }
@@ -71,7 +74,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_natural64_(&value))
     {
-        if (param == CONFIG_TYPE_INT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_INT))
         {
             return {ConversionStatus::SUCCESS, (float) value.natural64.value.elements[0]};
         }
@@ -79,7 +82,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_real16_(&value))
     {
-        if (param == CONFIG_TYPE_FLOAT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_FLOAT))
         {
             return {ConversionStatus::SUCCESS, (float) value.real16.value.elements[0]};
         }
@@ -87,7 +90,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_real32_(&value))
     {
-        if (param == CONFIG_TYPE_FLOAT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_FLOAT))
         {
             return {ConversionStatus::SUCCESS, (float) value.real32.value.elements[0]};
         }
@@ -95,7 +98,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_real64_(&value))
     {
-        if (param == CONFIG_TYPE_FLOAT)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_FLOAT))
         {
             return {ConversionStatus::SUCCESS, (float) value.real64.value.elements[0]};
         }
@@ -103,7 +106,7 @@ ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, Co
 
     } else if (uavcan_register_Value_1_0_is_bit_(&value))
     {
-        if (param == CONFIG_TYPE_BOOL)
+        if (CHECK_PARAM_IF_GIVEN(CONFIG_TYPE_BOOL))
         {
             return {ConversionStatus::SUCCESS, (float) value.bit.value.bitpacked[0]};
         }

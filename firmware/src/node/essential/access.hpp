@@ -124,7 +124,7 @@ struct : IHandler
         if (register_has_entry_for_name)
         {
             conversion::ConversionResponse conversion_response = ::conversion::extract_any_number(request.value,
-                                                                                                  entry_config_params.type);
+                                                                                                  {entry_config_params.type});
             // Going to write a value to the register.
             switch (conversion_response.conversion_status)
             {

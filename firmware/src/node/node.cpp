@@ -183,7 +183,7 @@ static void init_canard()
     state.canard = canardInit(&canardAllocate, &canardFree);
     state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
     ConfigParam _{};
-    bool value_exists = configGetDescr("uavcan_node_id", &_) != -ENOENT;
+    bool value_exists = false;//configGetDescr("uavcan_node_id", &_) != -ENOENT;
     float stored_node_id = CANARD_NODE_ID_UNSET;
     if (value_exists)
     {

@@ -18,6 +18,7 @@ struct : IHandler
     void operator()(node::state::State &state, CanardTransfer *const transfer)
     {
         (void) state;
+        printf("Received note\n");
         reg_udral_physics_acoustics_Note_0_1 message{};
         size_t size = transfer->payload_size;
         if (reg_udral_physics_acoustics_Note_0_1_deserialize_(&message, (const uint8_t *) transfer->payload, &size) >=

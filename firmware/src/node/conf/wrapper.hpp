@@ -54,7 +54,7 @@ struct ConversionResponse
     float value;
 };
 
-ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, ConfigDataType param);
+ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, std::optional<ConfigDataType> param);
 
 std::optional<float> extract(const uavcan_primitive_array_Bit_1_0 &bit);
 

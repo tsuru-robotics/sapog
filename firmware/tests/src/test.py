@@ -4,7 +4,6 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import asyncio
-import math
 import os
 import time
 import typing
@@ -404,8 +403,9 @@ class TestEssential:
             assert False
 
     @staticmethod
-    def test_has_heartbeat(restarted_sapogs):
-        for node_id in restarted_sapogs.keys():
+    def test_has_heartbeat(prepared_sapogs):
+        assert len(prepared_sapogs.keys()) > 0
+        for node_id in prepared_sapogs.keys():
             try:
                 registry01 = make_registry(3)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -422,3 +422,51 @@ class TestEssential:
                     assert True
             except TimeoutError:
                 assert False
+
+
+class TestFun:
+    @staticmethod
+    def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
+        # During this test, we need to save the configuration
+        # But we don't want to save any other configuration
+        # that could have been left on the device during tests,
+        # we only care about saving the configuration for
+        # the uavcan.pub.note_response.id configurable port
+        for node_id in prepared_sapogs.keys():
+            if restart_node(node_id):
+                time.sleep(2)
+            else:
+                assert False
+                return
+        result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+        assert len(result.keys()) == len(prepared_sapogs.keys())
+        prepared_node.registry["uavcan.pub.note_response.id"] = 135
+        assert len(prepared_sapogs.keys()) > 0
+        subprocess.run(["xterm", "-e", "bash", "-c",
+                        "echo Please press enter when you have set a breakpoint at access\n "
+                        "Make sure to let the program continue!; read line"])
+        for node_id in prepared_sapogs.keys():
+            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+            service_client.response_timeout = 10000
+            msg = uavcan.register.Access_1_0.Request()
+            msg.name.name = "uavcan.sub.note_response.id"
+            msg.value = uavcan.register.Value_1_0(
+                integer64=uavcan.primitive.array.Integer64_1_0(prepared_node.registry["uavcan.pub.note_response.id"]))
+            response = wrap_await(service_client.call(msg))
+            subprocess.run(["xterm", "-e", "bash", "-c",
+                            "echo Press enter to restart (you should be debugging access now; read line"])
+            command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+            command_client.response_timeout = 10000
+            msg = uavcan.node.ExecuteCommand_1_1.Request()
+            msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
+            response = wrap_await(command_client.call(msg))
+            if restart_node(21):
+                time.sleep(2)
+            else:
+                assert False
+                return
+        note_message = reg.udral.physics.acoustics.Note_0_1(frequency=uavcan.si.unit.frequency.Scalar_1_0(1500),
+                                                            acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
+                                                            duration=uavcan.si.unit.duration.Scalar_1_0(0.1))
+        publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
+        wrap_await(publisher.publish(note_message))

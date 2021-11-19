@@ -39,16 +39,16 @@ def allocate_nr_of_nodes(nr: int, continuous: bool = False):
                 return None
             assert isinstance(msg, uavcan.pnp.NodeIDAllocationData_1_0)
             their_unique_id = msg.unique_id_hash
-            if (their_node_id := internal_table.get(their_unique_id)) is not None:
-                print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
-            else:
-                assigned_node_id = 21 + allocation_counter
-                new_id = uavcan.node.ID_1_0(assigned_node_id)
-                response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
-                allocated_nodes[assigned_node_id] = msg.unique_id_hash
-                allocated_hw_ids.append(msg.unique_id_hash)
-                allocation_counter += 1
-                wrap_await(allocate_responder.publish(response))
+            # if (their_node_id := internal_table.get(their_unique_id)) is not None:
+            #     print(f"NodeID {their_node_id} requested another NodeID, one is enough!")
+            # else:
+            assigned_node_id = 21 + allocation_counter
+            new_id = uavcan.node.ID_1_0(assigned_node_id)
+            response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
+            allocated_nodes[assigned_node_id] = msg.unique_id_hash
+            allocated_hw_ids.append(msg.unique_id_hash)
+            allocation_counter += 1
+            wrap_await(allocate_responder.publish(response))
 
         if continuous:
             while True:
