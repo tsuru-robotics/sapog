@@ -49,7 +49,7 @@ struct DSDL final
 #define UAVCAN_L6_NUNAVUT_C_SERVICE(nunavut_type_without_version, version_major, version_minor)        \
     UAVCAN_L6_NUNAVUT_C_MESSAGE(nunavut_type_without_version##_Request, version_major, version_minor); \
     UAVCAN_L6_NUNAVUT_C_MESSAGE(nunavut_type_without_version##_Response, version_major, version_minor)
-
+// The buffer that is left uninitialized always gets overridden during serialization anyway.
 /// Implementation detail. Do not use this directly.
 // NOLINTNEXTLINE
 #define UAVCAN_L6_NUNAVUT_C(nunavut_type)                                                              \
@@ -59,6 +59,7 @@ struct DSDL final
         static constexpr std::size_t getExtent() { return nunavut_type##_EXTENT_BYTES_; }              \
         struct Serializer            final                                                             \
         {                                                                                              \
+            Serializer() { buffer_[0] = 0; } /* NOLINT buffer uninitialized intentionally */           \
             [[nodiscard]] const std::uint8_t*        getBuffer() const { return buffer_.data(); }      \
             [[nodiscard]] std::optional<std::size_t> serialize(const nunavut_type& obj)                \
             {                                                                                          \
@@ -69,7 +70,7 @@ struct DSDL final
             }                                                                                          \
                                                                                                        \
         private:                                                                                       \
-            std::array<std::uint8_t, nunavut_type##_SERIALIZATION_BUFFER_SIZE_BYTES_> buffer_{};       \
+            std::array<std::uint8_t, nunavut_type##_SERIALIZATION_BUFFER_SIZE_BYTES_> buffer_;         \
         };                                                                                             \
         [[nodiscard]] static std::optional<nunavut_type> deserialize(const std::size_t         size,   \
                                                                      const std::uint8_t* const buffer) \

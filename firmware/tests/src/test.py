@@ -168,11 +168,6 @@ def restart_node(node_id_to_restart):
 from my_simple_test_allocator import allocate_nr_of_nodes
 
 
-class TestESC:
-    def test_rpm_run_2_sec(self):
-        pass
-
-
 class TestRegisters:
     def test_write_unsupported_sapog_register(self, prepared_node, prepared_sapogs):
         """Checks if the response is empty when writing to a register that doesn't exit on Sapog.
@@ -424,6 +419,42 @@ class TestEssential:
                 assert False
 
 
+def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
+    for node_id in prepared_sapogs.keys():
+        if restart_node(node_id):
+            time.sleep(2)
+        else:
+            assert False
+            return
+    result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+    assert len(result.keys()) == len(prepared_sapogs.keys())
+    prepared_node.registry[name] = subject_id
+    assert len(prepared_sapogs.keys()) > 0
+    # subprocess.run(["xterm", "-e", "bash", "-c",
+    #                 "echo Please press enter when you have set a breakpoint at access\n "
+    #                 "Make sure to let the program continue!; read line"])
+    for node_id in prepared_sapogs.keys():
+        service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
+        service_client.response_timeout = 10000
+        msg = uavcan.register.Access_1_0.Request()
+        msg.name.name = name
+        msg.value = uavcan.register.Value_1_0(
+            integer64=uavcan.primitive.array.Integer64_1_0(prepared_node.registry[name]))
+        response = wrap_await(service_client.call(msg))
+        # subprocess.run(["xterm", "-e", "bash", "-c",
+        #                 "echo Press enter to restart (you should be debugging access now; read line"])
+        command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+        command_client.response_timeout = 10000
+        msg = uavcan.node.ExecuteCommand_1_1.Request()
+        msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
+        response = wrap_await(command_client.call(msg))
+        if restart_node(21):
+            time.sleep(2)
+        else:
+            assert False
+            return
+
+
 class TestFun:
     @staticmethod
     def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
@@ -431,42 +462,29 @@ class TestFun:
         # But we don't want to save any other configuration
         # that could have been left on the device during tests,
         # we only care about saving the configuration for
-        # the uavcan.pub.note_response.id configurable port
-        for node_id in prepared_sapogs.keys():
-            if restart_node(node_id):
-                time.sleep(2)
-            else:
-                assert False
-                return
-        result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
-        assert len(result.keys()) == len(prepared_sapogs.keys())
-        prepared_node.registry["uavcan.pub.note_response.id"] = 135
-        assert len(prepared_sapogs.keys()) > 0
-        subprocess.run(["xterm", "-e", "bash", "-c",
-                        "echo Please press enter when you have set a breakpoint at access\n "
-                        "Make sure to let the program continue!; read line"])
-        for node_id in prepared_sapogs.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 10000
-            msg = uavcan.register.Access_1_0.Request()
-            msg.name.name = "uavcan.sub.note_response.id"
-            msg.value = uavcan.register.Value_1_0(
-                integer64=uavcan.primitive.array.Integer64_1_0(prepared_node.registry["uavcan.pub.note_response.id"]))
-            response = wrap_await(service_client.call(msg))
-            subprocess.run(["xterm", "-e", "bash", "-c",
-                            "echo Press enter to restart (you should be debugging access now; read line"])
-            command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-            command_client.response_timeout = 10000
-            msg = uavcan.node.ExecuteCommand_1_1.Request()
-            msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
-            response = wrap_await(command_client.call(msg))
-            if restart_node(21):
-                time.sleep(2)
-            else:
-                assert False
-                return
+        # the uavcan.pub.note_response.id configurable port.
+        # Restarting to lose any other configuration.
+        configure_a_port_on_sapog("uavcan.pub.note_response.id", 135, prepared_sapogs, prepared_node)
         note_message = reg.udral.physics.acoustics.Note_0_1(frequency=uavcan.si.unit.frequency.Scalar_1_0(1500),
                                                             acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
                                                             duration=uavcan.si.unit.duration.Scalar_1_0(0.1))
         publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
         wrap_await(publisher.publish(note_message))
+
+
+import uavcan.si.unit.angular_velocity.Scalar_1_0
+
+
+def rpm_to_radians_per_second(rpm: int):
+    rps = rpm / 60
+    radians_per_second = rps * 3.14 * 2
+    return radians_per_second
+
+
+class TestESC:
+    @staticmethod
+    def test_rpm_run_2_sec(prepared_node, prepared_sapogs):
+        configure_a_port_on_sapog("uavcan.sub.radians_in_second_velocity.id", 136, prepared_sapogs, prepared_node)
+        rpm_message = uavcan.si.unit.angular.velocity.Scalar_1_0(rpm_to_radians_per_second(50))
+        pub = prepared_node.make_publisher(uavcan.si.unit.angular.velocity.Scalar_1_0, "radians_in_second_velocity")
+        wrap_await(pub.publish(rpm_message))

@@ -97,6 +97,12 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
     return true;
 }
 
+#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+
 namespace node::essential
 {
 struct : IHandler
