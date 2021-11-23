@@ -48,6 +48,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
         CanardTransferMetadata rtm{};
         rtm.transfer_kind = CanardTransferKindMessage;
         rtm.port_id = uavcan_node_port_List_0_1_FIXED_PORT_ID_;
+        rtm.remote_node_id = CANARD_NODE_ID_UNSET;
         rtm.priority = CanardPriorityOptional;
         rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++);
         for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
@@ -59,8 +60,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
                                                              &rtm,
                                                              serialized_size,
                                                              serialized);
-
-            (void) number_of_frames_enqueued;
+            printf("%ld\n", number_of_frames_enqueued);
             assert(number_of_frames_enqueued > 0);
         }
     }
