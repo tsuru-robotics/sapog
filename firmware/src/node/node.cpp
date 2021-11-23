@@ -229,13 +229,12 @@ static void init_canard()
             printf("Subscription %s had no handler set.\n", registered_port.name);
             continue;
         }
-        (void) res;
-        if (res != 0)
+        if (res <= 0)
         {
             printf("The error with canardRxSubscribe was: %d\n", res);
         }
         chThdSleepMicroseconds(400);
-        assert(res > 0); // This is to make sure that the subscription was successful.
+        assert(res >= 0); // This is to make sure that the subscription was successful.
         printf("Created a subscription for %s\n", registered_port.name);
     }
     printf("Canard initialized\n");
