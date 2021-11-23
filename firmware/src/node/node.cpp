@@ -229,7 +229,7 @@ static void init_canard()
             printf("Subscription %s had no handler set.\n", registered_port.name);
             continue;
         }
-        if (res <= 0)
+        if (res < 0)
         {
             printf("The error with canardRxSubscribe was: %d\n", res);
         }
