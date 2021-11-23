@@ -64,7 +64,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     }
 }
 
-inline static bool respond_to_access(CanardInstance *canard, const char *request_name,
+inline static bool respond_to_access(node::state::State &state, const char *request_name,
                                      const CanardRxTransfer *const transfer)
 {
     uavcan_register_Access_Response_1_0 response{};
@@ -82,17 +82,21 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
         return false;
     }
     printf("Successfully serialized access response.\n");
-    const CanardTransfer response_transfer = {
-        .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS * 1,
-        .priority = transfer->priority,
-        .transfer_kind = CanardTransferKindResponse,
-        .port_id = uavcan_register_Access_1_0_FIXED_PORT_ID_,
-        .remote_node_id = transfer->remote_node_id,
-        .transfer_id = transfer->transfer_id,
-        .payload_size = serialized_size,
-        .payload = &serialized[0],
-    };
-    (void) canardTxPush(const_cast<CanardInstance *>(canard), &response_transfer);
+    CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+    rtm.transfer_kind = CanardTransferKindResponse;
+    for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+    {
+        int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                         const_cast<CanardInstance *>(&state.canard),
+                                                         get_monotonic_microseconds() +
+                                                         ONE_SECOND_DEADLINE_usec,
+                                                         &rtm,
+                                                         serialized_size,
+                                                         serialized);
+
+        (void) number_of_frames_enqueued;
+        assert(number_of_frames_enqueued > 0);
+    }
     printf("Sent access response.\n");
     return true;
 }
@@ -156,7 +160,7 @@ struct : IHandler
         // The client is going to get a response with the actual value of the register
         assert(request_name.data() != nullptr);
         // We are silently losing precision, but it shouldn't matter for this application
-        respond_to_access(const_cast<CanardInstance *>(&state.canard), request_name.data(),
+        respond_to_access(state, request_name.data(),
                           transfer);
         return;
     }

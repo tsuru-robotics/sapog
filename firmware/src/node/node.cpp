@@ -163,7 +163,6 @@ RegisteredPort registered_ports[] =
                                              1, 0,
                                              &sub_esc_rpm_handler)
     };
-constexpr size_t count = sizeof(RegisteredPort);
 
 
 /// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
@@ -186,11 +185,7 @@ static void init_canard()
     state.canard = canardInit(&canardAllocate, &canardFree);
     for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
     {
-        CanardTxQueue new_queue = CanardTxQueue
-            {
-                .mtu_bytes = CANARD_MTU_CAN_CLASSIC,
-                .capacity = 100
-            };
+        CanardTxQueue new_queue = canardTxInit(100, 8);
         state.queues[i] = new_queue;
     }
     ConfigParam _{};
@@ -210,11 +205,11 @@ static void init_canard()
     state.timing.started_at = get_monotonic_microseconds();
     for (auto &registered_port: registered_ports)
     {
-        if (registered_port.subscription._port_id == CONFIGURABLE_SUBJECT_ID)
+        if (registered_port.subscription.port_id == CONFIGURABLE_SUBJECT_ID)
         {
             if (configGetDescr(registered_port.name, &_) != -ENOENT)
             {
-                registered_port.subscription._port_id = configGet(registered_port.name);
+                registered_port.subscription.port_id = configGet(registered_port.name);
             } else
             {
                 printf("Subscription for %s had no subject port id configured\n", registered_port.type);
@@ -224,9 +219,9 @@ static void init_canard()
         const int8_t res =  //
             canardRxSubscribe(&state.canard,
                               CanardTransferKindRequest,
-                              registered_port.subscription._port_id,
-                              registered_port.subscription._extent,
-                              registered_port.subscription._transfer_id_timeout_usec,
+                              registered_port.subscription.port_id,
+                              registered_port.subscription.extent,
+                              registered_port.subscription.transfer_id_timeout_usec,
                               &registered_port.subscription);
 
         if (registered_port.subscription.user_reference == nullptr)
@@ -246,11 +241,10 @@ static void init_canard()
     printf("Canard initialized\n");
 }
 
-template<size_t N>
 std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators()
 {
     return {
-        std::begin<N>(registered_ports), std::end<N>(registered_ports)
+        std::begin(registered_ports), std::end(registered_ports)
     };
 }
 

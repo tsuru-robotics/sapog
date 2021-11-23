@@ -16,12 +16,12 @@
 .name=_name,                                                                               \
 .transfer_kind=__kind,                                                                     \
 .subscription = {                                                                          \
-._next = nullptr,                                                                          \
-.sessions={},                                                                             \
+.base=CanardTreeNode{},                                                                    \
 .transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
 .extent = __extent,                                                                       \
 .port_id=_id,                                                                             \
-.user_reference=(void *) handler                                                           \
+.user_reference=(void *) handler,                                                           \
+.sessions={}                                                                             \
 }}
 
 #define FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, kind, sep)   \

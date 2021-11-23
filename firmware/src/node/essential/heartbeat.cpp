@@ -13,6 +13,7 @@ namespace node::essential
 {
 void publish_heartbeat(CanardInstance &canard, node::state::State &state)
 {
+    (void) canard;
     uavcan_node_Heartbeat_1_0 heartbeat{};
     heartbeat.uptime = (uint32_t) ((get_monotonic_microseconds() - state.timing.started_at) / MEGA);
     heartbeat.mode.value = uavcan_node_Mode_1_0_OPERATIONAL;

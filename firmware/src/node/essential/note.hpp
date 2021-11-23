@@ -15,7 +15,7 @@
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *const transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *const transfer)
     {
         (void) state;
         printf("Received note\n");

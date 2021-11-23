@@ -45,10 +45,10 @@ struct : ILoopMethod
 {
     void operator()(node::state::State &state)
     {
-        std::pair<std::optional<CanardTransfer>, void *> transfer = receive_transfer(state, 0);
+        std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state, 0);
         if (transfer.first.has_value())
         {
-            CanardTransfer *canard_transfer = &transfer.first.value();
+            CanardRxTransfer *canard_transfer = &transfer.first.value();
             if (transfer.second != nullptr)
             {
                 palWritePad(GPIOC, 11, 0);
