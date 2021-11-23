@@ -397,6 +397,10 @@ struct CanardInstance
 /// The time complexity is constant. This function does not invoke the dynamic memory manager.
 CanardInstance canardInit(const CanardMemoryAllocate memory_allocate, const CanardMemoryFree memory_free);
 
+/// Use depth first search to iterate over every subscription in canardInstance rx_subscriptions
+void iterateOverRxSubscriptions(CanardInstance canardInstance, CanardSubscriptionIteratorHandler *handler);
+
+
 /// Construct a new transmission queue instance with the specified values for capacity and mtu_bytes.
 /// No memory allocation is going to take place until the queue is actually pushed to.
 /// Applications are expected to have one instance of this type per redundant interface.

@@ -130,17 +130,25 @@ static bool send_plug_and_play_request(State &state)
     assert(err >= 0);
     if (err >= 0)
     {
-        const CanardTransfer transfer = {
-            .timestamp_usec = get_monotonic_microseconds() + SECOND_IN_MICROSECONDS,
-            .priority       = CanardPrioritySlow,
-            .transfer_kind  = CanardTransferKindMessage,
-            .port_id        = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_,
-            .remote_node_id = CANARD_NODE_ID_UNSET,
-            .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++),
-            .payload_size   = serialized_size,
-            .payload        = &serialized[0],
-        };
-        (void) canardTxPush(&state.canard, &transfer);  // The response will arrive asynchronously eventually.
+        CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
+        rtm.transfer_kind = CanardTransferKindMessage;
+        rtm.port_id = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_;
+        rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++);
+        rtm.remote_node_id = CANARD_NODE_ID_UNSET;
+        rtm.priority = CanardPrioritySlow;
+        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        {
+            int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                             const_cast<CanardInstance *>(&state.canard),
+                                                             get_monotonic_microseconds() +
+                                                             ONE_SECOND_DEADLINE_usec,
+                                                             &rtm,
+                                                             serialized_size,
+                                                             serialized);
+
+            (void) number_of_frames_enqueued;
+            assert(number_of_frames_enqueued > 0);
+        }
         transmit(state);
         return true;
     }

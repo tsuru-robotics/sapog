@@ -163,13 +163,11 @@ RegisteredPort registered_ports[] =
                                              1, 0,
                                              &sub_esc_rpm_handler)
     };
+constexpr size_t count = sizeof(RegisteredPort);
 
-//// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
-//std::pair<RegisteredPort *, RegisteredPort *>
-//get_ports_info_iterators()
-//{
-//    return {std::begin(registered_ports), std::end(registered_ports)};
-//}
+
+/// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
+
 
 static void init_canard()
 {
@@ -246,6 +244,14 @@ static void init_canard()
         printf("Created a subscription for %s\n", registered_port.name);
     }
     printf("Canard initialized\n");
+}
+
+template<size_t N>
+std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators()
+{
+    return {
+        std::begin<N>(registered_ports), std::end<N>(registered_ports)
+    };
 }
 
 

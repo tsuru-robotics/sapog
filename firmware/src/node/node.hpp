@@ -23,6 +23,7 @@ public:
     static int init();
 };
 }
+
 struct RegisteredPort
 {
     // uavcan.pub.PORT_NAME.id
@@ -31,6 +32,9 @@ struct RegisteredPort
     CanardTransferKind transfer_kind;
     CanardRxSubscription subscription;
 };
+
+template<size_t N>
+inline std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators();
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array

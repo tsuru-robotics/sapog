@@ -14,6 +14,7 @@
 
 void publish_port_list(CanardInstance &canard, node::state::State &state)
 {
+    (void) canard;
     uavcan_node_port_List_0_1 m{};
     uavcan_node_port_List_0_1_initialize_(&m);
     uavcan_node_port_SubjectIDList_0_1_select_sparse_list_(&m.publishers);
@@ -25,19 +26,17 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
         m.publishers.sparse_list.elements[(*cnt)++].value = uavcan_node_port_List_0_1_FIXED_PORT_ID_;
     }
 
-    // Indicate which servers and subscribers we implement.
-    // We could construct the list manually but it's easier and more robust to just query libcanard for that.
-    const CanardTreeNode *rxs = canard.rx_subscriptions[CanardTransferKindMessage];
-    while (rxs != NULL)
+    auto iterators = get_ports_info_iterators();
+    for (auto &iter = iterators.first; iter < iterators.second; iter++)
     {
-        m.subscribers.sparse_list.elements[m.subscribers.sparse_list.count++].value = rxs->_port_id;
-        rxs =;
-    }
-    rxs = canard.rx_subscriptions[CanardTransferKindRequest];
-    while (rxs != NULL)
-    {
-        nunavutSetBit(&m.servers.mask_bitpacked_[0], sizeof(m.servers.mask_bitpacked_), rxs->_port_id, true);
-        rxs = rxs->_next;
+        if (iter->transfer_kind == CanardTransferKindRequest)
+        {
+            nunavutSetBit(&m.servers.mask_bitpacked_[0], sizeof(m.servers.mask_bitpacked_), iter->subscription.port_id,
+                          true);
+        } else
+        {
+            m.subscribers.sparse_list.elements[m.subscribers.sparse_list.count++].value = iter->subscription.port_id;
+        }
     }
     // Notice that we don't check the clients because our application doesn't invoke any services.
 

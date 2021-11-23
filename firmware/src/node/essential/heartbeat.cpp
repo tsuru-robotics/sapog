@@ -22,20 +22,25 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
     assert(serialized_size.has_value());
     if (serialized_size.has_value())
     {
-        const CanardTransfer transfer = {
-            .timestamp_usec = get_monotonic_microseconds() +
-                              ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
-            .priority       = CanardPriorityNominal,
-            .transfer_kind  = CanardTransferKindMessage,
-            .port_id        = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
-            .remote_node_id = CANARD_NODE_ID_UNSET,
-            .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_node_heartbeat++),
-            .payload_size   = serialized_size.value(),
-            .payload        = serializer.getBuffer(),
-        };
-        int32_t number_of_frames_enqueued = canardTxPush(&canard, &transfer);
-        (void) number_of_frames_enqueued;
-        assert(number_of_frames_enqueued > 0);
+        CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
+        rtm.transfer_kind = CanardTransferKindMessage;
+        rtm.port_id = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_;
+        rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_heartbeat++);
+        rtm.remote_node_id = CANARD_NODE_ID_UNSET;
+        rtm.priority = CanardPriorityNominal;
+        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        {
+            int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                             const_cast<CanardInstance *>(&state.canard),
+                                                             get_monotonic_microseconds() +
+                                                             ONE_SECOND_DEADLINE_usec,
+                                                             &rtm,
+                                                             serialized_size.value(),
+                                                             serializer.getBuffer());
+
+            (void) number_of_frames_enqueued;
+            assert(number_of_frames_enqueued > 0);
+        }
     }
 }
 }
