@@ -26,7 +26,7 @@ UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
         printf("Handling execute command\n");
@@ -59,20 +59,22 @@ struct : IHandler
             assert(res.has_value());
             if (res.has_value())
             {
-                const CanardTransfer response_transfer = {
-                    .timestamp_usec = get_monotonic_microseconds() +
-                                      ONE_SECOND_DEADLINE_usec, // transmission deadline 1 second, optimal for heartbeat
-                    .priority       = CanardPriorityNominal,
-                    .transfer_kind  = CanardTransferKindResponse,
-                    .port_id        = uavcan_node_ExecuteCommand_1_1_FIXED_PORT_ID_,
-                    .remote_node_id = transfer->remote_node_id,
-                    .transfer_id    = transfer->transfer_id,
-                    .payload_size   = res.value(),
-                    .payload        = serializer.getBuffer(),
-                };
-                int32_t number_of_frames_enqueued = canardTxPush(&state.canard, &response_transfer);
-                (void) number_of_frames_enqueued;
-                assert(number_of_frames_enqueued > 0);
+                CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+                rtm.transfer_kind = CanardTransferKindResponse;
+                for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+                {
+                    int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                                     const_cast<CanardInstance *>(&state.canard),
+                                                                     transfer->timestamp_usec +
+                                                                     ONE_SECOND_DEADLINE_usec,
+                                                                     &rtm,
+                                                                     res.value(),
+                                                                     serializer.getBuffer());
+
+                    (void) number_of_frames_enqueued;
+                    assert(number_of_frames_enqueued > 0);
+                }
+
             }
             return;
         }

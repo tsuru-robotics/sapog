@@ -27,13 +27,13 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
 
     // Indicate which servers and subscribers we implement.
     // We could construct the list manually but it's easier and more robust to just query libcanard for that.
-    const CanardRxSubscription *rxs = canard._rx_subscriptions[CanardTransferKindMessage];
+    const CanardTreeNode *rxs = canard.rx_subscriptions[CanardTransferKindMessage];
     while (rxs != NULL)
     {
         m.subscribers.sparse_list.elements[m.subscribers.sparse_list.count++].value = rxs->_port_id;
-        rxs = rxs->_next;
+        rxs =;
     }
-    rxs = canard._rx_subscriptions[CanardTransferKindRequest];
+    rxs = canard.rx_subscriptions[CanardTransferKindRequest];
     while (rxs != NULL)
     {
         nunavutSetBit(&m.servers.mask_bitpacked_[0], sizeof(m.servers.mask_bitpacked_), rxs->_port_id, true);
@@ -46,16 +46,23 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     size_t serialized_size = uavcan_node_port_List_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_;
     if (uavcan_node_port_List_0_1_serialize_(&m, &serialized[0], &serialized_size) >= 0)
     {
-        const CanardTransfer transfer = {
-            .timestamp_usec = get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
-            .priority       = CanardPriorityOptional,  // Mind the priority.
-            .transfer_kind  = CanardTransferKindMessage,
-            .port_id        = uavcan_node_port_List_0_1_FIXED_PORT_ID_,
-            .remote_node_id = CANARD_NODE_ID_UNSET,
-            .transfer_id    = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++),
-            .payload_size   = serialized_size,
-            .payload        = &serialized[0],
-        };
-        (void) canardTxPush(&canard, &transfer);
+        CanardTransferMetadata rtm{};
+        rtm.transfer_kind = CanardTransferKindMessage;
+        rtm.port_id = uavcan_node_port_List_0_1_FIXED_PORT_ID_;
+        rtm.priority = CanardPriorityOptional;
+        rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++);
+        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        {
+            int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                             const_cast<CanardInstance *>(&state.canard),
+                                                             get_monotonic_microseconds() +
+                                                             ONE_SECOND_DEADLINE_usec,
+                                                             &rtm,
+                                                             serialized_size,
+                                                             serialized);
+
+            (void) number_of_frames_enqueued;
+            assert(number_of_frames_enqueued > 0);
+        }
     }
 }

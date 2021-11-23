@@ -46,5 +46,6 @@ struct State
     CanardInstance canard;
     int reduntant_interfaces[2] = {0, 1};
     bool is_save_requested = false;
+    CanardTxQueue queues[AMOUNT_OF_QUEUES];
 };
 }

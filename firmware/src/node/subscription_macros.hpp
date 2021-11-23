@@ -17,10 +17,10 @@
 .transfer_kind=__kind,                                                                     \
 .subscription = {                                                                          \
 ._next = nullptr,                                                                          \
-._sessions={},                                                                             \
-._transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
-._extent = __extent,                                                                       \
-._port_id=_id,                                                                             \
+.sessions={},                                                                             \
+.transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
+.extent = __extent,                                                                       \
+.port_id=_id,                                                                             \
 .user_reference=(void *) handler                                                           \
 }}
 

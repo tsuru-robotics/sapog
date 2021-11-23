@@ -141,8 +141,13 @@ void print_can_error_if_exists()
 
 bool is_port_configurable(RegisteredPort &reg)
 {
-    return reg.subscription._port_id == CONFIGURABLE_SUBJECT_ID;
+    return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
 }
+
+#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 RegisteredPort registered_ports[] =
     {
@@ -181,7 +186,15 @@ static void init_canard()
     bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
     bxCANConfigure(0, timings, false);
     state.canard = canardInit(&canardAllocate, &canardFree);
-    state.canard.mtu_bytes = CANARD_MTU_CAN_CLASSIC; // 8 bytes in MTU
+    for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+    {
+        CanardTxQueue new_queue = CanardTxQueue
+            {
+                .mtu_bytes = CANARD_MTU_CAN_CLASSIC,
+                .capacity = 100
+            };
+        state.queues[i] = new_queue;
+    }
     ConfigParam _{};
     bool value_exists = false;//configGetDescr("uavcan_node_id", &_) != -ENOENT;
     float stored_node_id = CANARD_NODE_ID_UNSET;
@@ -224,6 +237,11 @@ static void init_canard()
             continue;
         }
         (void) res;
+        if (res != 0)
+        {
+            printf("The error with canardRxSubscribe was: %d\n", res);
+        }
+        chThdSleepMicroseconds(400);
         assert(res > 0); // This is to make sure that the subscription was successful.
         printf("Created a subscription for %s\n", registered_port.name);
     }

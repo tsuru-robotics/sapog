@@ -28,5 +28,5 @@ public:
     virtual ~IHandler()
     {}
 
-    virtual void operator()(node::state::State &state, CanardTransfer *transfer) = 0;
+    virtual void operator()(node::state::State &state, CanardRxTransfer *transfer) = 0;
 };

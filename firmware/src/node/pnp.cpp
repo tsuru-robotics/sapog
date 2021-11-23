@@ -169,11 +169,11 @@ static bool unsubscribe_plug_and_play_response(State &state)
 
 static bool receive_plug_and_play_response(State &state)
 {
-    std::optional<CanardTransfer> transfer = receive_transfer(state, 0).first;
+    std::optional<CanardRxTransfer> transfer = receive_transfer(state, 0).first;
     if (transfer.has_value())
     {
 
-        if (transfer.value().port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
+        if (transfer.value().metadata.port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
         {
             uavcan_pnp_NodeIDAllocationData_1_0 msg{};
             auto result = uavcan_pnp_NodeIDAllocationData_1_0_deserialize_(&msg,

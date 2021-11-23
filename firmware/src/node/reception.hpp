@@ -22,8 +22,8 @@ static const int max_frames_to_process_per_iteration = 1000;
 
 using namespace node::state;
 
-void process_received_transfer(const State &state, const CanardTransfer *const transfer);
+void process_received_transfer(const State &state, const CanardRxTransfer *const transfer);
 
-std::pair<std::optional<CanardTransfer>, void *> receive_transfer(State &state, int if_index);
+std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state, int if_index);
 
-bool not_implemented_handler(const State &state, const CanardTransfer *const transfer);
+bool not_implemented_handler(const State &state, const CanardRxTransfer *const transfer);

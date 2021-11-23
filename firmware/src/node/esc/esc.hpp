@@ -25,7 +25,7 @@
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
         uavcan_si_unit_angular_velocity_Scalar_1_0 angular_velocity{};
@@ -46,7 +46,7 @@ struct : IHandler
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
         (void) transfer;
@@ -56,7 +56,7 @@ struct : IHandler
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
         (void) transfer;
@@ -66,7 +66,7 @@ struct : IHandler
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
         printf("ESC handler\n");

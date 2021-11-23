@@ -43,21 +43,22 @@ namespace node::essential
 {
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
         auto res = serializer.serialize(process_request_node_get_info());
         if (res.has_value())
         {
-            CanardTransfer rt = *transfer;  // Response transfers are similar to their requests.
-            if (transfer->timestamp_usec > 0)
+            CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+            rtm.transfer_kind = CanardTransferKindResponse;
+            for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
             {
-                rt.timestamp_usec = transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec;
+                (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                                    transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,
+                                    &rtm,
+                                    res.value(),
+                                    serializer.getBuffer());
             }
-            rt.transfer_kind = CanardTransferKindResponse;
-            rt.payload_size = res.value();
-            rt.payload = serializer.getBuffer();
-            (void) canardTxPush(const_cast<CanardInstance *>(&state.canard), &rt);
         } else
         {
             assert(false);

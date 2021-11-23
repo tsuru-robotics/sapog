@@ -65,7 +65,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
 }
 
 inline static bool respond_to_access(CanardInstance *canard, const char *request_name,
-                                     const CanardTransfer *const transfer)
+                                     const CanardRxTransfer *const transfer)
 {
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
@@ -97,17 +97,12 @@ inline static bool respond_to_access(CanardInstance *canard, const char *request
     return true;
 }
 
-#define CONFIGURABLE_SUBJECT_ID 0xFFFF
-CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
 
 namespace node::essential
 {
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardTransfer *transfer)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
         printf("\n\nAccess handler\n");

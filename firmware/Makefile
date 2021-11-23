@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-PROJECT = io.px4.sapog2
+PROJECT = io.px4.sapog
 
 HW_VERSION_MAJOR = 1
 FW_VERSION_MAJOR = 2
@@ -65,7 +65,7 @@ UDEFS = -DFW_VERSION_MAJOR=$(FW_VERSION_MAJOR)           \
         -DNODE_NAME=\"$(PROJECT)\"
 
 # MAVLink v1 compliance
-UDEFS += -DCONFIG_PARAM_MAX_NAME_LENGTH=16
+UDEFS += -DCONFIG_PARAM_MAX_NAME_LENGTH=92
 
 #
 # Git commit hash
@@ -87,9 +87,10 @@ BOOTLOADER_SIZE = 16384
 
 DDEFS += -DCORTEX_VTOR_INIT=$(BOOTLOADER_SIZE)            \
          -DCRT1_AREAS_NUMBER=0                            \
-         -DCONFIG_PARAMS_MAX=50	\
-         -DBXCAN_MAX_IFACE_INDEX=1\
-         -DBXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK=72000000
+         -DCONFIG_PARAMS_MAX=50	                          \
+         -DBXCAN_MAX_IFACE_INDEX=1                        \
+         -DBXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK=72000000\
+         -DAMOUNT_OF_QUEUES=1
 
 LDSCRIPT= linker.ld
 
