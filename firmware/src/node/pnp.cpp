@@ -39,7 +39,7 @@ void plug_and_play_loop(State &state)
     save_crc(state);
     if (state.canard.node_id == CANARD_NODE_ID_UNSET)
     {
-        printf("Plug and play activated.\n");
+        printf("started pnp\n");
     }
     bool do_save = true; // for testing purposes, it is better to have the device allocate every time
     bool needs_pnp = state.canard.node_id == CANARD_NODE_ID_UNSET;
@@ -83,6 +83,7 @@ void plug_and_play_loop(State &state)
                 }
                 continue;
             case node::state::PNPStatus::ReceivedResponse:
+                printf("finished pnp.\n");
                 if (!do_save)
                 {
                     state.plug_and_play.status = node::state::PNPStatus::Done;

@@ -6,6 +6,7 @@
 #include "cavl.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 // --------------------------------------------- BUILD CONFIGURATION ---------------------------------------------
 
@@ -1060,6 +1061,10 @@ int8_t canardRxAccept(CanardInstance *const ins,
         RxFrameModel model = {0};
         if (rxTryParseFrame(timestamp_usec, frame, &model))
         {
+//            if (model.port_id == 135)
+//            {
+//                printf("135!! i: %d md: %d\n", ins->node_id, model.destination_node_id);
+//            }
             if ((CANARD_NODE_ID_UNSET == model.destination_node_id) || (ins->node_id == model.destination_node_id))
             {
                 // This is the reason the function has a logarithmic time complexity of the number of subscriptions.
@@ -1081,6 +1086,10 @@ int8_t canardRxAccept(CanardInstance *const ins,
                 } else
                 {
                     out = 0;  // No matching subscription.
+//                    if (model.port_id != 7510 && model.port_id != 7509)
+//                    {
+//                        printf("no sub %d\n", model.port_id);
+//                    }
                 }
             } else
             {

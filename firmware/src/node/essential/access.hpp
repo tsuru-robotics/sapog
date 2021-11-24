@@ -44,19 +44,19 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     float value = configGet(request_name);
     if (param.type == CONFIG_TYPE_FLOAT)
     {
-        printf("Response value is a float: %f\n", value);
+        printf("Response value: float: %f\n", value);
         uavcan_register_Value_1_0_select_real64_(&out_value);
         out_value.real64.value.elements[0] = value;
         out_value.real64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_INT)
     {
-        printf("Response type is an int: %d\n", (uint16_t) value);
+        printf("Response type: int: %d\n", (uint16_t) value);
         uavcan_register_Value_1_0_select_integer64_(&out_value);
         out_value.integer64.value.elements[0] = value;
         out_value.integer64.value.count = 1;
     } else if (param.type == CONFIG_TYPE_BOOL)
     {
-        printf("Response type is bool\n");
+        printf("Response type: bool\n");
         uavcan_register_Value_1_0_select_bit_(&out_value);
         printf("The value that is being saved into a boolean: %d\n", (int) value);
         printf("nunavutSetBit %d\n", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
@@ -70,7 +70,6 @@ inline static bool respond_to_access(node::state::State &state, const char *requ
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
     uavcan_register_Value_1_0 response_value{};
-    printf("Request name: %s\n", request_name);
     get_response_value(request_name, response_value);
     response.value = response_value;
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
@@ -82,7 +81,7 @@ inline static bool respond_to_access(node::state::State &state, const char *requ
         printf("Failed to serialize access response with code %d\n", error);
         return false;
     }
-    printf("Successfully serialized access response.\n");
+    printf("Serialized.\n");
     CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
     rtm.transfer_kind = CanardTransferKindResponse;
     for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
@@ -98,7 +97,7 @@ inline static bool respond_to_access(node::state::State &state, const char *requ
         (void) number_of_frames_enqueued;
         assert(number_of_frames_enqueued > 0);
     }
-    printf("Sent access response.\n");
+    printf("Responded.\n");
     return true;
 }
 
@@ -110,7 +109,6 @@ struct : IHandler
     void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
         (void) state;
-        printf("\n\nAccess handler\n");
         uavcan_register_Access_Request_1_0 request{};
         size_t temp_payload_size{transfer->payload_size};
         auto result = uavcan_register_Access_Request_1_0_deserialize_(&request,
@@ -126,6 +124,7 @@ struct : IHandler
         std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
         get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
         ConfigParam entry_config_params{};
+        printf("\n\nAccess handler: %s\n", request_name.data());
         bool register_has_entry_for_name = configGetDescr(request_name.data(), &entry_config_params) == 0;
         if (register_has_entry_for_name)
         {
@@ -136,11 +135,9 @@ struct : IHandler
             {
                 case conversion::ConversionStatus::SUCCESS:
                 {
-                    printf("Request provides a value\n");
                     float received_value = conversion_response.value;
                     char *request_name_c = request_name.data();
-                    printf("Request name: %s\n", request_name_c);
-                    printf("Received (int) value: %d\n", (int) received_value);
+                    printf("(int) value: %d\n", (int) received_value);
                     configSet(request_name_c, received_value);
                     break;
                 }
@@ -150,11 +147,11 @@ struct : IHandler
                         printf("Read requested.\n");
                     } else
                     {
-                        printf("Received a value of type that cannot be stored in any register.\n");
+                        printf("Value that cannot be stored in any register.\n");
                     }
                     break;
                 case conversion::ConversionStatus::WRONG_TYPE:
-                    printf("Received a value of type that cannot be stored in this register.\n");
+                    printf("Value of this type that cannot be stored in this register.\n");
                     break;
             }
         }

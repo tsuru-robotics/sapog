@@ -428,7 +428,7 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
             return
     result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
     assert len(result.keys()) == len(prepared_sapogs.keys())
-    prepared_node.registry[name] = subject_id
+    prepared_node.registry[f"uavcan.pub.{name}"] = subject_id
     assert len(prepared_sapogs.keys()) > 0
     # subprocess.run(["xterm", "-e", "bash", "-c",
     #                 "echo Please press enter when you have set a breakpoint at access\n "
@@ -437,9 +437,8 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
         service_client.response_timeout = 10000
         msg = uavcan.register.Access_1_0.Request()
-        msg.name.name = name
-        msg.value = uavcan.register.Value_1_0(
-            integer64=uavcan.primitive.array.Integer64_1_0(prepared_node.registry[name]))
+        msg.name.name = f"uavcan.sub.{name}"
+        msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(subject_id))
         response = wrap_await(service_client.call(msg))
         # subprocess.run(["xterm", "-e", "bash", "-c",
         #                 "echo Press enter to restart (you should be debugging access now; read line"])
@@ -464,7 +463,7 @@ class TestFun:
         # we only care about saving the configuration for
         # the uavcan.pub.note_response.id configurable port.
         # Restarting to lose any other configuration.
-        configure_a_port_on_sapog("uavcan.pub.note_response.id", 135, prepared_sapogs, prepared_node)
+        configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
         note_message = reg.udral.physics.acoustics.Note_0_1(frequency=uavcan.si.unit.frequency.Scalar_1_0(1500),
                                                             acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
                                                             duration=uavcan.si.unit.duration.Scalar_1_0(0.1))

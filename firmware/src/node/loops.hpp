@@ -52,6 +52,7 @@ struct : ILoopMethod
             if (transfer.second != nullptr)
             {
                 palWritePad(GPIOC, 11, 0);
+                printf("handler for: %d\n", transfer.first.value().metadata.port_id);
                 IHandler *handler = static_cast<IHandler *>(transfer.second);
                 handler->operator()(state, canard_transfer);
                 palWritePad(GPIOC, 11, 1);

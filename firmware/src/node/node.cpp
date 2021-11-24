@@ -149,6 +149,15 @@ CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONF
 
 CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
+struct : IHandler
+{
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+    {
+        (void) state;
+        (void) transfer;
+    }
+} empty_handler;
+
 RegisteredPort registered_ports[] =
     {
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
@@ -224,7 +233,7 @@ static void init_canard()
         }
         const int8_t res =  //
             canardRxSubscribe(&state.canard,
-                              CanardTransferKindRequest,
+                              registered_port.transfer_kind,
                               registered_port.subscription.port_id,
                               registered_port.subscription.extent,
                               registered_port.subscription.transfer_id_timeout_usec,
@@ -241,9 +250,8 @@ static void init_canard()
         }
         chThdSleepMicroseconds(400);
         assert(res >= 0); // This is to make sure that the subscription was successful.
-        printf("New sub %s: %d\n", registered_port.name, registered_port.subscription.port_id);
+        printf("New sub %s: %d, res=%d\n", registered_port.name, registered_port.subscription.port_id, res);
     }
-    printf("Canard initialized\n");
 }
 
 std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators()

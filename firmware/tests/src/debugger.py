@@ -22,8 +22,8 @@ source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 sys.path.insert(0, str(namespace_path.absolute()))
-print(f"Namespace path: {namespace_path}")
-print(f"sys.path: {sys.path}")
+# print(f"Namespace path: {namespace_path}")
+# print(f"sys.path: {sys.path}")
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
@@ -74,8 +74,10 @@ def format_payload_hex_view_trace(trace: Trace):
 
 
 def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subject_id: int, debugger_id: int):
+    transfer_type = "service" if "service" in str(trace.transfer).lower() else "message"
     if ids.get(subject_id) is None:
-        return f"missing id {subject_id}"
+        return f"{transfer_type} CONFIGURED {subject_id}, from {trace.transfer.metadata.session_specifier.source_node_id} " \
+               f"to {trace.transfer.metadata.session_specifier.destination_node_id}"
     try:
         obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
         built_in_representation = pyuavcan.dsdl.to_builtin(obj)
@@ -89,10 +91,10 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
     transfer_deserialized = str(trace.transfer)
     if trace.transfer.metadata.session_specifier.source_node_id == debugger_id:
         transfer_deserialized = transfer_deserialized.replace(f"source_node_id={debugger_id}",
-                                                              f"source_node_id={debugger_id} (this debugger)")
+                                                              f"source_node_id={debugger_id} (this)")
     if trace.transfer.metadata.session_specifier.destination_node_id == debugger_id:
         transfer_deserialized = transfer_deserialized.replace(f"destination_node_id={debugger_id}",
-                                                              f"destination_node_id={debugger_id} (this debugger)")
+                                                              f"destination_node_id={debugger_id} (this)")
     transfer_deserialized = transfer_deserialized.replace(
         "AlienTransfer(AlienTransferMetadata(AlienSessionSpecifier(",
         "transfer(")
@@ -103,6 +105,16 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
                                                               "service_id=" + value.__name__ + f"({str(key)})")
     transfer_deserialized = re.sub(r"fragmented_payload=\[[^\[\]]+?\]", json.dumps(built_in_representation),
                                    transfer_deserialized)
+    transfer_deserialized = transfer_deserialized.replace("transfer(ServiceDataSpecifier(", "")
+    transfer_deserialized = transfer_deserialized.replace("source_node_id", "src_id")
+    transfer_deserialized = transfer_deserialized.replace("destination_node_id", "dest_id")
+    transfer_deserialized = transfer_deserialized.replace("priority", "prio")
+    transfer_deserialized = transfer_deserialized.replace(", role=<Role.REQUEST: 1>)", "")
+    transfer_deserialized = transfer_deserialized.replace("role=<Role.RESPONSE: 2>)", "")
+    transfer_deserialized = transfer_deserialized.replace("transfer_id", "t_id")
+    transfer_deserialized = transfer_deserialized.replace("), {})", "")
+    transfer_deserialized = transfer_deserialized.replace("service_id=", "")
+    transfer_deserialized = transfer_type + " " + transfer_deserialized
     return transfer_deserialized
 
 
@@ -118,8 +130,10 @@ def fill_ids():
 
 
 ignore_subjects = [
-    # 7510,  # port_list
-    # 7509  # heartbeat
+    7510  # port_list
+    , 7509  # heartbeat
+    , 8166  # allocation
+    , 430  # getinfo
 ]
 
 
@@ -189,7 +203,7 @@ async def run_debugger_node(with_debugging=False):
         try:
             with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
                 printed_interface = registry01["uavcan.can.iface"]
-                print(f"Debugger successfully connected to {printed_interface}")
+                # print(f"Debugger successfully connected to {printed_interface}")
                 import_submodules(uavcan)
                 ids = fill_ids()
                 tracer = node.presentation.transport.make_tracer()

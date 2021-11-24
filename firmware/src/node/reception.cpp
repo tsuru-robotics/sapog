@@ -46,12 +46,8 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
             {
                 return {transfer, this_subscription->user_reference};
                 //state.canard.memory_free(&state.canard, (void *) transfer.payload);
-            } else if ((canard_result == 0) || (canard_result == -CANARD_ERROR_OUT_OF_MEMORY))
-            { ;  // Zero means that the frame did not complete a transfer so there is nothing to do.
-                // OOM should never occur if the heap is sized correctly. We track OOM errors via heap API.
             } else
             {
-                assert(false);  // No other error can possibly occur at runtime.
             }
         }
     }
