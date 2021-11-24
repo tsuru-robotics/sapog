@@ -60,7 +60,7 @@ static int _watchdog_id;
 static MUTEX_DECL(_mutex);
 static EVENTSOURCE_DECL(_setpoint_update_event); // "I have modified the insides of this to void *", Silver Valdvee
 static THD_WORKING_AREA(_wa_control_thread,
-1024);
+                        1024);
 
 /*
  * TODO: Current implementation is a mess.
@@ -114,24 +114,30 @@ static struct params
 } _params;
 
 
-CONFIG_PARAM_FLOAT("mot_v_min",        2.5,    0.5,     10.0)
-CONFIG_PARAM_FLOAT("mot_v_spinup",     0.5,    0.01,    10.0)
-CONFIG_PARAM_FLOAT("mot_spup_vramp_t", 3.0,    0.0,     10.0)
-CONFIG_PARAM_FLOAT("mot_dc_accel",     0.09,   0.001,   0.5)
-CONFIG_PARAM_FLOAT("mot_dc_slope",     5.0,    0.1,     20.0)
+CONFIG_PARAM_FLOAT("mot_v_min", 2.5, 0.5, 10.0)
+
+CONFIG_PARAM_FLOAT("mot_v_spinup", 0.5, 0.01, 10.0)
+
+CONFIG_PARAM_FLOAT("mot_spup_vramp_t", 3.0, 0.0, 10.0)
+
+CONFIG_PARAM_FLOAT("mot_dc_accel", 0.09, 0.001, 0.5)
+
+CONFIG_PARAM_FLOAT("mot_dc_slope", 5.0, 0.1, 20.0)
 
 
+CONFIG_PARAM_INT("mot_num_poles", 14, 2, 100)
 
-CONFIG_PARAM_INT("mot_num_poles",  14,     2,       100)
-CONFIG_PARAM_INT("ctl_dir",        0,      0,       1)
+CONFIG_PARAM_INT("ctl_dir", 0, 0, 1)
 
-CONFIG_PARAM_INT("mot_rpm_min",    1000,   50,      5000)
+CONFIG_PARAM_INT("mot_rpm_min", 1000, 50, 5000)
 
-CONFIG_PARAM_FLOAT("mot_i_max",    20.0,   1.0,     60.0)
-CONFIG_PARAM_FLOAT("mot_i_max_p",  0.2,    0.01,    2.0)
+CONFIG_PARAM_FLOAT("mot_i_max", 20.0, 1.0, 60.0)
 
-CONFIG_PARAM_FLOAT("mot_lpf_freq", 20.0,   1.0,     200.0)
-CONFIG_PARAM_INT("mot_stop_thres", 7,      1,       100)
+CONFIG_PARAM_FLOAT("mot_i_max_p", 0.2, 0.01, 2.0)
+
+CONFIG_PARAM_FLOAT("mot_lpf_freq", 20.0, 1.0, 200.0)
+
+CONFIG_PARAM_INT("mot_stop_thres", 7, 1, 100)
 
 
 static void configure(void)
@@ -155,7 +161,7 @@ static void configure(void)
     _params.voltage_current_lowpass_tau = 1.0f / configGet("mot_lpf_freq");
     _params.num_unexpected_stops_to_latch = configGet("mot_stop_thres");
 
-    printf("Motor: RPM range: [%u, %u]; poles: %i\n", _params.rpm_min, _params.rpm_max, _params.poles);
+//    printf("Motor: RPM range: [%u, %u]; poles: %i\n", _params.rpm_min, _params.rpm_max, _params.poles);
 }
 
 static void poll_beep(void)
@@ -497,7 +503,8 @@ static void control_thread(void *arg)
         if (desired_thread_priority != chThdGetPriorityX())
         {
             const tprio_t old = chThdSetPriority(desired_thread_priority);
-            printf("Motor: Priority changed: %i --> %i\n", (int) old, (int) desired_thread_priority);
+            (void) old;
+            // printf("Motor: Priority changed: %i --> %i\n", (int) old, (int) desired_thread_priority);
         }
 
         /*

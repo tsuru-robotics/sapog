@@ -34,98 +34,115 @@
  */
 event_source_t shell_terminated;
 
-static char *_strtok(char *str, const char *delim, char **saveptr) {
-  char *token;
-  if (str)
-    *saveptr = str;
-  token = *saveptr;
+static char *_strtok(char *str, const char *delim, char **saveptr)
+{
+    char *token;
+    if (str)
+    {
+        *saveptr = str;
+    }
+    token = *saveptr;
 
-  if (!token)
-    return NULL;
+    if (!token)
+    {
+        return NULL;
+    }
 
-  token += strspn(token, delim);
-  *saveptr = strpbrk(token, delim);
-  if (*saveptr)
-    *(*saveptr)++ = '\0';
+    token += strspn(token, delim);
+    *saveptr = strpbrk(token, delim);
+    if (*saveptr)
+    {
+        *(*saveptr)++ = '\0';
+    }
 
-  return *token ? token : NULL;
+    return *token ? token : NULL;
 }
 
-static void usage(BaseSequentialStream *chp, char *p) {
+static void usage(BaseSequentialStream *chp, char *p)
+{
 
-  chprintf(chp, "Usage: %s\r\n", p);
+    chprintf(chp, "Usage: %s\r\n", p);
 }
 
-static void list_commands(BaseSequentialStream *chp, const ShellCommand *scp) {
+static void list_commands(BaseSequentialStream *chp, const ShellCommand *scp)
+{
 
-  while (scp->sc_name != NULL) {
-    chprintf(chp, "%s ", scp->sc_name);
-    scp++;
-  }
+    while (scp->sc_name != NULL)
+    {
+        chprintf(chp, "%s ", scp->sc_name);
+        scp++;
+    }
 }
 
-static void cmd_info(BaseSequentialStream *chp, int argc, char *argv[]) {
+static void cmd_info(BaseSequentialStream *chp, int argc, char *argv[])
+{
 
-  (void)argv;
-  if (argc > 0) {
-    usage(chp, "info");
-    return;
-  }
+    (void) argv;
+    if (argc > 0)
+    {
+        usage(chp, "info");
+        return;
+    }
 
-  chprintf(chp, "Kernel:       %s\r\n", CH_KERNEL_VERSION);
+    chprintf(chp, "Kernel:       %s\r\n", CH_KERNEL_VERSION);
 #ifdef PORT_COMPILER_NAME
-  chprintf(chp, "Compiler:     %s\r\n", PORT_COMPILER_NAME);
+    chprintf(chp, "Compiler:     %s\r\n", PORT_COMPILER_NAME);
 #endif
-  chprintf(chp, "Architecture: %s\r\n", PORT_ARCHITECTURE_NAME);
+    chprintf(chp, "Architecture: %s\r\n", PORT_ARCHITECTURE_NAME);
 #ifdef PORT_CORE_VARIANT_NAME
-  chprintf(chp, "Core Variant: %s\r\n", PORT_CORE_VARIANT_NAME);
+    chprintf(chp, "Core Variant: %s\r\n", PORT_CORE_VARIANT_NAME);
 #endif
 #ifdef PORT_INFO
-  chprintf(chp, "Port Info:    %s\r\n", PORT_INFO);
+    chprintf(chp, "Port Info:    %s\r\n", PORT_INFO);
 #endif
 #ifdef PLATFORM_NAME
-  chprintf(chp, "Platform:     %s\r\n", PLATFORM_NAME);
+    chprintf(chp, "Platform:     %s\r\n", PLATFORM_NAME);
 #endif
 #ifdef BOARD_NAME
-  chprintf(chp, "Board:        %s\r\n", BOARD_NAME);
+    chprintf(chp, "Board:        %s\r\n", BOARD_NAME);
 #endif
 #ifdef __DATE__
 #ifdef __TIME__
-  chprintf(chp, "Build time:   %s%s%s\r\n", __DATE__, " - ", __TIME__);
+    chprintf(chp, "Build time:   %s%s%s\r\n", __DATE__, " - ", __TIME__);
 #endif
 #endif
 }
 
-static void cmd_systime(BaseSequentialStream *chp, int argc, char *argv[]) {
+static void cmd_systime(BaseSequentialStream *chp, int argc, char *argv[])
+{
 
-  (void)argv;
-  if (argc > 0) {
-    usage(chp, "systime");
-    return;
-  }
-  chprintf(chp, "%lu\r\n", (unsigned long)chVTGetSystemTime());
+    (void) argv;
+    if (argc > 0)
+    {
+        usage(chp, "systime");
+        return;
+    }
+    chprintf(chp, "%lu\r\n", (unsigned long) chVTGetSystemTime());
 }
 
 /**
  * @brief   Array of the default commands.
  */
 static ShellCommand local_commands[] = {
-  {"info", cmd_info},
-  {"systime", cmd_systime},
-  {NULL, NULL}
+    {"info",    cmd_info},
+    {"systime", cmd_systime},
+    {NULL, NULL}
 };
 
 static bool cmdexec(const ShellCommand *scp, BaseSequentialStream *chp,
-                      char *name, int argc, char *argv[]) {
+                    char *name, int argc, char *argv[])
+{
 
-  while (scp->sc_name != NULL) {
-    if (strcmp(scp->sc_name, name) == 0) {
-      scp->sc_function(chp, argc, argv);
-      return false;
+    while (scp->sc_name != NULL)
+    {
+        if (strcmp(scp->sc_name, name) == 0)
+        {
+            scp->sc_function(chp, argc, argv);
+            return false;
+        }
+        scp++;
     }
-    scp++;
-  }
-  return true;
+    return true;
 }
 
 /**
@@ -133,60 +150,71 @@ static bool cmdexec(const ShellCommand *scp, BaseSequentialStream *chp,
  *
  * @param[in] p         pointer to a @p BaseSequentialStream object
  */
-static THD_FUNCTION(shell_thread, p) {
-  int n;
-  BaseSequentialStream *chp = ((ShellConfig *)p)->sc_channel;
-  const ShellCommand *scp = ((ShellConfig *)p)->sc_commands;
-  char *lp, *cmd, *tokp, line[SHELL_MAX_LINE_LENGTH];
-  char *args[SHELL_MAX_ARGUMENTS + 1];
+static THD_FUNCTION(shell_thread, p)
+{
+    int n;
+    BaseSequentialStream *chp = ((ShellConfig *) p)->sc_channel;
+    const ShellCommand *scp = ((ShellConfig *) p)->sc_commands;
+    char *lp, *cmd, *tokp, line[SHELL_MAX_LINE_LENGTH];
+    char *args[SHELL_MAX_ARGUMENTS + 1];
 
-  chRegSetThreadName("shell");
-  chprintf(chp, "\r\nChibiOS/RT Shell\r\n");
-  while (true) {
-    chprintf(chp, "ch> ");
-    if (shellGetLine(chp, line, sizeof(line))) {
-      chprintf(chp, "\r\nlogout");
-      break;
-    }
-    lp = _strtok(line, " \t", &tokp);
-    cmd = lp;
-    n = 0;
-    while ((lp = _strtok(NULL, " \t", &tokp)) != NULL) {
-      if (n >= SHELL_MAX_ARGUMENTS) {
-        chprintf(chp, "too many arguments\r\n");
-        cmd = NULL;
-        break;
-      }
-      args[n++] = lp;
-    }
-    args[n] = NULL;
-    if (cmd != NULL) {
-      if (strcmp(cmd, "exit") == 0) {
-        if (n > 0) {
-          usage(chp, "exit");
-          continue;
+    chRegSetThreadName("shell");
+//  chprintf(chp, "\r\nChibiOS/RT Shell\r\n");
+    while (true)
+    {
+//        chprintf(chp, "ch> ");
+        if (shellGetLine(chp, line, sizeof(line)))
+        {
+            chprintf(chp, "\r\nlogout");
+            break;
         }
-        break;
-      }
-      else if (strcmp(cmd, "help") == 0) {
-        if (n > 0) {
-          usage(chp, "help");
-          continue;
+        lp = _strtok(line, " \t", &tokp);
+        cmd = lp;
+        n = 0;
+        while ((lp = _strtok(NULL, " \t", &tokp)) != NULL)
+        {
+            if (n >= SHELL_MAX_ARGUMENTS)
+            {
+                chprintf(chp, "too many arguments\r\n");
+                cmd = NULL;
+                break;
+            }
+            args[n++] = lp;
         }
-        chprintf(chp, "Commands: help exit ");
-        list_commands(chp, local_commands);
-        if (scp != NULL)
-          list_commands(chp, scp);
-        chprintf(chp, "\r\n");
-      }
-      else if (cmdexec(local_commands, chp, cmd, n, args) &&
-          ((scp == NULL) || cmdexec(scp, chp, cmd, n, args))) {
-        chprintf(chp, "%s", cmd);
-        chprintf(chp, " ?\r\n");
-      }
+        args[n] = NULL;
+        if (cmd != NULL)
+        {
+            if (strcmp(cmd, "exit") == 0)
+            {
+                if (n > 0)
+                {
+                    usage(chp, "exit");
+                    continue;
+                }
+                break;
+            } else if (strcmp(cmd, "help") == 0)
+            {
+                if (n > 0)
+                {
+                    usage(chp, "help");
+                    continue;
+                }
+                chprintf(chp, "Commands: help exit ");
+                list_commands(chp, local_commands);
+                if (scp != NULL)
+                {
+                    list_commands(chp, scp);
+                }
+                chprintf(chp, "\r\n");
+            } else if (cmdexec(local_commands, chp, cmd, n, args) &&
+                       ((scp == NULL) || cmdexec(scp, chp, cmd, n, args)))
+            {
+                chprintf(chp, "%s", cmd);
+                chprintf(chp, " ?\r\n");
+            }
+        }
     }
-  }
-  shellExit(MSG_OK);
+    shellExit(MSG_OK);
 }
 
 /**
@@ -194,9 +222,10 @@ static THD_FUNCTION(shell_thread, p) {
  *
  * @api
  */
-void shellInit(void) {
+void shellInit(void)
+{
 
-  chEvtObjectInit(&shell_terminated);
+    chEvtObjectInit(&shell_terminated);
 }
 
 /**
@@ -208,13 +237,14 @@ void shellInit(void) {
  *
  * @api
  */
-void shellExit(msg_t msg) {
+void shellExit(msg_t msg)
+{
 
-  /* Atomically broadcasting the event source and terminating the thread,
-     there is not a chSysUnlock() because the thread terminates upon return.*/
-  chSysLock();
-  chEvtBroadcastI(&shell_terminated);
-  chThdExitS(msg);
+    /* Atomically broadcasting the event source and terminating the thread,
+       there is not a chSysUnlock() because the thread terminates upon return.*/
+    chSysLock();
+    chEvtBroadcastI(&shell_terminated);
+    chThdExitS(msg);
 }
 
 /**
@@ -248,9 +278,10 @@ thread_t *shellCreate(const ShellConfig *scp, size_t size, tprio_t prio) {
  * @api
  */
 thread_t *shellCreateStatic(const ShellConfig *scp, void *wsp,
-                            size_t size, tprio_t prio) {
+                            size_t size, tprio_t prio)
+{
 
-  return chThdCreateStatic(wsp, size, prio, shell_thread, (void *)scp);
+    return chThdCreateStatic(wsp, size, prio, shell_thread, (void *) scp);
 }
 
 /**
@@ -265,39 +296,50 @@ thread_t *shellCreateStatic(const ShellConfig *scp, void *wsp,
  *
  * @api
  */
-bool shellGetLine(BaseSequentialStream *chp, char *line, unsigned size) {
-  char *p = line;
+bool shellGetLine(BaseSequentialStream *chp, char *line, unsigned size)
+{
+    char *p = line;
 
-  while (true) {
-    char c;
+    while (true)
+    {
+        char c;
 
-    if (chSequentialStreamRead(chp, (uint8_t *)&c, 1) == 0)
-      return true;
-    if (c == 4) {
-      chprintf(chp, "^D");
-      return true;
+        if (chSequentialStreamRead(chp, (uint8_t *) &c, 1) == 0)
+        {
+            return true;
+        }
+        if (c == 4)
+        {
+            chprintf(chp, "^D");
+            return true;
+        }
+        if ((c == 8) || (c == 127))
+        {
+            if (p != line)
+            {
+                chSequentialStreamPut(chp, 0x08);
+                chSequentialStreamPut(chp, 0x20);
+                chSequentialStreamPut(chp, 0x08);
+                p--;
+            }
+            continue;
+        }
+        if (c == '\r')
+        {
+            chprintf(chp, "\r\n");
+            *p = 0;
+            return false;
+        }
+        if (c < 0x20)
+        {
+            continue;
+        }
+        if (p < line + size - 1)
+        {
+            chSequentialStreamPut(chp, c);
+            *p++ = (char) c;
+        }
     }
-    if ((c == 8) || (c == 127)) {
-      if (p != line) {
-        chSequentialStreamPut(chp, 0x08);
-        chSequentialStreamPut(chp, 0x20);
-        chSequentialStreamPut(chp, 0x08);
-        p--;
-      }
-      continue;
-    }
-    if (c == '\r') {
-      chprintf(chp, "\r\n");
-      *p = 0;
-      return false;
-    }
-    if (c < 0x20)
-      continue;
-    if (p < line + size - 1) {
-      chSequentialStreamPut(chp, c);
-      *p++ = (char)c;
-    }
-  }
 }
 
 /** @} */

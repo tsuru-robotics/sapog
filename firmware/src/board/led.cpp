@@ -75,131 +75,144 @@ namespace board
  */
 void init_led()
 {
-	chSysDisable();
+    chSysDisable();
 
-	// Power-on and reset
-	TIMX_RCC_ENR |= TIMX_RCC_ENR_MASK;
-	TIMX_RCC_RSTR |=  TIMX_RCC_RSTR_MASK;
-	TIMX_RCC_RSTR &= ~TIMX_RCC_RSTR_MASK;
+    // Power-on and reset
+    TIMX_RCC_ENR |= TIMX_RCC_ENR_MASK;
+    TIMX_RCC_RSTR |= TIMX_RCC_RSTR_MASK;
+    TIMX_RCC_RSTR &= ~TIMX_RCC_RSTR_MASK;
 
-	chSysEnable();
+    chSysEnable();
 
-	TIMX->ARR = 0xFFFF;
-	TIMX->CR1 = 0;
-	TIMX->CR2 = 0;
+    TIMX->ARR = 0xFFFF;
+    TIMX->CR1 = 0;
+    TIMX->CR2 = 0;
 
-	// CC1, CC2, CC3 are R, G, B. Inverted mode.
-	TIMX->CCMR1 =
-		TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 |
-		TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
+    // CC1, CC2, CC3 are R, G, B. Inverted mode.
+    TIMX->CCMR1 =
+        TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 |
+        TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
 
-	TIMX->CCMR2 =
-		TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
+    TIMX->CCMR2 =
+        TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
 
-	// All enabled, all inverted.
-	// TODO: Pixhawk ESC v1.4b reqiuires non-inverted outputs; make it optional depending on the HW version?
-	TIMX->CCER =
-		TIM_CCER_CC3E | TIM_CCER_CC2E | TIM_CCER_CC1E |
-		TIM_CCER_CC3P | TIM_CCER_CC2P | TIM_CCER_CC1P;
+    // All enabled, all inverted.
+    // TODO: Pixhawk ESC v1.4b reqiuires non-inverted outputs; make it optional depending on the HW version?
+    TIMX->CCER =
+        TIM_CCER_CC3E | TIM_CCER_CC2E | TIM_CCER_CC1E |
+        TIM_CCER_CC3P | TIM_CCER_CC2P | TIM_CCER_CC1P;
 
-	// Start
-	TIMX->EGR = TIM_EGR_UG | TIM_EGR_COMG;
-	TIMX->CR1 |= TIM_CR1_CEN;
+    // Start
+    TIMX->EGR = TIM_EGR_UG | TIM_EGR_COMG;
+    TIMX->CR1 |= TIM_CR1_CEN;
 }
 
 static void set_hex_impl(std::uint32_t hex_rgb)
 {
-	hex_rgb &= 0xFFFFFFU;
-	const unsigned pwm_red   = ((hex_rgb & 0xFF0000U) >> 16) * 257U;
-	const unsigned pwm_green = ((hex_rgb & 0x00FF00U) >> 8)  * 257U;
-	const unsigned pwm_blue  = ((hex_rgb & 0x0000FFU) >> 0)  * 257U;
+    hex_rgb &= 0xFFFFFFU;
+    const unsigned pwm_red = ((hex_rgb & 0xFF0000U) >> 16) * 257U;
+    const unsigned pwm_green = ((hex_rgb & 0x00FF00U) >> 8) * 257U;
+    const unsigned pwm_blue = ((hex_rgb & 0x0000FFU) >> 0) * 257U;
 
-	TIMX->CCR1 = pwm_red;
-	TIMX->CCR2 = pwm_green;    // On Pixhawk ESC v1.4b this is BLUE
-	TIMX->CCR3 = pwm_blue;     // On Pixhawk ESC v1.4b this is GREEN
+    TIMX->CCR1 = pwm_red;
+    TIMX->CCR2 = pwm_green;    // On Pixhawk ESC v1.4b this is BLUE
+    TIMX->CCR3 = pwm_blue;     // On Pixhawk ESC v1.4b this is GREEN
 }
 
 void led_emergency_override(LEDColor color)
 {
-	set_hex_impl(unsigned(color));
+    set_hex_impl(unsigned(color));
 }
 
 /*
  * LEDOverlay
  */
-LEDOverlay* LEDOverlay::layers[MAX_LAYERS] = {};
+LEDOverlay *LEDOverlay::layers[MAX_LAYERS] = {};
 chibios_rt::Mutex LEDOverlay::mutex;
 
 void LEDOverlay::set_hex_rgb(std::uint32_t hex_rgb)
 {
-	os::MutexLocker mlock(mutex);
+    os::MutexLocker mlock(mutex);
 
-	color = hex_rgb;
+    color = hex_rgb;
 
-	// Checking if this layer is registered
-	int position = -1;
-	for (int i = 0; i < MAX_LAYERS; i++) {
-		if (layers[i] == this) {
-			position = i;
-			break;
-		}
-	}
+    // Checking if this layer is registered
+    int position = -1;
+    for (int i = 0; i < MAX_LAYERS; i++)
+    {
+        if (layers[i] == this)
+        {
+            position = i;
+            break;
+        }
+    }
 
-	// Not registered - fixing
-	if (position < 0) {
-		for (int i = 0; i < MAX_LAYERS; i++) {
-			if (layers[i] == nullptr) {
-				position = i;
-				layers[i] = this;
-				os::lowsyslog("LED: 0x%08x registered at pos %d\n",
-				            reinterpret_cast<unsigned>(this), position);
-				break;
-			}
-		}
-	}
+    // Not registered - fixing
+    if (position < 0)
+    {
+        for (int i = 0; i < MAX_LAYERS; i++)
+        {
+            if (layers[i] == nullptr)
+            {
+                position = i;
+                layers[i] = this;
+//				os::lowsyslog("LED: 0x%08x registered at pos %d\n",
+//				            reinterpret_cast<unsigned>(this), position);
+                break;
+            }
+        }
+    }
 
-	// Failed to register - ignore the command
-	if (position < 0) {
-		os::lowsyslog("LED: 0x%08x failed to register\n", reinterpret_cast<unsigned>(this));
-		return;
-	}
+    // Failed to register - ignore the command
+    if (position < 0)
+    {
+        os::lowsyslog("LED: 0x%08x failed to register\n", reinterpret_cast<unsigned>(this));
+        return;
+    }
 
-	// Checking if we're at the top
-	if ((position >= (MAX_LAYERS - 1)) || (layers[position + 1] == nullptr)) {
-		set_hex_impl(color);
-	}
+    // Checking if we're at the top
+    if ((position >= (MAX_LAYERS - 1)) || (layers[position + 1] == nullptr))
+    {
+        set_hex_impl(color);
+    }
 }
 
 void LEDOverlay::unset()
 {
-	os::MutexLocker mlock(mutex);
+    os::MutexLocker mlock(mutex);
 
-	// Removing ourselves from the list
-	for (int i = 0; i < MAX_LAYERS; i++) {
-		if (layers[i] == this) {
-			layers[i] = nullptr;
-			os::lowsyslog("LED: 0x%08x unregistered from pos %d\n", reinterpret_cast<unsigned>(this), i);
-			break;
-		}
-	}
+    // Removing ourselves from the list
+    for (int i = 0; i < MAX_LAYERS; i++)
+    {
+        if (layers[i] == this)
+        {
+            layers[i] = nullptr;
+            os::lowsyslog("LED: 0x%08x unregistered from pos %d\n", reinterpret_cast<unsigned>(this), i);
+            break;
+        }
+    }
 
-	// Defragmenting the list
-	LEDOverlay* new_layers[MAX_LAYERS] = {};
-	for (int src = 0, dst = 0; src < MAX_LAYERS; src++) {
-		if (layers[src] != nullptr) {
-			new_layers[dst++] = layers[src];
-		}
-	}
-	std::copy_n(new_layers, MAX_LAYERS, layers);
+    // Defragmenting the list
+    LEDOverlay *new_layers[MAX_LAYERS] = {};
+    for (int src = 0, dst = 0; src < MAX_LAYERS; src++)
+    {
+        if (layers[src] != nullptr)
+        {
+            new_layers[dst++] = layers[src];
+        }
+    }
+    std::copy_n(new_layers, MAX_LAYERS, layers);
 
-	// Activating the last item
-	for (int i = (MAX_LAYERS - 1); i >= 0; i--) {
-		if (layers[i] != nullptr) {
-			os::lowsyslog("LED: 0x%08x reactivated at pos %d\n", reinterpret_cast<unsigned>(layers[i]), i);
-			set_hex_impl(layers[i]->color);
-			break;
-		}
-	}
+    // Activating the last item
+    for (int i = (MAX_LAYERS - 1); i >= 0; i--)
+    {
+        if (layers[i] != nullptr)
+        {
+            os::lowsyslog("LED: 0x%08x reactivated at pos %d\n", reinterpret_cast<unsigned>(layers[i]), i);
+            set_hex_impl(layers[i]->color);
+            break;
+        }
+    }
 }
 
 }

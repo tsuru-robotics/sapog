@@ -77,179 +77,181 @@ static struct motor_adc_sample _sample;
 
 
 __attribute__((optimize(3)))
-CH_FAST_IRQ_HANDLER(Vector88)	// ADC1 + ADC2 handler
+CH_FAST_IRQ_HANDLER(Vector88)    // ADC1 + ADC2 handler
 {
-	_sample.timestamp = motor_timer_hnsec() -
-		((SAMPLE_DURATION_NANOSEC * NUM_SAMPLES_PER_ADC) / 2) / NSEC_PER_HNSEC;
+    _sample.timestamp = motor_timer_hnsec() -
+                        ((SAMPLE_DURATION_NANOSEC * NUM_SAMPLES_PER_ADC) / 2) / NSEC_PER_HNSEC;
 
 #define SMPLADC1(num)     (_adc1_2_dma_buffer[num] & 0xFFFFU)
 #define SMPLADC2(num)     (_adc1_2_dma_buffer[num] >> 16)
-	/*
-	 * ADC channel sampling:
-	 *   VOLT A A C
-	 *   CURR C B B
-	 */
-	_sample.phase_values[0] = (SMPLADC1(1) + SMPLADC1(2)) / 2;
-	_sample.phase_values[1] = (SMPLADC2(2) + SMPLADC2(3)) / 2;
-	_sample.phase_values[2] = (SMPLADC2(1) + SMPLADC1(3)) / 2;
+    /*
+     * ADC channel sampling:
+     *   VOLT A A C
+     *   CURR C B B
+     */
+    _sample.phase_values[0] = (SMPLADC1(1) + SMPLADC1(2)) / 2;
+    _sample.phase_values[1] = (SMPLADC2(2) + SMPLADC2(3)) / 2;
+    _sample.phase_values[2] = (SMPLADC2(1) + SMPLADC1(3)) / 2;
 
-	_sample.input_voltage = SMPLADC1(0);
-	_sample.input_current = SMPLADC2(0);
+    _sample.input_voltage = SMPLADC1(0);
+    _sample.input_current = SMPLADC2(0);
 
 #undef SMPLADC1
 #undef SMPLADC2
 
-	motor_adc_sample_callback(&_sample);
+    motor_adc_sample_callback(&_sample);
 
-	ADC1->SR = 0;         // Reset the IRQ flags
+    ADC1->SR = 0;         // Reset the IRQ flags
 }
 
-static void adc_calibrate(ADC_TypeDef* const adc)
+static void adc_calibrate(ADC_TypeDef *const adc)
 {
-	// RSTCAL
-	ASSERT_ALWAYS(!(adc->CR2 & ADC_CR2_RSTCAL));
-	adc->CR2 |= ADC_CR2_RSTCAL;
-	while (adc->CR2 & ADC_CR2_RSTCAL) { }
+    // RSTCAL
+    ASSERT_ALWAYS(!(adc->CR2 & ADC_CR2_RSTCAL));
+    adc->CR2 |= ADC_CR2_RSTCAL;
+    while (adc->CR2 & ADC_CR2_RSTCAL)
+    {}
 
-	// CAL
-	ASSERT_ALWAYS(!(adc->CR2 & ADC_CR2_CAL));
-	adc->CR2 |= ADC_CR2_CAL;
-	while (adc->CR2 & ADC_CR2_CAL) { }
+    // CAL
+    ASSERT_ALWAYS(!(adc->CR2 & ADC_CR2_CAL));
+    adc->CR2 |= ADC_CR2_CAL;
+    while (adc->CR2 & ADC_CR2_CAL)
+    {}
 }
 
 static void enable(void)
 {
-	// DMA
-	DMA1_Channel1->CCR = 0;  // Deinitialize
-	DMA1_Channel1->CMAR = (uint32_t)_adc1_2_dma_buffer;
-	DMA1_Channel1->CNDTR = sizeof(_adc1_2_dma_buffer) / 4;
-	DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
-	DMA1_Channel1->CCR =
-		DMA_CCR_PL_0 | DMA_CCR_PL_1 |   // Max priority
-		DMA_CCR_MSIZE_1 |               // 32 bit
-		DMA_CCR_PSIZE_1 |               // 32 bit
-		DMA_CCR_MINC |
-		DMA_CCR_CIRC |
-		DMA_CCR_EN;
+    // DMA
+    DMA1_Channel1->CCR = 0;  // Deinitialize
+    DMA1_Channel1->CMAR = (uint32_t) _adc1_2_dma_buffer;
+    DMA1_Channel1->CNDTR = sizeof(_adc1_2_dma_buffer) / 4;
+    DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
+    DMA1_Channel1->CCR =
+        DMA_CCR_PL_0 | DMA_CCR_PL_1 |   // Max priority
+        DMA_CCR_MSIZE_1 |               // 32 bit
+        DMA_CCR_PSIZE_1 |               // 32 bit
+        DMA_CCR_MINC |
+        DMA_CCR_CIRC |
+        DMA_CCR_EN;
 
-	// ADC enable, reset
-	const uint32_t enr_mask = RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN;
-	const uint32_t rst_mask = RCC_APB2RSTR_ADC1RST | RCC_APB2RSTR_ADC2RST;
-	chSysDisable();
-	RCC->APB2ENR |= enr_mask;
-	RCC->APB2RSTR |= rst_mask;
-	RCC->APB2RSTR &= ~rst_mask;
-	chSysEnable();
+    // ADC enable, reset
+    const uint32_t enr_mask = RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN;
+    const uint32_t rst_mask = RCC_APB2RSTR_ADC1RST | RCC_APB2RSTR_ADC2RST;
+    chSysDisable();
+    RCC->APB2ENR |= enr_mask;
+    RCC->APB2RSTR |= rst_mask;
+    RCC->APB2RSTR &= ~rst_mask;
+    chSysEnable();
 
-	usleep(5);  // Sequence: enable ADC, wait 2+ cycles, poweron, calibrate?
+    usleep(5);  // Sequence: enable ADC, wait 2+ cycles, poweron, calibrate?
 
-	// ADC calibration
-	ADC1->CR2 = ADC_CR2_ADON;
-	adc_calibrate(ADC1);
+    // ADC calibration
+    ADC1->CR2 = ADC_CR2_ADON;
+    adc_calibrate(ADC1);
 
-	ADC2->CR2 = ADC_CR2_ADON;
-	adc_calibrate(ADC2);
+    ADC2->CR2 = ADC_CR2_ADON;
+    adc_calibrate(ADC2);
 
-	/*
-	 * ADC channel sampling:
-	 *   VOLT A A C
-	 *   CURR C B B
-	 * BEMF is sampled in the last order because the BEMF signal conditioning circuits need several
-	 * microseconds to stabilize. Moving these channels to the end of the sequence allows us to reduce
-	 * the overall sampling time.
-	 */
-	ADC1->SQR1 = ADC_SQR1_L_0 | ADC_SQR1_L_1;
-	ADC1->SQR3 =
-		ADC_SQR3_SQ1_2 |
-		ADC_SQR3_SQ2_0 |
-		ADC_SQR3_SQ3_0 |
-		ADC_SQR3_SQ4_0 | ADC_SQR3_SQ4_1;
+    /*
+     * ADC channel sampling:
+     *   VOLT A A C
+     *   CURR C B B
+     * BEMF is sampled in the last order because the BEMF signal conditioning circuits need several
+     * microseconds to stabilize. Moving these channels to the end of the sequence allows us to reduce
+     * the overall sampling time.
+     */
+    ADC1->SQR1 = ADC_SQR1_L_0 | ADC_SQR1_L_1;
+    ADC1->SQR3 =
+        ADC_SQR3_SQ1_2 |
+        ADC_SQR3_SQ2_0 |
+        ADC_SQR3_SQ3_0 |
+        ADC_SQR3_SQ4_0 | ADC_SQR3_SQ4_1;
 
-	ADC2->SQR1 = ADC1->SQR1;
-	ADC2->SQR3 =
-		ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_0 |
-		ADC_SQR3_SQ2_0 | ADC_SQR3_SQ2_1 |
-		ADC_SQR3_SQ3_1 |
-		ADC_SQR3_SQ4_1;
+    ADC2->SQR1 = ADC1->SQR1;
+    ADC2->SQR3 =
+        ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_0 |
+        ADC_SQR3_SQ2_0 | ADC_SQR3_SQ2_1 |
+        ADC_SQR3_SQ3_1 |
+        ADC_SQR3_SQ4_1;
 
-	// SMPR registers are not configured because they have right values by default
+    // SMPR registers are not configured because they have right values by default
 
-	// ADC initialization
-	ADC1->CR1 = ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2 | ADC_CR1_SCAN | ADC_CR1_EOCIE;
-	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_EXTTRIG | MOTOR_ADC1_2_TRIGGER | ADC_CR2_DMA;
+    // ADC initialization
+    ADC1->CR1 = ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2 | ADC_CR1_SCAN | ADC_CR1_EOCIE;
+    ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_EXTTRIG | MOTOR_ADC1_2_TRIGGER | ADC_CR2_DMA;
 
-	ADC2->CR1 = ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2 | ADC_CR1_SCAN;
-	ADC2->CR2 = ADC_CR2_ADON | ADC_CR2_EXTTRIG | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_2;
+    ADC2->CR1 = ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2 | ADC_CR1_SCAN;
+    ADC2->CR2 = ADC_CR2_ADON | ADC_CR2_EXTTRIG | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_2;
 
-	// ADC IRQ (only ADC1 IRQ is used because ADC2 is configured in slave mode)
-	chSysDisable();
-	nvicEnableVector(ADC1_2_IRQn, MOTOR_IRQ_PRIORITY_MASK);
-	chSysEnable();
+    // ADC IRQ (only ADC1 IRQ is used because ADC2 is configured in slave mode)
+    chSysDisable();
+    nvicEnableVector(ADC1_2_IRQn, MOTOR_IRQ_PRIORITY_MASK);
+    chSysEnable();
 }
 
 int motor_adc_init(float current_shunt_resistance)
 {
-	if ((current_shunt_resistance < 1e-6F) ||
-	    (current_shunt_resistance > 1.0F))
-	{
-		return -1;
-	}
+    if ((current_shunt_resistance < 1e-6F) ||
+        (current_shunt_resistance > 1.0F))
+    {
+        return -1;
+    }
 
-	_shunt_resistance = current_shunt_resistance;
-	printf("Motor: Shunt %.6f ohm\n", _shunt_resistance);
+    _shunt_resistance = current_shunt_resistance;
+//	printf("Motor: Shunt %.6f ohm\n", _shunt_resistance);
 
-	chSysDisable();
+    chSysDisable();
 
-	RCC->AHBENR |= RCC_AHBENR_DMA1EN;  // Never disabled
+    RCC->AHBENR |= RCC_AHBENR_DMA1EN;  // Never disabled
 
-	RCC->CFGR &= ~RCC_CFGR_ADCPRE;
+    RCC->CFGR &= ~RCC_CFGR_ADCPRE;
 #if STM32_PCLK2 == 72000000
-	// ADC clock 72 / 6 = 12 MHz
-	RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
+    // ADC clock 72 / 6 = 12 MHz
+    RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
 #else
 #  error "What's wrong with PCLK2?"
 #endif
-	chSysEnable();
+    chSysEnable();
 
-	enable();
+    enable();
 
-	return 0;
+    return 0;
 }
 
 void motor_adc_enable_from_isr(void)
 {
-	ADC1->SR = 0;
-	ADC1->CR1 |= ADC_CR1_EOCIE;
+    ADC1->SR = 0;
+    ADC1->CR1 |= ADC_CR1_EOCIE;
 }
 
 void motor_adc_disable_from_isr(void)
 {
-	ADC1->CR1 &= ~ADC_CR1_EOCIE;
+    ADC1->CR1 &= ~ADC_CR1_EOCIE;
 }
 
 struct motor_adc_sample motor_adc_get_last_sample(void)
 {
-	struct motor_adc_sample ret;
-	irq_primask_disable();
-	ret = _sample;
-	irq_primask_enable();
-	return ret;
+    struct motor_adc_sample ret;
+    irq_primask_disable();
+    ret = _sample;
+    irq_primask_enable();
+    return ret;
 }
 
 float motor_adc_convert_input_voltage(int raw)
 {
-	static const float RTOP = 10.0F;
-	static const float RBOT = 1.3F;
-	static const float SCALE = (RTOP + RBOT) / RBOT;
-	const float unscaled = raw * (ADC_REF_VOLTAGE / (float)(1 << ADC_RESOLUTION));
-	return unscaled * SCALE;
+    static const float RTOP = 10.0F;
+    static const float RBOT = 1.3F;
+    static const float SCALE = (RTOP + RBOT) / RBOT;
+    const float unscaled = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
+    return unscaled * SCALE;
 }
 
 float motor_adc_convert_input_current(int raw)
 {
-	// http://www.diodes.com/datasheets/ZXCT1051.pdf
-	const float vout = raw * (ADC_REF_VOLTAGE / (float)(1 << ADC_RESOLUTION));
-	const float vsense = vout / 10;
-	const float iload = vsense / _shunt_resistance;
-	return iload;
+    // http://www.diodes.com/datasheets/ZXCT1051.pdf
+    const float vout = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
+    const float vsense = vout / 10;
+    const float iload = vsense / _shunt_resistance;
+    return iload;
 }

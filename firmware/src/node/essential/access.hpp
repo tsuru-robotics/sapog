@@ -70,6 +70,7 @@ inline static bool respond_to_access(node::state::State &state, const char *requ
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
     uavcan_register_Value_1_0 response_value{};
+    printf("Request name: %s\n", request_name);
     get_response_value(request_name, response_value);
     response.value = response_value;
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};

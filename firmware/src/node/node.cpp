@@ -209,10 +209,16 @@ static void init_canard()
         {
             if (configGetDescr(registered_port.name, &_) != -ENOENT)
             {
-                registered_port.subscription.port_id = configGet(registered_port.name);
+                float new_port = configGet(registered_port.name);
+                if ((int) new_port == CONFIGURABLE_SUBJECT_ID)
+                {
+                    printf("no %s\n", registered_port.type);
+                    continue;
+                }
+                registered_port.subscription.port_id = new_port;
             } else
             {
-                printf("Subscription for %s had no subject port id configured\n", registered_port.type);
+                printf("no %s\n", registered_port.type);
                 continue;
             }
         }
@@ -226,16 +232,16 @@ static void init_canard()
 
         if (registered_port.subscription.user_reference == nullptr)
         {
-            printf("Subscription %s had no handler set.\n", registered_port.name);
+            printf("no handler %s\n", registered_port.name);
             continue;
         }
         if (res < 0)
         {
-            printf("The error with canardRxSubscribe was: %d\n", res);
+            printf("canardRxSubscribe error: %d\n", res);
         }
         chThdSleepMicroseconds(400);
         assert(res >= 0); // This is to make sure that the subscription was successful.
-        printf("Created a subscription for %s\n", registered_port.name);
+        printf("New sub %s: %d\n", registered_port.name, registered_port.subscription.port_id);
     }
     printf("Canard initialized\n");
 }

@@ -182,7 +182,7 @@ void applicationHaltHook()
 int main()
 {
     auto wdt = init();
-
+    printf("\n\n\n\nBooted\n");
     chThdSetPriority(NORMALPRIO);
 
     //do_startup_beep();
@@ -198,7 +198,6 @@ int main()
     uavcan_node_1_0::UAVCANNode node{};
     (void) node;
     node.init();
-    printf("Node init done, thread launched.\n");
     while (!os::isRebootRequested())
     {
         wdt.reset();
@@ -214,7 +213,6 @@ int main()
         //bg_config_manager.poll();
         ::usleep(500 * 1000); // 500 milliseconds
     }
-    printf("Preparing for a restart\n");
     ::usleep(100 * 1000); // 100 milliseconds
     motor_stop();
     board::reboot();
