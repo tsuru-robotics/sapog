@@ -27,6 +27,7 @@
 #include <node/esc/esc.hpp>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include <bxcan/bxcan_registers.h>
+#include <node/esc/readiness.hpp>
 #include "node/essential/note.hpp"
 #include "node/subscription_macros.hpp"
 
@@ -149,6 +150,8 @@ CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONF
 
 CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
+CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.idingroup", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
 struct : IHandler
 {
     void operator()(node::state::State &state, CanardRxTransfer *transfer)
@@ -160,7 +163,7 @@ struct : IHandler
 
 RegisteredPort registered_ports[] =
     {
-        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
+//        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
                                       &uavcan_node_ExecuteCommand_Request_1_1_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
@@ -170,9 +173,11 @@ RegisteredPort registered_ports[] =
                                              &reg_udral_physics_acoustics_Note_0_1_handler),
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(radians_in_second_velocity, uavcan_si_unit_angular_velocity_Scalar,
                                              1, 0,
-                                             &sub_esc_rpm_handler)
+                                             &sub_esc_rpm_handler),
+        CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(readiness, reg_udral_service_common_Readiness,
+                                             0, 1,
+                                             &sub_readiness_handler)
     };
-
 
 /// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 

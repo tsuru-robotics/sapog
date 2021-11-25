@@ -5,11 +5,6 @@
  */
 #pragma once
 
-/*
- * Copyright (c) 2021 Zubax, zubax.com
- * Distributed under the MIT License, available in the file LICENSE.
- * Author: Silver Valdvee <silver.valdvee@zubax.com>
- */
 #include "esc.hpp"
 #include "src/settings/registers.hpp"
 #include <reg/udral/service/common/Readiness_0_1.h>
@@ -36,7 +31,8 @@ struct : IHandler
         {
             float rotations_per_second = angular_velocity.radian_per_second / 2.0 / 3.14159265358979f;
             unsigned int rpm = rotations_per_second * 60;
-            motor_set_rpm(rpm, 100);
+            printf("RPM: %d\n", rpm);
+            motor_set_rpm(rpm, 500);
         }
         (void) transfer;
         return;

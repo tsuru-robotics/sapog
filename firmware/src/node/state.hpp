@@ -30,6 +30,12 @@ enum class PNPStatus
     ReceivedResponse,
     Done
 };
+enum class Readiness
+{
+    SLEEP = 0,
+    STANDBY = 2,
+    ENGAGED = 3
+};
 struct PlugAndPlay
 {
     int request_count = 0;
@@ -44,8 +50,8 @@ struct State
     TransferIds transfer_ids;
     PlugAndPlay plug_and_play;
     CanardInstance canard;
-    int reduntant_interfaces[2] = {0, 1};
     bool is_save_requested = false;
     CanardTxQueue queues[AMOUNT_OF_QUEUES];
+    Readiness readiness;
 };
 }
