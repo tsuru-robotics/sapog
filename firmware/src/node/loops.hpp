@@ -56,8 +56,13 @@ struct : ILoopMethod
                 IHandler *handler = static_cast<IHandler *>(transfer.second);
                 handler->operator()(state, canard_transfer);
                 palWritePad(GPIOC, 11, 1);
+            } else
+            {
+                printf("Handler is a null pointer\n");
             }
             board::deallocate(static_cast<const uint8_t *>(transfer.first.value().payload));
+        } else
+        {
         }
         transmit(state);
     }

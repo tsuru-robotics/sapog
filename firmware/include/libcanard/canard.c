@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <hal.h>
 
 // --------------------------------------------- BUILD CONFIGURATION ---------------------------------------------
 
@@ -1061,10 +1062,10 @@ int8_t canardRxAccept(CanardInstance *const ins,
         RxFrameModel model = {0};
         if (rxTryParseFrame(timestamp_usec, frame, &model))
         {
-//            if (model.port_id == 135)
-//            {
-//                printf("135!! i: %d md: %d\n", ins->node_id, model.destination_node_id);
-//            }
+            if (model.port_id == 135)
+            {
+                palWritePad(GPIOC, 11, ~palReadPad(GPIOC, 11));
+            }
             if ((CANARD_NODE_ID_UNSET == model.destination_node_id) || (ins->node_id == model.destination_node_id))
             {
                 // This is the reason the function has a logarithmic time complexity of the number of subscriptions.

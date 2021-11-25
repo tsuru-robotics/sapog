@@ -44,10 +44,15 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
             //this_subscription->
             if (canard_result > 0)
             {
+                printf("Got full transfer: %d\n", transfer.metadata.port_id);
                 return {transfer, this_subscription->user_reference};
                 //state.canard.memory_free(&state.canard, (void *) transfer.payload);
             } else
             {
+                if (transfer.metadata.port_id != 0)
+                {
+                    printf("Got one frame of: %d\n", transfer.metadata.port_id);
+                }
             }
         }
     }

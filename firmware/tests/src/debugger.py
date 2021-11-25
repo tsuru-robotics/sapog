@@ -77,7 +77,8 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
     transfer_type = "service" if "service" in str(trace.transfer).lower() else "message"
     if ids.get(subject_id) is None:
         return f"{transfer_type} CONFIGURED {subject_id}, from {trace.transfer.metadata.session_specifier.source_node_id} " \
-               f"to {trace.transfer.metadata.session_specifier.destination_node_id}"
+               f"to {trace.transfer.metadata.session_specifier.destination_node_id}" \
+               f"\n{str(trace.transfer)}"
     try:
         obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
         built_in_representation = pyuavcan.dsdl.to_builtin(obj)

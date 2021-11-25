@@ -422,11 +422,12 @@ class TestEssential:
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     for node_id in prepared_sapogs.keys():
         if restart_node(node_id):
-            time.sleep(2)
+            time.sleep(4)
         else:
             assert False
             return
     result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+    time.sleep(1)
     assert len(result.keys()) == len(prepared_sapogs.keys())
     prepared_node.registry[f"uavcan.pub.{name}"] = subject_id
     assert len(prepared_sapogs.keys()) > 0
@@ -448,10 +449,21 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
         response = wrap_await(command_client.call(msg))
         if restart_node(21):
-            time.sleep(2)
+            time.sleep(3)
+            result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
         else:
             assert False
             return
+
+
+def play_note(frequency, duration, prepared_node):
+    note_message = reg.udral.physics.acoustics.Note_0_1(
+        frequency=uavcan.si.unit.frequency.Scalar_1_0(frequency),
+        acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
+        duration=uavcan.si.unit.duration.Scalar_1_0(duration))
+    publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
+    wrap_await(publisher.publish(note_message))
+    time.sleep(duration)
 
 
 class TestFun:
@@ -464,11 +476,12 @@ class TestFun:
         # the uavcan.pub.note_response.id configurable port.
         # Restarting to lose any other configuration.
         configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
-        note_message = reg.udral.physics.acoustics.Note_0_1(frequency=uavcan.si.unit.frequency.Scalar_1_0(1500),
-                                                            acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
-                                                            duration=uavcan.si.unit.duration.Scalar_1_0(0.1))
-        publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
-        wrap_await(publisher.publish(note_message))
+        arps = [[(440.00, 0.2), (523.25, 0.2), (659.25, 0.2)], [(587.33, 0.1), (698.46, 0.1), (880.00, 0.1)],
+                [(196.00, 0.2), (246.94, 0.2), (293.66, 0.1)]]
+        for arp in arps:
+            for i in range(6):
+                for frequency, duration in arp:
+                    play_note(frequency, duration, prepared_node)
 
 
 import uavcan.si.unit.angular_velocity.Scalar_1_0
