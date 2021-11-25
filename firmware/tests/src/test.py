@@ -496,7 +496,8 @@ def rpm_to_radians_per_second(rpm: int):
 class TestESC:
     @staticmethod
     def test_rpm_run_2_sec(prepared_node, prepared_sapogs):
-        configure_a_port_on_sapog("uavcan.sub.radians_in_second_velocity.id", 136, prepared_sapogs, prepared_node)
-        rpm_message = uavcan.si.unit.angular.velocity.Scalar_1_0(rpm_to_radians_per_second(50))
-        pub = prepared_node.make_publisher(uavcan.si.unit.angular.velocity.Scalar_1_0, "radians_in_second_velocity")
-        wrap_await(pub.publish(rpm_message))
+        configure_a_port_on_sapog("radians_in_second_velocity.id", 136, prepared_sapogs, prepared_node)
+        for i in range(200):
+            rpm_message = uavcan.si.unit.angular_velocity.Scalar_1_0(rpm_to_radians_per_second(50))
+            pub = prepared_node.make_publisher(uavcan.si.unit.angular_velocity.Scalar_1_0, "radians_in_second_velocity")
+            wrap_await(pub.publish(rpm_message))
