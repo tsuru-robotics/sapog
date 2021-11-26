@@ -36,3 +36,8 @@ struct : IHandler
         return;
     }
 } sub_readiness_handler;
+
+void publish_esc_heartbeat(node::state::State &state)
+{
+    
+}

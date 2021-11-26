@@ -8,6 +8,8 @@
 #include <zubax_chibios/config/config.hpp>
 #include <libcanard/canard.h>
 
+#define CONFIGURABLE_ID_IN_ESC_GROUP 0xFFFF
+#define CONFIGURABLE_SUBJECT_ID 0xFFFF
 namespace node::state
 {
 struct Timing
@@ -53,5 +55,7 @@ struct State
     bool is_save_requested = false;
     CanardTxQueue queues[AMOUNT_OF_QUEUES];
     Readiness readiness;
+    uint32_t id_in_esc_group;
+    uint32_t esc_heartbeat_publish_port;
 };
 }

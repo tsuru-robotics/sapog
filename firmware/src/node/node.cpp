@@ -145,12 +145,23 @@ bool is_port_configurable(RegisteredPort &reg)
     return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
 }
 
-#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+
 CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.idingroup", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("id_in_esc_group", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
+
+
+// not going to setup a uavcan.pub.esc_heartbeat.type register for the type name
+// because this device doesn't have much memory.
+CONFIG_PARAM_INT("uavcan.pub.esc_heartbeat.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.pub.esc_feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.pub.esc_power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.pub.esc_dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 struct : IHandler
 {
@@ -215,6 +226,15 @@ static void init_canard()
     } else
     {
         state.canard.node_id = stored_node_id;
+    }
+
+    if (configGetDescr("id_in_esc_group", &_) != -ENOENT)
+    {
+        state.id_in_esc_group = configGet("id_in_esc_group");
+    }
+    if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
+    {
+        state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
     }
     state.timing.started_at = get_monotonic_microseconds();
     for (auto &registered_port: registered_ports)

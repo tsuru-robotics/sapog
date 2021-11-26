@@ -431,20 +431,15 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     assert len(result.keys()) == len(prepared_sapogs.keys())
     prepared_node.registry[f"uavcan.pub.{name}"] = subject_id
     assert len(prepared_sapogs.keys()) > 0
-    # subprocess.run(["xterm", "-e", "bash", "-c",
-    #                 "echo Please press enter when you have set a breakpoint at access\n "
-    #                 "Make sure to let the program continue!; read line"])
     for node_id in prepared_sapogs.keys():
         service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-        service_client.response_timeout = 10000
+        service_client.response_timeout = 1
         msg = uavcan.register.Access_1_0.Request()
         msg.name.name = f"uavcan.sub.{name}"
         msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(subject_id))
         response = wrap_await(service_client.call(msg))
-        # subprocess.run(["xterm", "-e", "bash", "-c",
-        #                 "echo Press enter to restart (you should be debugging access now; read line"])
         command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-        command_client.response_timeout = 10000
+        command_client.response_timeout = 1
         msg = uavcan.node.ExecuteCommand_1_1.Request()
         msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
         response = wrap_await(command_client.call(msg))
@@ -476,10 +471,9 @@ class TestFun:
         # the uavcan.pub.note_response.id configurable port.
         # Restarting to lose any other configuration.
         configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
-        arps = [[(440.00, 0.2), (523.25, 0.2), (659.25, 0.2)], [(587.33, 0.1), (698.46, 0.1), (880.00, 0.1)],
-                [(196.00, 0.2), (246.94, 0.2), (293.66, 0.1)]]
+        arps = [[(196.00, 0.2), (246.94, 0.2), (293.66, 0.1)]]
         for arp in arps:
-            for i in range(6):
+            for i in range(1):
                 for frequency, duration in arp:
                     play_note(frequency, duration, prepared_node)
 

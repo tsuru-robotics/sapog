@@ -22,6 +22,10 @@ struct : IHandler
 {
     void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
+        if (state.readiness != Readiness::ENGAGED || state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
+        {
+            return;
+        }
         (void) state;
         uavcan_si_unit_angular_velocity_Scalar_1_0 angular_velocity{};
         size_t size = transfer->payload_size;
