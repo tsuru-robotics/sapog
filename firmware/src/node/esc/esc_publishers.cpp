@@ -3,7 +3,12 @@
 #include <node/state.hpp>
 #include <node/time.h>
 #include <node/units.hpp>
+#include <reg/udral/service/actuator/common/Feedback_0_1.h>
 #include "esc_publishers.hpp"
+
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat, 0, 1);
+
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Feedback, 0, 1);
 
 void publish_esc_heartbeat(node::state::State &state)
 {
@@ -66,10 +71,10 @@ void publish_esc_feedback(node::state::State &state)
 
 void publish_esc_power(node::state::State &state)
 {
-
+    (void) state;
 }
 
 void publish_esc_dynamics(node::state::State &state)
 {
-
+    (void) state;
 }

@@ -231,10 +231,20 @@ static void init_canard()
     if (configGetDescr("id_in_esc_group", &_) != -ENOENT)
     {
         state.id_in_esc_group = configGet("id_in_esc_group");
+        if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
+        {
+            printf("id_in_esc_group not configured.\n");
+
+        }
     }
     if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
     {
         state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
+        if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
+        {
+            printf("uavcan.pub.esc_heartbeat.id not configured\n");
+
+        }
     }
     state.timing.started_at = get_monotonic_microseconds();
     for (auto &registered_port: registered_ports)
