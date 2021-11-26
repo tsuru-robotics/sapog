@@ -471,7 +471,7 @@ class TestFun:
         # the uavcan.pub.note_response.id configurable port.
         # Restarting to lose any other configuration.
         configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
-        arps = [[(196.00, 0.2), (246.94, 0.2), (293.66, 0.1)]]
+        arps = [[(196.00, 0.05), (246.94, 0.05), (293.66, 0.2)]]
         for arp in arps:
             for i in range(1):
                 for frequency, duration in arp:

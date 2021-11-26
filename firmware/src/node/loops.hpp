@@ -9,6 +9,7 @@
 #include <uavcan/pnp/NodeIDAllocationData_2_0.h>
 #include <uavcan/pnp/NodeIDAllocationData_1_0.h>
 #include <node/interfaces/IHandler.hpp>
+#include <node/esc/esc_publishers.hpp>
 #include "node/pnp.hpp"
 #include "node/time.h"
 #include "state.hpp"
@@ -25,6 +26,7 @@ struct : ILoopMethod
     void operator()(node::state::State &state)
     {
         node::essential::publish_heartbeat(state.canard, state);
+        publish_esc_heartbeat(state);
         transmit(state);
         // Before code below is uncommented, make sure that the node has an id.
         // communications::publish_port_list(state.canard, state);

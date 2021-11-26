@@ -38,6 +38,13 @@ enum class Readiness
     STANDBY = 2,
     ENGAGED = 3
 };
+enum class Health
+{
+    NOMINAL = 0,
+    ADVISORY = 1,
+    CAUTION = 2,
+    WARNING = 3
+};
 struct PlugAndPlay
 {
     int request_count = 0;
@@ -55,7 +62,9 @@ struct State
     bool is_save_requested = false;
     CanardTxQueue queues[AMOUNT_OF_QUEUES];
     Readiness readiness;
+    Health health;
     uint32_t id_in_esc_group;
     uint32_t esc_heartbeat_publish_port;
+
 };
 }

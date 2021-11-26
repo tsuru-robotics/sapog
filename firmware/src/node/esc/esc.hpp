@@ -17,6 +17,7 @@
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include <motor/motor.hpp>
 #include <node/interfaces/IHandler.hpp>
+#include "node/esc/esc_publishers.hpp"
 
 struct : IHandler
 {
@@ -37,6 +38,7 @@ struct : IHandler
             unsigned int rpm = rotations_per_second * 60;
             printf("RPM: %d\n", rpm);
             motor_set_rpm(rpm, 500);
+            publish_esc_feedback(state);
         }
         (void) transfer;
         return;
