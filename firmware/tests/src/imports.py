@@ -9,4 +9,3 @@ def add_deps():
     namespace_path = dependency_path / "namespaces"
     print(f"Namespace path: {namespace_path.absolute()}")
     sys.path.insert(0, str(namespace_path.absolute()))
-    importlib.import_module()

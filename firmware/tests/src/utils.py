@@ -98,7 +98,7 @@ def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
     service_client.response_timeout = 1
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name
-    msg.value = uavcan.register.Value_1_0(reg_value)
+    msg.value = reg_value
     return wrap_await(service_client.call(msg))
 
 

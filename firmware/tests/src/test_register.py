@@ -7,6 +7,7 @@ from asyncio import exceptions
 import pytest
 
 from my_simple_test_allocator import allocate_nr_of_nodes
+from utils import make_access_request
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -83,12 +84,10 @@ class TestRegisters:
         time.sleep(0.2)
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.1
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named"))
-            msg.name.name = "uavcan.node.description"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("uavcan.node.description",
+                                           uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
+                                           node_id,
+                                           prepared_node)
             is_result_good = response is not None and response[0].value.empty is not None
             assert is_result_good
             if not is_result_good:
@@ -99,12 +98,11 @@ class TestRegisters:
         checks if that was saved."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.1
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60001))
-            msg.name.name = "mot_pwm_hz"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("mot_pwm_hz",
+                                           uavcan.register.Value_1_0(
+                                               integer64=uavcan.primitive.array.Integer64_1_0(60001)),
+                                           node_id,
+                                           prepared_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -118,10 +116,11 @@ class TestRegisters:
                     print("response[0].value.bit is None")
             else:
                 print("Response is None")
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(60000))
-            msg.name.name = "mot_pwm_hz"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("mot_pwm_hz",
+                                           uavcan.register.Value_1_0(
+                                               integer64=uavcan.primitive.array.Integer64_1_0(60000)),
+                                           node_id,
+                                           prepared_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -143,12 +142,10 @@ class TestRegisters:
         checks again to see if it was saved correctly."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.1
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1))
-            msg.name.name = "pwm_enable"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("pwm_enable",
+                                           uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1)),
+                                           node_id,
+                                           prepared_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -165,10 +162,10 @@ class TestRegisters:
                     print("response[0].value.bit is None")
             else:
                 print("Response is None")
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(0))
-            msg.name.name = "pwm_enable"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("pwm_enable",
+                                           uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(0)),
+                                           node_id,
+                                           prepared_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -193,12 +190,9 @@ class TestRegisters:
         there is one of it."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.1
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
-            msg.name.name = "rpmctl_p"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("rpmctl_p", uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
+                                           node_id,
+                                           prepared_node)
             if response:
                 real_value = response[0].value.real64
                 if real_value:
@@ -220,12 +214,9 @@ class TestRegisters:
         there is one of it."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.1
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
-            msg.name.name = "pwm_enable"
-            response = wrap_await(service_client.call(msg))
+            response = make_access_request("pwm_enable", uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
+                                           node_id,
+                                           prepared_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -245,13 +236,11 @@ class TestRegisters:
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
-            service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_id)
-            service_client.response_timeout = 0.2
-            msg = uavcan.register.Access_1_0.Request()
-            msg.value = uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0())
-            msg.name.name = "mot_tim_adv_min"
-            response = wrap_await(service_client.call(msg))
+        for node_id in prepared_sapogs.keys():
+            response = make_access_request("mot_tim_adv_min",
+                                           uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
+                                           node_id,
+                                           prepared_node)
             if response:
                 real_value = response[0].value.integer64
                 if real_value:
