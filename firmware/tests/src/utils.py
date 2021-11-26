@@ -10,6 +10,7 @@ import pytest
 
 from allocator import OneTimeAllocator
 from my_simple_test_allocator import allocate_nr_of_nodes
+from register_pair_class import RegisterPair
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -104,38 +105,14 @@ def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
     return wrap_await(service_client.call(msg))
 
 
-def make_configurable_id_client(value, port_name, target_node_id, prepared_node):
-    service_client = prepared_node.make_client(uavcan.register.Access_1_0, target_node_id)
-    service_client.response_timeout = 1
-    msg = uavcan.register.Access_1_0.Request()
-    msg.name.name = f"uavcan.sub.{port_name}.id"
-    msg.value = uavcan.register.Value_1_0(value)
-    return wrap_await(service_client.call(msg))
-
-
-def make_configurable_id_publisher(type_, port_name, subject_id, prepared_node):
-    prepared_node.registry[f"uavcan.pub.{port_name}.id"] = subject_id
-    return prepared_node.make_publisher(type_, port_name)
-
-
-def configure_registers_on_sapog(regs, prepared_sapogs, prepared_node):
-    for node_id in prepared_sapogs.keys():
-        if restart_node(node_id):
-            time.sleep(4)
-        else:
-            assert False
-            return
-    result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
-    time.sleep(1)
-    for node_id in prepared_sapogs.keys():
-        for key in regs:
-            value = regs[key]
-            reg_pattern = r"uavcan\.pub\.([^\.]+).id"
-            match = re.match(reg_pattern, key)
-            if match:
-                print(match.groups(0))
-                # prepared_node.registry[f"uavcan.pub.{match.groups(1)}.id"] = value
-                make_access_request(key, value, node_id, prepared_node)
+def configure_registers(regs: list[RegisterPair], prepared_node, prepared_sapogs):
+    for pair in regs:
+        assert isinstance(pair, RegisterPair)
+        prepared_node.registry[pair.tester_reg_name] = pair.value
+        if pair.embedded_device_reg_name:
+            for node_id in prepared_sapogs:
+                make_access_request(pair.embedded_device_reg_name, pair.value,
+                                    node_id, prepared_node)
 
 
 def allocate_one_node_id(node_name):
@@ -178,22 +155,6 @@ def plug_in_power():
         plug_in_power_automatic()
 
 
-corresponding = {"cln": "srv", "pub": "sub"}
-
-
-def get_their_port_from_our_port(our_port: str):
-    for key in corresponding:
-        if key in our_port:
-            return our_port.replace(key, corresponding[key])
-
-
-def get_port_name_from_our_port(our_port: str):
-    reg_pattern = r"uavcan\.pub\.([^\.]+).id"
-    match = re.match(reg_pattern, our_port)
-    assert match
-    return match.groups(1)
-
-
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     for node_id in prepared_sapogs.keys():
         if restart_node(node_id):
@@ -207,7 +168,9 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     prepared_node.registry[f"uavcan.pub.{name}.id"] = subject_id
     assert len(prepared_sapogs.keys()) > 0
     for node_id in prepared_sapogs.keys():
-        make_access_request(f"uavcan.sub.{name}.id", uavcan.primitive.array.Integer64_1_0(subject_id), node_id,
+        make_access_request(f"uavcan.sub.{name}.id",
+                            uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(subject_id)),
+                            node_id,
                             prepared_node)
         command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
         command_client.response_timeout = 1

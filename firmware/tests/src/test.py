@@ -7,7 +7,7 @@ import os
 import time
 import typing
 
-from utils import configure_a_port_on_sapog
+from utils import configure_a_port_on_sapog, prepared_sapogs, prepared_node, restarted_sapogs
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -86,7 +86,7 @@ class TestFun:
         # we only care about saving the configuration for
         # the uavcan.pub.note_response.id configurable port.
         # Restarting to lose any other configuration.
-        configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
+        configure_a_port_on_sapog("note_response", 135, prepared_sapogs, prepared_node)
         arps = [[(196.00, 0.05), (246.94, 0.05), (293.66, 0.2)]]
         for arp in arps:
             for i in range(1):

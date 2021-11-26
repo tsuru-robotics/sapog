@@ -1,12 +1,6 @@
-import asyncio
 import os
 import time
 
-from asyncio import exceptions
-
-import pytest
-
-from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import make_access_request
 from utils import prepared_node, prepared_sapogs, restarted_sapogs
 
@@ -20,12 +14,6 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
-
-import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo, register
-from pyuavcan.presentation._presentation import MessageClass
-
-from _await_wrap import wrap_await
 
 
 class TestRegisters:
