@@ -1,17 +1,13 @@
-#
-# Copyright (c) 2021 Zubax, zubax.com
-# Distributed under the MIT License, available in the file LICENSE.
-# Author: Silver Valdvee <silver.valdvee@zubax.com>
-#
 import asyncio
 import os
 import re
 import time
-import typing
 
-import pathlib
-import sys
 from asyncio import exceptions
+
+import pytest
+
+from my_simple_test_allocator import allocate_nr_of_nodes
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -23,87 +19,12 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
-import reg.udral.physics.acoustics.Note_0_1
-import reg.udral.service.common.Readiness_0_1
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
 
 from _await_wrap import wrap_await
-from allocator import OneTimeAllocator
-
-
-def make_registry(node_id: int):
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
-    registry01["uavcan.can.mtu"] = 8
-    registry01["uavcan.node.id"] = node_id
-    return registry01
-
-
-import pytest
-
-sapog_name = "io.px4.sapog"
-
-
-def node_name():
-    return sapog_name
-
-
-def is_interface_up_and_running():
-    ifconfig_result = str(subprocess.run("ifconfig"))
-    return ifconfig_result.find("slcan0: flags=193<UP,RUNNING,NOARP>")
-
-
-hw_id_type = typing.Union[typing.List[int], bytes, bytearray]
-
-
-def configure_note_register():
-    print(reg.drone.physics.acoustics.Note_0_1)
-
-
-def allocate_one_node_id(node_name):
-    with OneTimeAllocator(node_name) as allocator:
-        wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
-        return allocator.allocated_node_id, allocator.allocated_node_name
-
-
-import subprocess
-
-
-def unplug_power_automatic():
-    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "outputoff"])
-
-
-def plug_in_power_automatic():
-    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "-v", "15"])
-
-
-def unplug_power():
-    global is_running_on_my_laptop
-    if is_running_on_my_laptop:
-        unplug_power_manual()
-    else:
-        unplug_power_automatic()
-
-
-def plug_in_power():
-    global is_running_on_my_laptop
-    if is_running_on_my_laptop:
-        plug_in_power_manual()
-    else:
-        plug_in_power_automatic()
-
-
-def unplug_power_manual():
-    """Yields with a \"dialog\" open for the user to close with enter when the requested action is done."""
-    subprocess.run(["xterm", "-e", "bash", "-c", "echo Unplug power to boards and press enter when done; read line"])
-
-
-def plug_in_power_manual():
-    """Yields with a \"dialog\" open for the user to close with enter when the requested action is done."""
-    subprocess.run(["xterm", "-e", "bash", "-c", "echo Plug in power for boards and press enter when done; read line"])
 
 
 def is_device_with_node_id_running(node_id):
@@ -124,9 +45,6 @@ def is_device_with_node_id_running(node_id):
         except exceptions.TimeoutError as e:
             return False
         return True
-
-
-from debugger import format_payload_hex_view
 
 
 @pytest.fixture(scope="class")
@@ -150,6 +68,14 @@ def restarted_sapogs():
     return allocate_nr_of_nodes(1)
 
 
+def make_registry(node_id: int):
+    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.mtu"] = 8
+    registry01["uavcan.node.id"] = node_id
+    return registry01
+
+
 def restart_node(node_id_to_restart):
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
@@ -161,16 +87,10 @@ def restart_node(node_id_to_restart):
         return response
 
 
-from my_simple_test_allocator import allocate_nr_of_nodes
-
-
-def test_restart_node(prepared_node, prepared_sapogs):
-    for node_id in prepared_sapogs.keys():
-        service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_RESTART
-        response = wrap_await(service_client.call(msg))
-        assert response is not None
+def rpm_to_radians_per_second(rpm: int):
+    rps = rpm / 60
+    radians_per_second = rps * 3.14 * 2
+    return radians_per_second
 
 
 def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
@@ -258,33 +178,3 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         else:
             assert False
             return
-
-
-def play_note(frequency, duration, prepared_node):
-    note_message = reg.udral.physics.acoustics.Note_0_1(
-        frequency=uavcan.si.unit.frequency.Scalar_1_0(frequency),
-        acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
-        duration=uavcan.si.unit.duration.Scalar_1_0(duration))
-    publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
-    wrap_await(publisher.publish(note_message))
-    time.sleep(duration)
-
-
-class TestFun:
-    @staticmethod
-    def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
-        # During this test, we need to save the configuration
-        # But we don't want to save any other configuration
-        # that could have been left on the device during tests,
-        # we only care about saving the configuration for
-        # the uavcan.pub.note_response.id configurable port.
-        # Restarting to lose any other configuration.
-        configure_a_port_on_sapog("note_response.id", 135, prepared_sapogs, prepared_node)
-        arps = [[(196.00, 0.05), (246.94, 0.05), (293.66, 0.2)]]
-        for arp in arps:
-            for i in range(1):
-                for frequency, duration in arp:
-                    play_note(frequency, duration, prepared_node)
-
-
-import uavcan.si.unit.angular_velocity.Scalar_1_0

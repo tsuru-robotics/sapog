@@ -233,7 +233,7 @@ static void init_canard()
         state.id_in_esc_group = configGet("id_in_esc_group");
         if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
         {
-            printf("id_in_esc_group not configured.\n");
+            printf("no id_in_esc_group\n");
 
         }
     }
@@ -242,7 +242,16 @@ static void init_canard()
         state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
         if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
         {
-            printf("uavcan.pub.esc_heartbeat.id not configured\n");
+            printf("no uavcan.pub.esc_heartbeat.id\n");
+
+        }
+    }
+    if (configGetDescr("uavcan.pub.esc_feedback.id", &_) != -ENOENT)
+    {
+        state.esc_feedback_publish_port = configGet("uavcan.pub.esc_feedback.id");
+        if (state.esc_feedback_publish_port == CONFIGURABLE_SUBJECT_ID)
+        {
+            printf("no uavcan.pub.esc_feedback.id\n");
 
         }
     }

@@ -65,6 +65,7 @@ struct State
     Health health;
     uint32_t id_in_esc_group;
     uint32_t esc_heartbeat_publish_port;
+    uint32_t esc_feedback_publish_port;
 
 };
 }
