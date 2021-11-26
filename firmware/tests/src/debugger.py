@@ -131,10 +131,10 @@ def fill_ids():
 
 
 ignore_subjects = [
-    7510  # port_list
-    , 7509  # heartbeat
-    , 8166  # allocation
-    , 430  # getinfo
+    # 7510  # port_list
+    # , 7509  # heartbeat
+    # , 8166  # allocation
+    # , 430  # getinfo
 ]
 
 

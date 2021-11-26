@@ -174,7 +174,7 @@ struct : IHandler
 
 RegisteredPort registered_ports[] =
     {
-//        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
                                       &uavcan_node_ExecuteCommand_Request_1_1_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,

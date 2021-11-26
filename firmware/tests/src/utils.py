@@ -1,12 +1,14 @@
 import asyncio
 import os
 import re
+import subprocess
 import time
 
 from asyncio import exceptions
 
 import pytest
 
+from allocator import OneTimeAllocator
 from my_simple_test_allocator import allocate_nr_of_nodes
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
@@ -134,6 +136,46 @@ def configure_registers_on_sapog(regs, prepared_sapogs, prepared_node):
                 print(match.groups(0))
                 # prepared_node.registry[f"uavcan.pub.{match.groups(1)}.id"] = value
                 make_access_request(key, value, node_id, prepared_node)
+
+
+def allocate_one_node_id(node_name):
+    with OneTimeAllocator(node_name) as allocator:
+        wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
+        return allocator.allocated_node_id, allocator.allocated_node_name
+
+
+def unplug_power():
+    global is_running_on_my_laptop
+    if is_running_on_my_laptop:
+        unplug_power_manual()
+    else:
+        unplug_power_automatic()
+
+
+def unplug_power_manual():
+    """Yields with a \"dialog\" open for the user to close with enter when the requested action is done."""
+    subprocess.run(["xterm", "-e", "bash", "-c", "echo Unplug power to boards and press enter when done; read line"])
+
+
+def plug_in_power_manual():
+    """Yields with a \"dialog\" open for the user to close with enter when the requested action is done."""
+    subprocess.run(["xterm", "-e", "bash", "-c", "echo Plug in power for boards and press enter when done; read line"])
+
+
+def unplug_power_automatic():
+    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "outputoff"])
+
+
+def plug_in_power_automatic():
+    subprocess.run(["/usr/bin/env", "-S", "groom_power.py", "-v", "15"])
+
+
+def plug_in_power():
+    global is_running_on_my_laptop
+    if is_running_on_my_laptop:
+        plug_in_power_manual()
+    else:
+        plug_in_power_automatic()
 
 
 corresponding = {"cln": "srv", "pub": "sub"}
