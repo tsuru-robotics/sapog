@@ -8,6 +8,7 @@ import pytest
 
 from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import make_access_request
+from utils import prepared_node, prepared_sapogs, restarted_sapogs
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
