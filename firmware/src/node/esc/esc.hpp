@@ -21,11 +21,23 @@
 #include "node/esc/esc_publishers.hpp"
 #include <algorithm>
 
+struct : IStateAwareHandler
+{
+    void operator()(node::state::State *state)
+    {
+        assert(state != nullptr);
+        if (state != nullptr)
+        {
+            state->readiness = Readiness::STANDBY;
+        }
+    }
+} ttl_expiry_handler;
+
 struct : IHandler
 {
     void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
-        if (state.readiness == Readiness::ENGAGED && state.id_in_esc_group != CONFIGURABLE_ID_IN_ESC_GROUP)
+        if (state.readiness == Readiness::ENGAGED)
         {
             reg_udral_service_actuator_common_sp_Scalar_0_1 setpoint{};
             size_t size = transfer->payload_size;
@@ -40,6 +52,7 @@ struct : IHandler
                     unsigned int rpm = rotations_per_second * 60;
                     printf("RPM: %d\n", rpm);
                     motor_set_rpm(rpm, state.ttl_milliseconds);
+                    motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
                     publish_esc_feedback(state);
                     (void) transfer;
                     return;

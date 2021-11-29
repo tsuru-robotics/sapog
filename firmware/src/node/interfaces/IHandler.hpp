@@ -19,6 +19,18 @@ public:
     virtual void operator()(node::state::State &state) = 0;
 };
 
+class IStateAwareHandler
+{
+public:
+    IStateAwareHandler()
+    {}
+
+    virtual ~IStateAwareHandler()
+    {}
+
+    virtual void operator()(node::state::State *state) = 0;
+};
+
 class IHandler
 {
 public:

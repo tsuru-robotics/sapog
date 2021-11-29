@@ -53,12 +53,10 @@ class TestESC:
                 return
         time.sleep(4)
         allocate_nr_of_nodes(len(prepared_sapogs.keys()))
-        # prepared_node.registry[f"uavcan.pub.radians_in_second_velocity.id"] = 136
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_pub = prepared_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         wrap_await(readiness_pub.publish(readiness_message))
-        
-        # rpm_message = uavcan.si.unit.angular_velocity.Scalar_1_0()
+
         rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(2000))
         pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
         for i in range(40):

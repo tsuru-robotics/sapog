@@ -43,22 +43,22 @@ extern "C" {
 
 enum motor_control_mode
 {
-	MOTOR_CONTROL_MODE_OPENLOOP,
-	MOTOR_CONTROL_MODE_RPM
+    MOTOR_CONTROL_MODE_OPENLOOP,
+    MOTOR_CONTROL_MODE_RPM
 };
 
 enum motor_limit_mask
 {
-	MOTOR_LIMIT_RPM = 1,
-	MOTOR_LIMIT_CURRENT = 2,
-	MOTOR_LIMIT_ACCEL = 4
+    MOTOR_LIMIT_RPM = 1,
+    MOTOR_LIMIT_CURRENT = 2,
+    MOTOR_LIMIT_ACCEL = 4
 };
 
 enum motor_forced_rotation_direction
 {
-	MOTOR_FORCED_ROTATION_NONE,
-	MOTOR_FORCED_ROTATION_FORWARD,
-	MOTOR_FORCED_ROTATION_REVERSE,
+    MOTOR_FORCED_ROTATION_NONE,
+    MOTOR_FORCED_ROTATION_FORWARD,
+    MOTOR_FORCED_ROTATION_REVERSE,
 };
 
 /**
@@ -94,6 +94,8 @@ float motor_get_duty_cycle(void);
  */
 unsigned motor_get_rpm(void);
 
+IStateAwareHandler *motor_get_current_ttl_expiry_handler();
+void motor_set_current_ttl_expiry_handler(IStateAwareHandler *handler);
 void motor_stop(void);
 
 enum motor_control_mode motor_get_control_mode(void);
@@ -126,7 +128,7 @@ int motor_get_limit_mask(void);
  * @param [out] out_voltage Volts
  * @param [out] out_current Amperes
  */
-void motor_get_input_voltage_current(float* out_voltage, float* out_current);
+void motor_get_input_voltage_current(float *out_voltage, float *out_current);
 
 /**
  * Simple wrappers; refer to RTCTL API docs to learn more
@@ -140,7 +142,7 @@ int motor_test_motor(void);
 void motor_beep(int frequency, int duration_msec);
 void motor_print_debug_info(void);
 void motor_emergency(void);
-void motor_execute_cli_command(int argc, const char* argv[]);
+void motor_execute_cli_command(int argc, const char *argv[]);
 unsigned comm_period_to_rpm(uint32_t comm_period_hnsec);
 /**
  * @}

@@ -43,6 +43,7 @@
 #include <assert.h>
 #include <zubax_chibios/config/config.h>
 #include <zubax_chibios/watchdog/watchdog.h>
+#include <node/interfaces/IHandler.hpp>
 
 #define IDLE_CONTROL_PERIOD_MSEC  10
 #define WATCHDOG_TIMEOUT_MSEC     10000
@@ -219,6 +220,28 @@ static void update_filters(float dt)
                 1.0F, dt);
 }
 
+// This code manages having a handler for when the TTL is expired
+struct : IStateAwareHandler
+{
+    void operator()(node::state::State *state)
+    {
+        (void) state;
+    }
+} default_expected_stop_handler;
+
+IStateAwareHandler *current_ttl_expiry_handler = &default_expected_stop_handler;
+
+IStateAwareHandler *motor_get_current_ttl_expiry_handler()
+{
+    return current_ttl_expiry_handler;
+}
+
+void motor_set_current_ttl_expiry_handler(IStateAwareHandler *handler)
+{
+    current_ttl_expiry_handler = handler;
+}
+// end of managing having a handler for when the TTL is expired
+
 static void stop(bool expected)
 {
     motor_rtctl_stop();
@@ -231,6 +254,11 @@ static void stop(bool expected)
     _state.rtctl_state = motor_rtctl_get_state();
     if (expected)
     {
+        // This if statement calls a handler if it exists for handling TTL expiry
+        if (current_ttl_expiry_handler != nullptr)
+        {
+            (*current_ttl_expiry_handler)(nullptr);
+        }
         _state.num_unexpected_stops = 0;
     } else
     {
@@ -836,3 +864,4 @@ void motor_execute_cli_command(int argc, const char *argv[])
     }
     chMtxUnlock(&_mutex);
 }
+
