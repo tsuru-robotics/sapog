@@ -43,7 +43,7 @@
 #include <assert.h>
 #include <zubax_chibios/config/config.h>
 #include <zubax_chibios/watchdog/watchdog.h>
-#include <node/interfaces/IHandler.hpp>
+#include "motor_ttl_expiry_handler.hpp"
 
 #define IDLE_CONTROL_PERIOD_MSEC  10
 #define WATCHDOG_TIMEOUT_MSEC     10000
@@ -257,7 +257,7 @@ static void stop(bool expected)
         // This if statement calls a handler if it exists for handling TTL expiry
         if (current_ttl_expiry_handler != nullptr)
         {
-            (*current_ttl_expiry_handler)(nullptr);
+            (*current_ttl_expiry_handler)(current_ttl_expiry_handler->state);
         }
         _state.num_unexpected_stops = 0;
     } else

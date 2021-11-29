@@ -94,8 +94,7 @@ float motor_get_duty_cycle(void);
  */
 unsigned motor_get_rpm(void);
 
-IStateAwareHandler *motor_get_current_ttl_expiry_handler();
-void motor_set_current_ttl_expiry_handler(IStateAwareHandler *handler);
+
 void motor_stop(void);
 
 enum motor_control_mode motor_get_control_mode(void);

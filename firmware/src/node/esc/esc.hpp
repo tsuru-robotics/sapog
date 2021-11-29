@@ -20,6 +20,7 @@
 #include <node/interfaces/IHandler.hpp>
 #include "node/esc/esc_publishers.hpp"
 #include <algorithm>
+#include <motor/motor_ttl_expiry_handler.hpp>
 
 struct : IStateAwareHandler
 {
@@ -52,6 +53,7 @@ struct : IHandler
                     unsigned int rpm = rotations_per_second * 60;
                     printf("RPM: %d\n", rpm);
                     motor_set_rpm(rpm, state.ttl_milliseconds);
+                    ttl_expiry_handler.state = &state;
                     motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
                     publish_esc_feedback(state);
                     (void) transfer;
@@ -62,6 +64,8 @@ struct : IHandler
                     dc = std::min(dc, 1.0f);
                     printf("DC: %f\n", (float) dc);
                     motor_set_duty_cycle(dc, state.ttl_milliseconds);
+                    ttl_expiry_handler.state = &state;
+                    motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
                     publish_esc_feedback(state);
                     (void) transfer;
                     return;

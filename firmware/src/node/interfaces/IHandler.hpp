@@ -22,6 +22,8 @@ public:
 class IStateAwareHandler
 {
 public:
+    node::state::State *state;
+
     IStateAwareHandler()
     {}
 
