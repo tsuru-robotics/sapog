@@ -23,7 +23,7 @@ convert_pair converters[] = { // NOLINT(bugprone-dynamic-static-initializers)
             uavcan_register_Value_1_0_select_natural16_(&value);
             value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
             return value;
-        }}
+        }},
 };
 }
 

@@ -57,12 +57,15 @@ std::string_view find_type_name(const char *const request_name)
     return found_type_name;
 }
 
-inline static void get_response_value(const char *const request_name, uavcan_register_Value_1_0 &out_value)
+inline static void get_response_value(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
 {
     ConfigParam param{};
-    if (configGetDescr(request_name, &param) != 0)
+    if (configGetDescr(request_name.data(), &param) != 0)
     {
-        std::string_view type_string = find_type_name(request_name);
+        std::string_view type_string = find_type_name(request_name.data());
+        bool endsWithId =
+            request_name.at(request_name.size() - 1) == 'd' && request_name.at(request_name.size() - 2) == 'i' &&
+            request_name.at(request_name.size() - 3) == '.';
         if (type_string != "")
         {
             uavcan_register_Value_1_0_select_string_(&out_value);
@@ -71,6 +74,11 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
             memcpy(&return_value.value.elements, type_string.data(), return_value.value.count);
             out_value._string = return_value;
             return;
+        } else if (endsWithId)
+        {
+            uavcan_register_Value_1_0 return_value{};
+            uavcan_register_Value_1_0_select_natural16_(&return_value);
+            return_value.natural16.value.elements[0] = value; // NOLINT(cppcoreguidelines-narrowing-conversions)
         } else
         {
             uavcan_register_Value_1_0_select_empty_(&out_value);
@@ -78,17 +86,18 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
             printf("Access returns with empty value\n");
             return;
         }
-    } else
-    {
-
     }
-    float value = configGet(request_name);
-    auto converter = node::conf::wrapper::find_converter(request_name);
+    float value = configGet(request_name.data());
+    auto converter = node::conf::wrapper::find_converter(request_name.data());
+    std::string_view request_name_sw(request_name.data());
+
     if (converter.has_value())
     {
         out_value = converter.value()(value);
     } else
     {
+
+
         if (param.type == CONFIG_TYPE_FLOAT)
         {
             printf("Response value: float: %f\n", value);
@@ -112,7 +121,7 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
     }
 }
 
-inline static bool respond_to_access(node::state::State &state, const char *request_name,
+inline static bool respond_to_access(node::state::State &state, std::basic_string_view<char> request_name,
                                      const CanardRxTransfer *const transfer)
 {
     uavcan_register_Access_Response_1_0 response{};
@@ -171,6 +180,7 @@ struct : IHandler
         }
         std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
         get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
+
         ConfigParam entry_config_params{};
         printf("\n\nAccess handler: %s\n", request_name.data());
         bool register_has_entry_for_name = configGetDescr(request_name.data(), &entry_config_params) == 0;
@@ -205,8 +215,7 @@ struct : IHandler
         }
         // The client is going to get a response with the actual value of the register
         assert(request_name.data() != nullptr);
-        // We are silently losing precision, but it shouldn't matter for this application
-        respond_to_access(state, request_name.data(),
+        respond_to_access(state, std::string_view(request_name.data()),
                           transfer);
         return;
     }
