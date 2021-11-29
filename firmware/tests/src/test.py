@@ -27,25 +27,11 @@ from pyuavcan.application import Node, register
 
 from _await_wrap import wrap_await
 
-
-def make_registry(node_id: int):
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
-    registry01["uavcan.can.mtu"] = 8
-    registry01["uavcan.node.id"] = node_id
-    return registry01
-
-
 sapog_name = "io.px4.sapog"
 
 
 def node_name():
     return sapog_name
-
-
-def is_interface_up_and_running():
-    ifconfig_result = str(subprocess.run("ifconfig"))
-    return ifconfig_result.find("slcan0: flags=193<UP,RUNNING,NOARP>")
 
 
 hw_id_type = typing.Union[typing.List[int], bytes, bytearray]

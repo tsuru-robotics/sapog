@@ -31,6 +31,10 @@ struct : IHandler
                                                                 &size) >= 0)
         {
             state.readiness = Readiness(readiness.value);
+            if (readiness.value == 3)
+            {
+                printf("Readiness set to active.\n");
+            }
         }
         (void) transfer;
         return;

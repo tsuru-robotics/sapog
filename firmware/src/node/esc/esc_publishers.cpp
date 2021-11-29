@@ -43,28 +43,31 @@ void publish_esc_heartbeat(node::state::State &state)
 
 void publish_esc_feedback(node::state::State &state)
 {
-    uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
-    reg_udral_service_actuator_common_Feedback_0_1 fb{};
-    fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
-    fb.heartbeat.readiness.value = static_cast<uint8_t>(state.readiness);
-    fb.heartbeat.health = uavcan_node_Health_1_0{};
-    fb.heartbeat.health.value = static_cast<uint8_t>(state.health);
-    auto res = serializer.serialize(fb);
-    if (res.has_value())
+    if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
     {
-        CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
-        rtm.transfer_kind = CanardTransferKindMessage;
-        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
+        reg_udral_service_actuator_common_Feedback_0_1 fb{};
+        fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
+        fb.heartbeat.readiness.value = static_cast<uint8_t>(state.readiness);
+        fb.heartbeat.health = uavcan_node_Health_1_0{};
+        fb.heartbeat.health.value = static_cast<uint8_t>(state.health);
+        auto res = serializer.serialize(fb);
+        if (res.has_value())
         {
-            (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
-                                get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
-                                &rtm,
-                                res.value(),
-                                serializer.getBuffer());
+            CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
+            rtm.transfer_kind = CanardTransferKindMessage;
+            for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+            {
+                (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                                    get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
+                                    &rtm,
+                                    res.value(),
+                                    serializer.getBuffer());
+            }
+        } else
+        {
+            assert(false);
         }
-    } else
-    {
-        assert(false);
     }
 }
 

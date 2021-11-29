@@ -131,10 +131,10 @@ def fill_ids():
 
 
 ignore_subjects = [
-    # 7510  # port_list
-    # , 7509  # heartbeat
-    # , 8166  # allocation
-    # , 430  # getinfo
+    7510  # port_list
+    , 7509  # heartbeat
+    , 8166  # allocation
+    , 430  # getinfo
 ]
 
 
@@ -188,7 +188,7 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
     msg = uavcan.register.Access_1_0.Request()
     my_array = uavcan.primitive.array.Integer64_1_0()
     my_array.value = [1]
-    msg.name.name = "uavcan_node_id"
+    msg.name.name = "uavcan.node.id"
     msg.value.integer64 = my_array
     response = await service_client.call(msg)
     print(response)

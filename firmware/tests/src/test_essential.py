@@ -4,7 +4,7 @@ import time
 
 from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import is_device_with_node_id_running, restart_node, make_registry
-from utils import prepared_sapogs
+from utils import prepared_sapogs, prepared_node
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -26,8 +26,8 @@ from _await_wrap import wrap_await
 
 class TestEssential:
     @staticmethod
-    def test_allows_allocation_of_node_id():
-        if restart_node(21):
+    def test_allows_allocation_of_node_id(prepared_node):
+        if restart_node(prepared_node, 21):
             time.sleep(2)
         try:
             required_amount = 1

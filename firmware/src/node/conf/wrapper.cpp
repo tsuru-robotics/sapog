@@ -5,8 +5,33 @@
  */
 #include "wrapper.hpp"
 
-converter_type find_converter(const char *name)
+namespace node::conf::wrapper
 {
+
+convert_pair converters[] = { // NOLINT(bugprone-dynamic-static-initializers)
+    {"uavcan.pub.esc.status.id",
+        [](float in) {
+            value_type value{};
+            uavcan_register_Value_1_0_select_natural16_(&value);
+            value.natural16.value.elements[0] = static_cast<std::uint16_t>(in);
+            value.natural16.value.count = 1;
+            return value;
+        }},
+    {"uavcan.node.id",
+        [](float in) {
+            value_type value{};
+            uavcan_register_Value_1_0_select_natural16_(&value);
+            value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
+            return value;
+        }}
+};
+}
+
+using converter_type = node::conf::wrapper::converter_type;
+
+std::optional<converter_type> node::conf::wrapper::find_converter(const char *name)
+{
+    using namespace node::conf::wrapper;
     for (auto &pair: converters)
     {
         const char *current_name = pair.first;
@@ -18,10 +43,7 @@ converter_type find_converter(const char *name)
     }
     // In case there isn't a matching converter, return one that returns an empty value.
     // the returned value is basically selected to be uavcan.primitive.Empty.1.0
-    return [](float input) {
-        (void) input;
-        return value_type{};
-    };
+    return {};
 }
 
 #define CHECK_PARAM_IF_GIVEN(type) \

@@ -45,6 +45,11 @@ enum class Health
     CAUTION = 2,
     WARNING = 3
 };
+enum class ControlMode
+{
+    RPM,
+    DUTYCYCLE
+};
 struct PlugAndPlay
 {
     int request_count = 0;
@@ -63,9 +68,10 @@ struct State
     CanardTxQueue queues[AMOUNT_OF_QUEUES];
     Readiness readiness;
     Health health;
-    uint32_t id_in_esc_group;
-    uint32_t esc_heartbeat_publish_port;
-    uint32_t esc_feedback_publish_port;
-
+    uint16_t id_in_esc_group;
+    uint16_t esc_heartbeat_publish_port;
+    uint16_t esc_feedback_publish_port;
+    ControlMode control_mode;
+    uint16_t ttl_milliseconds;
 };
 }

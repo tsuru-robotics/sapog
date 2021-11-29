@@ -1,13 +1,18 @@
 import time
+import typing
 
 from _await_wrap import wrap_await
-from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, \
-    make_configurable_id_publisher, prepared_node, prepared_sapogs, restarted_sapogs, restart_node
+from my_simple_test_allocator import allocate_nr_of_nodes
+from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, prepared_node, \
+    prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save
 from imports import add_deps
 
 add_deps()
 import uavcan.primitive.array.Integer64_1_0
 import reg.udral.service.common.Readiness_0_1
+import reg.udral.service.actuator.common.sp.Scalar_0_1
+import uavcan.primitive.array.Bit_1_0
+import uavcan.register.Value_1_0
 
 from register_pair_class import RegisterPair, EmbeddedDeviceRegPair
 
@@ -16,29 +21,46 @@ class TestESC:
     @staticmethod
     def test_rpm_run_2_sec(prepared_node, prepared_sapogs):
         for node_id in prepared_sapogs.keys():
-            if restart_node(node_id):
+            if restart_node(prepared_node, node_id):
                 time.sleep(4)
             else:
                 assert False
                 return
-        registers_array: list[RegisterPair] = [
-            RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
-                         uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(136))),
-            RegisterPair("uavcan.cln.readiness.id", "uavcan.srv.readiness.id",
-                         uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(137))),
+        allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+        # radian per second
+        registers_array: typing.List[RegisterPair] = [
+            RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
+            # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
+            #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
+            RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(137))),
             EmbeddedDeviceRegPair("id_in_esc_group",
-                                  uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(0)))
+                                  uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(0))),
+            EmbeddedDeviceRegPair("control_mode_rpm",
+                                  uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
+            RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(138))),
+            RegisterPair("uavcan.sub.esc_feedback.id", "uavcan.pub.esc_feedback.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(139)))
         ]
-        # prepared_node.registry[f"uavcan.pub.radians_in_second_velocity.id"] = 136
+        time.sleep(1)
+        configure_registers(registers_array, prepared_node, prepared_sapogs)
         for node_id in prepared_sapogs.keys():
-            readiness_message = reg.udral.service.common.Readiness_0_1(3)
-        client = prepared_node.make_client(reg.udral.service.common.Readiness_0_1, node_id, "readiness")
-        wrap_await(client.call(readiness_message))
+            command_save(prepared_node, node_id)
+            if restart_node(prepared_node, node_id) is None:
+                assert False
+                return
+        time.sleep(4)
+        allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+        # prepared_node.registry[f"uavcan.pub.radians_in_second_velocity.id"] = 136
+        readiness_message = reg.udral.service.common.Readiness_0_1(3)
+        readiness_pub = prepared_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
+        wrap_await(readiness_pub.publish(readiness_message))
 
-        rpm_message = uavcan.si.unit.angular_velocity.Scalar_1_0(rpm_to_radians_per_second(2000))
-        pub = make_configurable_id_publisher(uavcan.si.unit.angular_velocity.Scalar_1_0,
-                                             "radians_in_second_velocity",
-                                             subject_id=136, prepared_node=prepared_node)
-        for i in range(20):
+        # rpm_message = uavcan.si.unit.angular_velocity.Scalar_1_0()
+        rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(2000))
+        pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
+        for i in range(40):
             wrap_await(pub.publish(rpm_message))
         time.sleep(0.3)

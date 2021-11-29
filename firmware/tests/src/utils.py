@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+import typing
 
 from asyncio import exceptions
 
@@ -79,15 +80,12 @@ def make_registry(node_id: int):
     return registry01
 
 
-def restart_node(node_id_to_restart):
-    registry01 = make_registry(3)
-    with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-        service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_RESTART
-        response = wrap_await(service_client.call(msg))
-        node.close()
-        return response
+def restart_node(prepared_node, node_id_to_restart):
+    service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
+    msg = uavcan.node.ExecuteCommand_1_1.Request()
+    msg.command = msg.COMMAND_RESTART
+    response = wrap_await(service_client.call(msg))
+    return response
 
 
 def rpm_to_radians_per_second(rpm: int):
@@ -105,10 +103,11 @@ def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
     return wrap_await(service_client.call(msg))
 
 
-def configure_registers(regs: list[RegisterPair], prepared_node, prepared_sapogs):
+def configure_registers(regs: typing.List[RegisterPair], prepared_node, prepared_sapogs):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
-        prepared_node.registry[pair.tester_reg_name] = pair.value
+        if pair.tester_reg_name:
+            prepared_node.registry[pair.tester_reg_name] = pair.value
         if pair.embedded_device_reg_name:
             for node_id in prepared_sapogs:
                 make_access_request(pair.embedded_device_reg_name, pair.value,
@@ -155,6 +154,14 @@ def plug_in_power():
         plug_in_power_automatic()
 
 
+def command_save(prepared_node, node_id):
+    command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+    command_client.response_timeout = 1
+    msg = uavcan.node.ExecuteCommand_1_1.Request()
+    msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
+    wrap_await(command_client.call(msg))
+
+
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     for node_id in prepared_sapogs.keys():
         if restart_node(node_id):
@@ -172,11 +179,7 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
                             uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(subject_id)),
                             node_id,
                             prepared_node)
-        command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-        command_client.response_timeout = 1
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
-        response = wrap_await(command_client.call(msg))
+        command_save(prepared_node, node_id)
         if restart_node(21):
             time.sleep(3)
             result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))

@@ -148,9 +148,13 @@ bool is_port_configurable(RegisteredPort &reg)
 
 CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.sub.radians_in_second_velocity.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("uavcan.sub.setpoint.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_INT("id_in_esc_group", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
+
+CONFIG_PARAM_INT("uavcan.sub.readiness.id", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
+
+CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
 
 
 // not going to setup a uavcan.pub.esc_heartbeat.type register for the type name
@@ -162,6 +166,8 @@ CONFIG_PARAM_INT("uavcan.pub.esc_feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFI
 CONFIG_PARAM_INT("uavcan.pub.esc_power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_INT("uavcan.pub.esc_dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
 struct : IHandler
 {
@@ -182,9 +188,9 @@ RegisteredPort registered_ports[] =
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                              0, 1,
                                              &reg_udral_physics_acoustics_Note_0_1_handler),
-        CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(radians_in_second_velocity, uavcan_si_unit_angular_velocity_Scalar,
-                                             1, 0,
-                                             &sub_esc_rpm_handler),
+        CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(setpoint, reg_udral_service_actuator_common_sp_Scalar,
+                                             0, 1,
+                                             &setpoint_handler),
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(readiness, reg_udral_service_common_Readiness,
                                              0, 1,
                                              &sub_readiness_handler)
@@ -214,11 +220,11 @@ static void init_canard()
         state.queues[i] = new_queue;
     }
     ConfigParam _{};
-    bool value_exists = false;//configGetDescr("uavcan_node_id", &_) != -ENOENT;
+    bool value_exists = false;//configGetDescr("uavcan.node.id", &_) != -ENOENT;
     float stored_node_id = CANARD_NODE_ID_UNSET;
     if (value_exists)
     {
-        stored_node_id = configGet("uavcan_node_id");
+        stored_node_id = configGet("uavcan.node.id");
     }
     if (stored_node_id == NAN)
     {
@@ -237,6 +243,15 @@ static void init_canard()
 
         }
     }
+    if (configGetDescr("ttl_milliseconds", &_) != -ENOENT)
+    {
+        state.ttl_milliseconds = configGet("ttl_milliseconds");
+    }
+
+    if (configGetDescr("control_mode_rpm", &_) != -ENOENT)
+    {
+        state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
+    }
     if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
     {
         state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
@@ -252,7 +267,6 @@ static void init_canard()
         if (state.esc_feedback_publish_port == CONFIGURABLE_SUBJECT_ID)
         {
             printf("no uavcan.pub.esc_feedback.id\n");
-
         }
     }
     state.timing.started_at = get_monotonic_microseconds();
@@ -265,7 +279,7 @@ static void init_canard()
                 float new_port = configGet(registered_port.name);
                 if ((int) new_port == CONFIGURABLE_SUBJECT_ID)
                 {
-                    printf("no %s\n", registered_port.type);
+                    printf("no %s\n", registered_port.name);
                     continue;
                 }
                 registered_port.subscription.port_id = new_port;

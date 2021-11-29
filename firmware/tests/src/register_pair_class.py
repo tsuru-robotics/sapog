@@ -16,4 +16,4 @@ class RegisterPair():
 
 class EmbeddedDeviceRegPair(RegisterPair):
     def __init__(self, name: str, value: uavcan.register.Value_1_0):
-        super(None, name, value)
+        super().__init__(None, name, value)

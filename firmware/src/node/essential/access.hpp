@@ -22,6 +22,19 @@
 #include <node/interfaces/IHandler.hpp>
 #include "access.hpp"
 
+struct type_name_association
+{
+    const char *name;
+    const char *type_name;
+};
+
+type_name_association types_names[] = {
+    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
+    {"uavcan.sub.readiness.type",     "reg.udral.service.common.Readiness.0.1"},
+    {"uavcan.sub.setpoint.type",      "reg.udral.service.actuator.common.sp.Scalar.0.1"},
+    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
+};
+
 template<std::size_t Size>
 inline static void get_name_null_terminated_string(uavcan_register_Access_Request_1_0 &request,
                                                    std::array<char, Size> &out_request_name)
@@ -42,25 +55,32 @@ inline static void get_response_value(const char *const request_name, uavcan_reg
         return;
     }
     float value = configGet(request_name);
-    if (param.type == CONFIG_TYPE_FLOAT)
+    auto converter = node::conf::wrapper::find_converter(request_name);
+    if (converter.has_value())
     {
-        printf("Response value: float: %f\n", value);
-        uavcan_register_Value_1_0_select_real64_(&out_value);
-        out_value.real64.value.elements[0] = value;
-        out_value.real64.value.count = 1;
-    } else if (param.type == CONFIG_TYPE_INT)
+        out_value = converter.value()(value);
+    } else
     {
-        printf("Response type: int: %d\n", (uint16_t) value);
-        uavcan_register_Value_1_0_select_integer64_(&out_value);
-        out_value.integer64.value.elements[0] = value;
-        out_value.integer64.value.count = 1;
-    } else if (param.type == CONFIG_TYPE_BOOL)
-    {
-        printf("Response type: bool\n");
-        uavcan_register_Value_1_0_select_bit_(&out_value);
-        printf("The value that is being saved into a boolean: %d\n", (int) value);
-        printf("nunavutSetBit %d\n", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
-        out_value.bit.value.count = 1;
+        if (param.type == CONFIG_TYPE_FLOAT)
+        {
+            printf("Response value: float: %f\n", value);
+            uavcan_register_Value_1_0_select_real64_(&out_value);
+            out_value.real64.value.elements[0] = value;
+            out_value.real64.value.count = 1;
+        } else if (param.type == CONFIG_TYPE_INT)
+        {
+            printf("Response type: int: %d\n", (uint16_t) value);
+            uavcan_register_Value_1_0_select_integer64_(&out_value);
+            out_value.integer64.value.elements[0] = value;
+            out_value.integer64.value.count = 1;
+        } else if (param.type == CONFIG_TYPE_BOOL)
+        {
+            printf("Response type: bool\n");
+            uavcan_register_Value_1_0_select_bit_(&out_value);
+            printf("The value that is being saved into a boolean: %d\n", (int) value);
+            printf("nunavutSetBit %d\n", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
+            out_value.bit.value.count = 1;
+        }
     }
 }
 

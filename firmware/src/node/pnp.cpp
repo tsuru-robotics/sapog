@@ -149,7 +149,6 @@ static bool send_plug_and_play_request(State &state)
 
             (void) number_of_frames_enqueued;
             assert(number_of_frames_enqueued > 0);
-            printf("PNP\n");
         }
         transmit(state);
         return true;

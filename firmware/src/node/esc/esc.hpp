@@ -15,35 +15,48 @@
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <cstdio>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
+#include "reg/udral/service/actuator/common/sp/Scalar_0_1.h"
 #include <motor/motor.hpp>
 #include <node/interfaces/IHandler.hpp>
 #include "node/esc/esc_publishers.hpp"
+#include <algorithm>
 
 struct : IHandler
 {
     void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
-        if (state.readiness != Readiness::ENGAGED || state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
+        if (state.readiness == Readiness::ENGAGED && state.id_in_esc_group != CONFIGURABLE_ID_IN_ESC_GROUP)
         {
-            return;
+            reg_udral_service_actuator_common_sp_Scalar_0_1 setpoint{};
+            size_t size = transfer->payload_size;
+            if (reg_udral_service_actuator_common_sp_Scalar_0_1_deserialize_(&setpoint,
+                                                                             (const uint8_t *) transfer->payload,
+                                                                             &size) >= 0)
+            {
+                if (state.control_mode == ControlMode::RPM)
+                {
+
+                    float rotations_per_second = setpoint.value / 2.0 / 3.14159265358979f;
+                    unsigned int rpm = rotations_per_second * 60;
+                    printf("RPM: %d\n", rpm);
+                    motor_set_rpm(rpm, state.ttl_milliseconds);
+                    publish_esc_feedback(state);
+                    (void) transfer;
+                    return;
+                } else if (state.control_mode == ControlMode::DUTYCYCLE)
+                {
+                    float dc = setpoint.value;
+                    dc = std::min(dc, 1.0f);
+                    printf("DC: %f\n", (float) dc);
+                    motor_set_duty_cycle(dc, state.ttl_milliseconds);
+                    publish_esc_feedback(state);
+                    (void) transfer;
+                    return;
+                }
+            }
         }
-        (void) state;
-        uavcan_si_unit_angular_velocity_Scalar_1_0 angular_velocity{};
-        size_t size = transfer->payload_size;
-        if (uavcan_si_unit_angular_velocity_Scalar_1_0_deserialize_(&angular_velocity,
-                                                                    (const uint8_t *) transfer->payload,
-                                                                    &size) >= 0)
-        {
-            float rotations_per_second = angular_velocity.radian_per_second / 2.0 / 3.14159265358979f;
-            unsigned int rpm = rotations_per_second * 60;
-            printf("RPM: %d\n", rpm);
-            motor_set_rpm(rpm, 500);
-            publish_esc_feedback(state);
-        }
-        (void) transfer;
-        return;
     }
-} sub_esc_rpm_handler;
+} setpoint_handler;
 
 
 struct : IHandler
