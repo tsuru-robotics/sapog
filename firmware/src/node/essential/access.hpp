@@ -28,13 +28,6 @@ struct type_name_association
     const char *type_name;
 };
 
-type_name_association types_names[] = {
-    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
-    {"uavcan.sub.readiness.type",     "reg.udral.service.common.Readiness.0.1"},
-    {"uavcan.sub.setpoint.type",      "reg.udral.service.actuator.common.sp.Scalar.0.1"},
-    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
-};
-
 template<std::size_t Size>
 inline static void get_name_null_terminated_string(uavcan_register_Access_Request_1_0 &request,
                                                    std::array<char, Size> &out_request_name)
@@ -44,15 +37,50 @@ inline static void get_name_null_terminated_string(uavcan_register_Access_Reques
     out_request_name.at(request.name.name.count) = '\0';
 }
 
+type_name_association types_names[] = {
+    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
+    {"uavcan.sub.readiness.type",     "reg.udral.service.common.Readiness.0.1"},
+    {"uavcan.sub.setpoint.type",      "reg.udral.service.actuator.common.sp.Scalar.0.1"},
+    {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
+};
+
+std::string_view find_type_name(const char *const request_name)
+{
+    std::string_view found_type_name{};
+    for (auto &iter: types_names)
+    {
+        if (std::string_view(iter.name) == std::string_view(request_name))
+        {
+            found_type_name = iter.type_name;
+        }
+    }
+    return found_type_name;
+}
+
 inline static void get_response_value(const char *const request_name, uavcan_register_Value_1_0 &out_value)
 {
     ConfigParam param{};
     if (configGetDescr(request_name, &param) != 0)
     {
-        uavcan_register_Value_1_0_select_empty_(&out_value);
-        out_value.empty = uavcan_primitive_Empty_1_0{0};
-        printf("Access returns with empty value\n");
-        return;
+        std::string_view type_string = find_type_name(request_name);
+        if (type_string != "")
+        {
+            uavcan_register_Value_1_0_select_string_(&out_value);
+            uavcan_primitive_String_1_0 return_value{};
+            return_value.value.count = type_string.size();
+            memcpy(&return_value.value.elements, type_string.data(), return_value.value.count);
+            out_value._string = return_value;
+            return;
+        } else
+        {
+            uavcan_register_Value_1_0_select_empty_(&out_value);
+            out_value.empty = uavcan_primitive_Empty_1_0{0};
+            printf("Access returns with empty value\n");
+            return;
+        }
+    } else
+    {
+
     }
     float value = configGet(request_name);
     auto converter = node::conf::wrapper::find_converter(request_name);
