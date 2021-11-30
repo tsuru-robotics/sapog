@@ -58,6 +58,12 @@ def prepared_node():
 
 
 @pytest.fixture(scope="class")
+def prepared_double_redundant_node():
+    registry01 = make_registry(7, redundant=True)
+    return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
+
+
+@pytest.fixture(scope="class")
 def prepared_sapogs():
     if is_device_with_node_id_running(21) and is_running_on_my_laptop:
         print("Device with node id 21 is already running so I will use that.")
@@ -72,9 +78,13 @@ def restarted_sapogs():
     return allocate_nr_of_nodes(1)
 
 
-def make_registry(node_id: int):
+def make_registry(node_id: int, redundant=False):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    if redundant:
+        added_string = " socketcan:slcan1"
+    else:
+        added_string = ""
+    registry01["uavcan.can.iface"] = "socketcan:slcan0" + added_string
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01
