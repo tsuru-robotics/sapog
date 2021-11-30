@@ -9,8 +9,6 @@
 #include <cstddef>
 #include <ch.h>
 #include "bxcan/bxcan.h"
-#include "reception.hpp"
-#include "uavcan/node/Heartbeat_1_0.h"
 #include "uavcan/_register/Access_1_0.h"
 #include "libcanard/canard.h"
 #include "state.hpp"
@@ -114,32 +112,6 @@ void print_can_error_if_exists()
     }
 }
 
-
-// Not all subscriptions come from here, allocation comes from pnp.cpp file and is used there only
-/*
- {
-     CONFIGURABLE_SUBJECT_ID,
-     "uavcan.sub.esc_rpm_direct.id",
-     CanardTransferKindRequest,
-     uavcan_si_unit_angular_velocity_Scalar_1_0_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &sub_esc_rpm_handler},
- {
-     CONFIGURABLE_SUBJECT_ID,
-     "sub.esc.power",
-     CanardTransferKindRequest,
-     reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &reg_udral_physics_electricity_PowerTs_0_1_handler},
- {
-     CONFIGURABLE_SUBJECT_ID,
-     "sub.esc.duty_cycle",
-     CanardTransferKindRequest,
-     reg_udral_service_actuator_common_sp_Scalar_0_1_EXTENT_BYTES_,
-     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, {},
-     &sub_esc_duty_cycle_handler},
-};*/
-
 bool is_port_configurable(RegisteredPort &reg)
 {
     return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
@@ -156,9 +128,6 @@ CONFIG_PARAM_INT("uavcan.sub.readiness.id", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CON
 
 CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
 
-
-// not going to setup a uavcan.pub.esc_heartbeat.type register for the type name
-// because this device doesn't have much memory.
 CONFIG_PARAM_INT("uavcan.pub.esc_heartbeat.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_INT("uavcan.pub.esc_feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)

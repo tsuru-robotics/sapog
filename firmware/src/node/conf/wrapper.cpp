@@ -8,23 +8,15 @@
 namespace node::conf::wrapper
 {
 
-convert_pair converters[] = { // NOLINT(bugprone-dynamic-static-initializers)
-    {"uavcan.pub.esc.status.id",
-        [](float in) {
-            value_type value{};
-            uavcan_register_Value_1_0_select_natural16_(&value);
-            value.natural16.value.elements[0] = static_cast<std::uint16_t>(in);
-            value.natural16.value.count = 1;
-            return value;
-        }},
+convert_pair converters[] = {
     {"uavcan.node.id",
-        [](float in) {
-            value_type value{};
-            uavcan_register_Value_1_0_select_natural16_(&value);
-            value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
-            return value;
-        }},
-};
+     [](float in) {
+         value_type value{};
+         uavcan_register_Value_1_0_select_natural16_(&value);
+         value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
+         return ConverterReturnType{.value = value, ._mutable = true, .persistent = true};
+     }},
+}; // NOLINT(bugprone-dynamic-static-initializers)
 }
 
 using converter_type = node::conf::wrapper::converter_type;

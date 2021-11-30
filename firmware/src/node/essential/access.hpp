@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <node/conf/wrapper.hpp>
 #include <node/interfaces/IHandler.hpp>
+#include <uavcan/primitive/scalar/Natural16_1_0.h>
 #include "access.hpp"
 
 struct type_name_association
@@ -57,7 +58,16 @@ std::string_view find_type_name(const char *const request_name)
     return found_type_name;
 }
 
-inline static void get_response_value(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
+struct RegisterCriteria
+{
+    bool _mutable;
+    bool persistent;
+};
+
+inline static RegisterCriteria get_response_value(std::string_view
+                                                  request_name,
+                                                  uavcan_register_Value_1_0 &out_value
+)
 {
     ConfigParam param{};
     if (configGetDescr(request_name.data(), &param) != 0)
@@ -73,37 +83,41 @@ inline static void get_response_value(std::string_view request_name, uavcan_regi
             return_value.value.count = type_string.size();
             memcpy(&return_value.value.elements, type_string.data(), return_value.value.count);
             out_value._string = return_value;
-            return;
+            return RegisterCriteria{._mutable=true, .persistent = true};
         } else if (endsWithId)
         {
-            uavcan_register_Value_1_0 return_value{};
-            uavcan_register_Value_1_0_select_natural16_(&return_value);
-            return_value.natural16.value.elements[0] = value; // NOLINT(cppcoreguidelines-narrowing-conversions)
+            uavcan_register_Value_1_0_select_string_(&out_value);
+            uavcan_primitive_String_1_0 return_value{};
+            constexpr std::string_view natural16_string = "uavcan.primitive.scalar.Natural16.1.0\0";
+            return_value.value.count = natural16_string.size();
+            std::copy(natural16_string.begin(), natural16_string.end(), std::begin(return_value.value.elements));
+            out_value._string = return_value;
         } else
         {
             uavcan_register_Value_1_0_select_empty_(&out_value);
             out_value.empty = uavcan_primitive_Empty_1_0{0};
             printf("Access returns with empty value\n");
-            return;
+            return RegisterCriteria{._mutable=true, .persistent = true};
         }
     }
     float value = configGet(request_name.data());
-    auto converter = node::conf::wrapper::find_converter(request_name.data());
+    std::optional<node::conf::wrapper::converter_type> converter = node::conf::wrapper::find_converter(
+        request_name.data());
     std::string_view request_name_sw(request_name.data());
-
     if (converter.has_value())
     {
-        out_value = converter.value()(value);
+        auto converter_response = converter.value()(value);
+        out_value = converter_response.value;
+        return RegisterCriteria{._mutable = converter_response._mutable, .persistent = converter_response.persistent};
     } else
     {
-
-
         if (param.type == CONFIG_TYPE_FLOAT)
         {
             printf("Response value: float: %f\n", value);
             uavcan_register_Value_1_0_select_real64_(&out_value);
             out_value.real64.value.elements[0] = value;
-            out_value.real64.value.count = 1;
+            out_value.real64.value.
+                count = 1;
         } else if (param.type == CONFIG_TYPE_INT)
         {
             printf("Response type: int: %d\n", (uint16_t) value);
@@ -115,10 +129,14 @@ inline static void get_response_value(std::string_view request_name, uavcan_regi
             printf("Response type: bool\n");
             uavcan_register_Value_1_0_select_bit_(&out_value);
             printf("The value that is being saved into a boolean: %d\n", (int) value);
-            printf("nunavutSetBit %d\n", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
-            out_value.bit.value.count = 1;
+            printf("nunavutSetBit %d\n",
+                   nunavutSetBit(out_value
+                                     .bit.value.bitpacked, 1, 0, value != 0));
+            out_value.bit.value.
+                count = 1;
         }
     }
+    return RegisterCriteria{};
 }
 
 inline static bool respond_to_access(node::state::State &state, std::basic_string_view<char> request_name,
@@ -127,8 +145,10 @@ inline static bool respond_to_access(node::state::State &state, std::basic_strin
     uavcan_register_Access_Response_1_0 response{};
     // Read the value and send it back to the client
     uavcan_register_Value_1_0 response_value{};
-    get_response_value(request_name, response_value);
+    auto register_criteria = get_response_value(request_name, response_value);
     response.value = response_value;
+    response.persistent = register_criteria.persistent;
+    response._mutable = register_criteria._mutable;
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response, &serialized[0], &serialized_size);
@@ -215,8 +235,7 @@ struct : IHandler
         }
         // The client is going to get a response with the actual value of the register
         assert(request_name.data() != nullptr);
-        respond_to_access(state, std::string_view(request_name.data()),
-                          transfer);
+        respond_to_access(state, std::string_view(request_name.data()), transfer);
         return;
     }
 } uavcan_register_Access_1_0_handler;

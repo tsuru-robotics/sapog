@@ -14,7 +14,13 @@
 
 namespace node::conf::wrapper
 {
-using function_type = uavcan_register_Value_1_0(float);
+struct ConverterReturnType
+{
+    uavcan_register_Value_1_0 value;
+    bool _mutable = true;
+    bool persistent = true;
+};
+using function_type = ConverterReturnType(float);
 using converter_type = std::function<function_type>;
 using convert_pair = std::pair<const char *, converter_type>;
 using value_type = uavcan_register_Value_1_0;
