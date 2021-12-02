@@ -38,7 +38,8 @@ static uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
     return resp;
 }
 
-UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_GetInfo, 1, 0);
+UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_GetInfo,
+1, 0);
 namespace node::essential
 {
 struct : IHandler
@@ -51,7 +52,7 @@ struct : IHandler
         {
             CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
             rtm.transfer_kind = CanardTransferKindResponse;
-            for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+            for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
             {
                 (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                                     transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,

@@ -58,7 +58,7 @@ class OneTimeAllocator(Allocator, ABC):
     def __init__(self, target_name: str):
         print("One time allocator constructed.")
         registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-        registry01["uavcan.can.iface"] = "socketcan:slcan0"
+        registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
         registry01["uavcan.can.mtu"] = 8
         registry01["uavcan.node.id"] = 1
         self.node = make_node(NodeInfo(name="one_time_allocator_node"), registry01)

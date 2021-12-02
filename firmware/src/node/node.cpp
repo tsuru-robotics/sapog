@@ -140,9 +140,9 @@ CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+    void operator()(node::state::State &_state, CanardRxTransfer *transfer)
     {
-        (void) state;
+        (void) _state;
         (void) transfer;
     }
 } empty_handler;
@@ -178,15 +178,22 @@ static void init_canard()
         RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
         RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
         RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
+#if BXCAN_MAX_IFACE_INDEX > 0
+        RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
+        RCC->APB1RSTR |= RCC_APB1RSTR_CAN2RST;
+        RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN2RST;
+#endif
     }
     BxCANTimings timings{};
     bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
-    bxCANConfigure(0, timings, false);
-    state.canard = canardInit(&canardAllocate, &canardFree);
-    for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
-        CanardTxQueue new_queue = canardTxInit(100, 8);
-        state.queues[i] = new_queue;
+        printf("%d\n", bxCANConfigure(i, timings, false));
+    }
+    state.canard = canardInit(&canardAllocate, &canardFree);
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    {
+        state.queues[i] = canardTxInit(100, 8);
     }
     ConfigParam _{};
     bool value_exists = false;//configGetDescr("uavcan.node.id", &_) != -ENOENT;

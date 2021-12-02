@@ -134,10 +134,10 @@ static bool send_plug_and_play_request(State &state)
         CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
         rtm.transfer_kind = CanardTransferKindMessage;
         rtm.port_id = uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_;
-        rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++);
+        rtm.transfer_id = (CanardTransferID)(state.transfer_ids.uavcan_pnp_allocation++);
         rtm.remote_node_id = CANARD_NODE_ID_UNSET;
         rtm.priority = CanardPrioritySlow;
-        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
             int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                              const_cast<CanardInstance *>(&state.canard),
@@ -178,7 +178,7 @@ static bool unsubscribe_plug_and_play_response(State &state)
 
 static bool receive_plug_and_play_response(State &state)
 {
-    std::optional<CanardRxTransfer> transfer = receive_transfer(state, 0).first;
+    std::optional <CanardRxTransfer> transfer = receive_transfer(state, 0).first;
     if (transfer.has_value())
     {
 

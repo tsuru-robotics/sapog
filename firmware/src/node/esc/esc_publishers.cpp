@@ -6,9 +6,11 @@
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
 #include "esc_publishers.hpp"
 
-UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat, 0, 1);
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
+0, 1);
 
-UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Feedback, 0, 1);
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Feedback,
+0, 1);
 
 void publish_esc_heartbeat(node::state::State &state)
 {
@@ -27,7 +29,7 @@ void publish_esc_heartbeat(node::state::State &state)
     {
         CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
         rtm.transfer_kind = CanardTransferKindMessage;
-        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
             (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                                 get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
@@ -56,7 +58,7 @@ void publish_esc_feedback(node::state::State &state)
         {
             CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
             rtm.transfer_kind = CanardTransferKindMessage;
-            for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+            for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
             {
                 (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                                     get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,

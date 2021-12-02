@@ -88,8 +88,8 @@
 #define VAL_GPIOACRH            0x888b8bbb      // 15..8
 #define VAL_GPIOAODR            ((1 << 11))
 
-#define VAL_GPIOBCRL            0x8b8888bb
-#define VAL_GPIOBCRH            0x38b88866
+#define VAL_GPIOBCRL            0b10001011100010101000100010111011
+#define VAL_GPIOBCRH            0b00111000101110101000100001100110
 #define VAL_GPIOBODR            ((1 << GPIO_PIN_I2C_SCL) | (1 << GPIO_PIN_I2C_SDA) | (1 << 12))
 
 #define VAL_GPIOCCRL            0xbb884444
@@ -108,7 +108,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void boardInit(void);
+void boardInit(void);
 #ifdef __cplusplus
 }
 #endif

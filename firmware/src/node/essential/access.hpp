@@ -88,7 +88,8 @@ inline static RegisterCriteria get_response_value(std::string_view
         {
             uavcan_register_Value_1_0_select_string_(&out_value);
             uavcan_primitive_String_1_0 return_value{};
-            constexpr std::string_view natural16_string = "uavcan.primitive.scalar.Natural16.1.0\0";
+            constexpr
+            std::string_view natural16_string = "uavcan.primitive.scalar.Natural16.1.0\0";
             return_value.value.count = natural16_string.size();
             std::copy(natural16_string.begin(), natural16_string.end(), std::begin(return_value.value.elements));
             out_value._string = return_value;
@@ -101,7 +102,7 @@ inline static RegisterCriteria get_response_value(std::string_view
         }
     }
     float value = configGet(request_name.data());
-    std::optional<node::conf::wrapper::converter_type> converter = node::conf::wrapper::find_converter(
+    std::optional <node::conf::wrapper::converter_type> converter = node::conf::wrapper::find_converter(
         request_name.data());
     std::string_view request_name_sw(request_name.data());
     if (converter.has_value())
@@ -161,7 +162,7 @@ inline static bool respond_to_access(node::state::State &state, std::basic_strin
     printf("Serialized.\n");
     CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
     rtm.transfer_kind = CanardTransferKindResponse;
-    for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
         int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                          const_cast<CanardInstance *>(&state.canard),
@@ -198,7 +199,7 @@ struct : IHandler
         {
             return;
         }
-        std::array<char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1> request_name;
+        std::array < char, uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1 > request_name;
         get_name_null_terminated_string<uavcan_register_Name_1_0_name_ARRAY_CAPACITY_ + 1>(request, request_name);
 
         ConfigParam entry_config_params{};

@@ -65,7 +65,7 @@ struct State
     PlugAndPlay plug_and_play;
     CanardInstance canard;
     bool is_save_requested = false;
-    CanardTxQueue queues[AMOUNT_OF_QUEUES];
+    CanardTxQueue queues[BXCAN_MAX_IFACE_INDEX + 1];
     Readiness readiness;
     Health health;
     uint16_t id_in_esc_group;

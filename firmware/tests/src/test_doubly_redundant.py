@@ -20,14 +20,18 @@ import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
 import subprocess
-from utils import is_running_on_my_laptop
+from utils import is_running_on_my_laptop, prepared_double_redundant_node
 
 
 def set_interface_online(interface_name: str, online: bool):
-    if is_running_on_my_laptop:
-        subprocess.run(["xterm", "-e", "bash", "-c", f"sudo ifconfig {interface_name} up; read line"])
+    if online:
+        online_string = "up"
     else:
-        subprocess.run(["sudo", "ifconfig", interface_name, "up"])
+        online_string = "down"
+    if is_running_on_my_laptop:
+        subprocess.run(["xterm", "-e", "bash", "-c", f"sudo ifconfig {interface_name} {online_string}; read line"])
+    else:
+        subprocess.run(["sudo", "ifconfig", interface_name, online_string])
 
 
 def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):

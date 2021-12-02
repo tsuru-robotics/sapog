@@ -4,7 +4,7 @@ import time
 
 from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import is_device_with_node_id_running, restart_node, make_registry
-from utils import prepared_sapogs, prepared_node
+from utils import prepared_sapogs, prepared_node, prepared_double_redundant_node
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -26,8 +26,8 @@ from _await_wrap import wrap_await
 
 class TestEssential:
     @staticmethod
-    def test_allows_allocation_of_node_id(prepared_node):
-        if restart_node(prepared_node, 21):
+    def test_allows_allocation_of_node_id(prepared_double_redundant_node):
+        if restart_node(prepared_double_redundant_node, 21):
             time.sleep(2)
         try:
             required_amount = 1
@@ -41,7 +41,7 @@ class TestEssential:
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():
             try:
-                registry01 = make_registry(3)
+                registry01 = make_registry(3, True)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                     subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
                     event = asyncio.Event()

@@ -17,21 +17,15 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
     std::array<std::uint8_t, 8> payload_array{};
     frame.payload = &payload_array;
 
-    for (uint16_t i = 0; i < max_frames_to_process_per_iteration; i += AMOUNT_OF_QUEUES)
+    for (uint16_t i = 0; i < max_frames_to_process_per_iteration; i += (BXCAN_MAX_IFACE_INDEX + 1))
     {
-        for (int i = 0; i < AMOUNT_OF_QUEUES; ++i)
+        bool queue_i_had_something[BXCAN_MAX_IFACE_INDEX + 1] = {};
+        for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
             bool bxCanQueueHadSomething = bxCANPop(if_index,
                                                    &frame.extended_can_id,
                                                    &frame.payload_size, payload_array.data());
-            if (!bxCanQueueHadSomething)
-            {
-                //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
-                palWritePad(GPIOC, 14, 1);
-                chThdSleepMicroseconds(100);
-                palWritePad(GPIOC, 14, 0);
-                return {};
-            }
+            queue_i_had_something[i] = bxCanQueueHadSomething;
             // The transfer is actually not stored here in this narrow scoped variable
             // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
             // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
@@ -54,6 +48,15 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
 //                    printf("Got one frame of: %d\n", transfer.metadata.port_id);
                 }
             }
+        }
+        if (std::all_of(std::begin(queue_i_had_something), std::end(queue_i_had_something),
+                        [](bool i) { return i == false; }))
+        {
+            //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
+            palWritePad(GPIOC, 14, 1);
+            chThdSleepMicroseconds(100);
+            palWritePad(GPIOC, 14, 0);
+            return {};
         }
     }
     return {};

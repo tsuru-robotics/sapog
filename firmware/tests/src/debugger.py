@@ -131,10 +131,10 @@ def fill_ids():
 
 
 ignore_subjects = [
-    7510  # port_list
-    , 7509  # heartbeat
-    , 8166  # allocation
-    , 430  # getinfo
+    # 7510  # port_list
+    # , 7509  # heartbeat
+    # , 8166  # allocation
+    # , 430  # getinfo
 ]
 
 
@@ -196,15 +196,13 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
 
 async def run_debugger_node(with_debugging=False):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
     registry01["uavcan.can.mtu"] = 8
     debugger_node_id = 2
     registry01["uavcan.node.id"] = debugger_node_id
     while True:
         try:
             with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:
-                printed_interface = registry01["uavcan.can.iface"]
-                # print(f"Debugger successfully connected to {printed_interface}")
                 import_submodules(uavcan)
                 ids = fill_ids()
                 tracer = node.presentation.transport.make_tracer()
