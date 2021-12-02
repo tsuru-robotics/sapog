@@ -41,7 +41,7 @@ class TestEssential:
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():
             try:
-                registry01 = make_registry(3, True)
+                registry01 = make_registry(3)
                 with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
                     subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
                     event = asyncio.Event()

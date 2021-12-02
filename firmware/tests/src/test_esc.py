@@ -4,7 +4,7 @@ import typing
 from _await_wrap import wrap_await
 from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, prepared_node, \
-    prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save
+    prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save, prepared_double_redundant_node
 from imports import add_deps
 
 add_deps()
@@ -19,7 +19,8 @@ from register_pair_class import RegisterPair, EmbeddedDeviceRegPair
 
 class TestESC:
     @staticmethod
-    def test_rpm_run_2_sec(prepared_node, prepared_sapogs):
+    def test_rpm_run_2_sec(prepared_double_redundant_node, prepared_sapogs):
+        prepared_node = prepared_double_redundant_node
         for node_id in prepared_sapogs.keys():
             if restart_node(prepared_node, node_id):
                 time.sleep(4)
@@ -44,7 +45,7 @@ class TestESC:
             RegisterPair("uavcan.sub.esc_feedback.id", "uavcan.pub.esc_feedback.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(139)))
         ]
-        time.sleep(1)
+        time.sleep(2)
         configure_registers(registers_array, prepared_node, prepared_sapogs)
         for node_id in prepared_sapogs.keys():
             command_save(prepared_node, node_id)

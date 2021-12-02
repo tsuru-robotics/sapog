@@ -51,6 +51,16 @@ def is_device_with_node_id_running(node_id):
         return True
 
 
+def get_available_slcan_interfaces():
+    result = subprocess.run(["netstat -i | tail -n +3 |cut -d\" \" -f1"], shell=True, stdout=subprocess.PIPE)
+    list_of_interfaces = result.stdout.decode("utf-8").strip().split("\n")
+    result_interfaces = []
+    for interface_name in list_of_interfaces:
+        if "slcan" in interface_name:
+            result_interfaces.append("socketcan:" + interface_name)
+    return result_interfaces
+
+
 @pytest.fixture(scope="class")
 def prepared_node():
     registry01 = make_registry(7)
@@ -59,7 +69,7 @@ def prepared_node():
 
 @pytest.fixture(scope="class")
 def prepared_double_redundant_node():
-    registry01 = make_registry(7, redundant=True)
+    registry01 = make_registry(7)
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
 
 
@@ -78,13 +88,9 @@ def restarted_sapogs():
     return allocate_nr_of_nodes(1)
 
 
-def make_registry(node_id: int, redundant=False):
+def make_registry(node_id: int):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    if redundant:
-        added_string = " socketcan:slcan1"
-    else:
-        added_string = ""
-    registry01["uavcan.can.iface"] = "socketcan:slcan0" + added_string
+    registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01
@@ -174,7 +180,7 @@ def command_save(prepared_node, node_id):
 
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
     for node_id in prepared_sapogs.keys():
-        if restart_node(node_id):
+        if restart_node(prepared_node, node_id):
             time.sleep(4)
         else:
             assert False
@@ -190,7 +196,7 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
                             node_id,
                             prepared_node)
         command_save(prepared_node, node_id)
-        if restart_node(21):
+        if restart_node(prepared_node, node_id):
             time.sleep(3)
             result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
         else:
