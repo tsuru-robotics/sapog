@@ -92,7 +92,7 @@ def restarted_sapogs():
 def make_registry(node_id: int):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
-    print("Using these interfaces")
+    print("Using these interfaces: " + str(registry01["uavcan.can.iface"]))
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01

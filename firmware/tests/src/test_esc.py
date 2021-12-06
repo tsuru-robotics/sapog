@@ -60,7 +60,8 @@ class TestESC:
 
         rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(2000))
         pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
-        for i in range(40):
+        for i in range(400):
             wrap_await(pub.publish(rpm_message))
             wrap_await(readiness_pub.publish(readiness_message))
+            time.sleep(0.3)
         time.sleep(0.3)

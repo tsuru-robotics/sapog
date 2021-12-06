@@ -1,6 +1,7 @@
 import os
 import time
 
+from _await_wrap import wrap_await
 from utils import make_access_request
 from utils import prepared_node, prepared_sapogs, restarted_sapogs
 
@@ -14,16 +15,27 @@ import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
+import uavcan.register.List_1_0
 
 
 class TestRegisters:
+    def test_register_list(self, prepared_node, prepared_sapogs):
+        assert len(prepared_sapogs.keys()) > 0
+        for node_id in prepared_sapogs.keys():
+            service_client = prepared_node.make_client(uavcan.register.List_1_0, node_id)
+            service_client.response_timeout = 1
+            msg = uavcan.register.List_1_0.Request(20)
+            result = wrap_await(service_client.call(msg))
+            print(result)
+            assert result is not None
+
     def test_write_unsupported_sapog_register(self, prepared_node, prepared_sapogs):
         """Checks if the response is empty when writing to a register that doesn't exit on Sapog.
         uavcan.node.description is a register that would exist on other nodes but on this node, only storage of floats
         is implemented and string storage is not supported."""
         time.sleep(0.2)
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
+        for node_id in prepared_sapogs.keys():
             response = make_access_request("uavcan.node.description",
                                            uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
                                            node_id,
@@ -37,7 +49,7 @@ class TestRegisters:
         """Writes a non-default value and checks if it was successfully saved. Then writes back the default value and
         checks if that was saved."""
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
+        for node_id in prepared_sapogs.keys():
             response = make_access_request("mot_pwm_hz",
                                            uavcan.register.Value_1_0(
                                                integer64=uavcan.primitive.array.Integer64_1_0(60001)),
@@ -81,7 +93,7 @@ class TestRegisters:
         """Writes to a register and checks the value to match what was written, then writes the opposite value and
         checks again to see if it was saved correctly."""
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
+        for node_id in prepared_sapogs.keys():
             response = make_access_request("pwm_enable",
                                            uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1)),
                                            node_id,
@@ -129,7 +141,7 @@ class TestRegisters:
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
+        for node_id in prepared_sapogs.keys():
             response = make_access_request("rpmctl_p", uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
                                            node_id,
                                            prepared_node)
@@ -153,7 +165,7 @@ class TestRegisters:
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
         assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():  # resource.keys():
+        for node_id in prepared_sapogs.keys():
             response = make_access_request("pwm_enable", uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
                                            node_id,
                                            prepared_node)

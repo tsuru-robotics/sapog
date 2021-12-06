@@ -17,7 +17,8 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
     std::array<std::uint8_t, 8> payload_array{};
     frame.payload = &payload_array;
 
-    for (uint16_t i = 0; i < max_frames_to_process_per_iteration; i += (BXCAN_MAX_IFACE_INDEX + 1))
+    for (uint16_t i = 0;
+         i < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); i += (BXCAN_MAX_IFACE_INDEX + 1))
     {
         bool queue_i_had_something[BXCAN_MAX_IFACE_INDEX + 1] = {};
         for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
