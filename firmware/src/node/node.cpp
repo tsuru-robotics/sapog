@@ -27,6 +27,7 @@
 #include <bxcan/bxcan_registers.h>
 #include <node/esc/readiness.hpp>
 #include "node/essential/note.hpp"
+#include "node/essential/register_list.hpp"
 #include "node/subscription_macros.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
@@ -87,7 +88,7 @@ void print_can_error_if_exists()
     // Loops begin running
     while (true)
     {
-//        print_can_error_if_exists()
+        print_can_error_if_exists();
         if (state.is_save_requested)
         {
             state.is_save_requested = false;
@@ -147,6 +148,7 @@ struct : IHandler
     }
 } empty_handler;
 
+
 RegisteredPort registered_ports[] =
     {
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
@@ -154,6 +156,8 @@ RegisteredPort registered_ports[] =
                                       &uavcan_node_ExecuteCommand_Request_1_1_handler),
         FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
                                       &node::essential::uavcan_register_Access_1_0_handler),
+        FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_List, 1, 0,
+                                      &node::essential::uavcan_register_List_1_0_handler),
         CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                              0, 1,
                                              &reg_udral_physics_acoustics_Note_0_1_handler),
@@ -216,7 +220,6 @@ static void init_canard()
         if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
         {
             printf("no id_in_esc_group\n");
-
         }
     }
     if (configGetDescr("ttl_milliseconds", &_) != -ENOENT)
@@ -234,7 +237,6 @@ static void init_canard()
         if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
         {
             printf("no uavcan.pub.esc_heartbeat.id\n");
-
         }
     }
     if (configGetDescr("uavcan.pub.esc_feedback.id", &_) != -ENOENT)

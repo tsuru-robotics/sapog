@@ -989,10 +989,14 @@ static int autobaud_and_get_dynamic_node_id(bl_timer_id tboot,
 		uint32_t *node_id)
 {
 
+#ifndef FAST_BOOT
 	board_indicate(autobaud_start);
+#endif
 
 	int rv = can_autobaud(speed, tboot);
+#ifdef FAST_BOOT
 	return CAN_BOOT_TIMEOUT; // change for boot time, Valdvee
+#endif
 	if (rv != CAN_BOOT_TIMEOUT) {
 		board_indicate(autobaud_end);
 		board_indicate(allocation_start);

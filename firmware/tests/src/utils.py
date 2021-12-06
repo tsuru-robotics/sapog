@@ -75,10 +75,11 @@ def prepared_double_redundant_node():
 
 @pytest.fixture(scope="class")
 def prepared_sapogs():
-    if is_device_with_node_id_running(21) and is_running_on_my_laptop:
+    if is_running_on_my_laptop and is_device_with_node_id_running(21):
         print("Device with node id 21 is already running so I will use that.")
         return {21: "idk"}
     else:
+        print("Allocating one node")
         return allocate_nr_of_nodes(1)  # This will allocate id 21 too
 
 
@@ -91,6 +92,7 @@ def restarted_sapogs():
 def make_registry(node_id: int):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
+    print("Using these interfaces")
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01

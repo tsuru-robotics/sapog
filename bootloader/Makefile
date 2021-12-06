@@ -71,7 +71,7 @@ PROJECT_OBJECTS   = $(addprefix $(PROJECT_BUILD), \
 PROJECT_INC_PATHS = -I$(PROJECT)/include/
 PROJECT_LIB_PATHS = -L.
 PROJECT_LIBRARIES =
-PROJECT_SYMBOLS   = -include config.h -DTOOLCHAIN_GCC_ARM -DNO_RELOC='0'
+PROJECT_SYMBOLS   = -include config.h -DTOOLCHAIN_GCC_ARM -DNO_RELOC='0' -DFAST_BOOT
 
 
 ##############################################################################
