@@ -61,42 +61,46 @@ void publish_esc_heartbeat(node::state::State &state)
 
 void publish_esc_feedback(node::state::State &state)
 {
-  if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
+  if (state.readiness != node::state::Readiness::SLEEP)
   {
-    uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
-    reg_udral_service_actuator_common_Feedback_0_1 fb{};
-    fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
-    fb.heartbeat.readiness.value = static_cast<uint8_t>(state.readiness);
-    fb.heartbeat.health = uavcan_node_Health_1_0{};
-    fb.heartbeat.health.value = static_cast<uint8_t>(state.health);
-    auto res = serializer.serialize(fb);
-    if (res.has_value())
+    if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
     {
-      CanardTransferMetadata rtm{};
-      rtm.transfer_kind = CanardTransferKindMessage;
-      for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+      uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
+      reg_udral_service_actuator_common_Feedback_0_1 fb{};
+      fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
+      fb.heartbeat.readiness.value = static_cast<uint8_t>(state.readiness);
+      fb.heartbeat.health = uavcan_node_Health_1_0{};
+      fb.heartbeat.health.value = static_cast<uint8_t>(state.health);
+      auto res = serializer.serialize(fb);
+      if (res.has_value())
       {
-        (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
-                            get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
-                            &rtm,
-                            res.value(),
-                            serializer.getBuffer());
+        CanardTransferMetadata rtm{};
+        rtm.transfer_kind = CanardTransferKindMessage;
+        for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+        {
+          (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                              get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
+                              &rtm,
+                              res.value(),
+                              serializer.getBuffer());
+        }
+      } else
+      {
+        assert(false);
       }
-    } else
-    {
-      assert(false);
     }
-  }
-  if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
-  {
-    state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds, 20k us delay
-    if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
+    if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
     {
-      publish_esc_dynamics(state);
-    }
-    if (state.esc_power_publish_port != CONFIGURABLE_SUBJECT_ID)
-    {
-      publish_esc_power(state);
+      printf("Time for sending power and dynamics reports.\n");
+      state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds, 20k us delay
+      if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
+      {
+        publish_esc_dynamics(state);
+      }
+      if (state.esc_power_publish_port != CONFIGURABLE_SUBJECT_ID)
+      {
+        publish_esc_power(state);
+      }
     }
   }
 }

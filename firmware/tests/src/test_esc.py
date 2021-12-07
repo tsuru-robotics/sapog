@@ -72,5 +72,7 @@ class TestESC:
                 wrap_await(readiness_pub.publish(readiness_message))
                 time.sleep(0.3)
         except KeyboardInterrupt:
-            print("Interrupted")
+            # The ESC would stop after TTL itself, but it is important to have quicker control available when all
+            # communications are still available
             wrap_await(readiness_pub.publish(readiness_stop_message))
+            print("\nInterrupted, sent stop message")

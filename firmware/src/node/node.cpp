@@ -172,6 +172,20 @@ RegisteredPort registered_ports[] =
                                          &sub_readiness_handler)
   };
 
+struct PublishConfigurablePort
+{
+  std::string_view name;
+  uint16_t *state_variable;
+};
+PublishConfigurablePort publish_ports[] = {
+  {"uavcan.pub.esc_heartbeat.id", &state.esc_heartbeat_publish_port},
+  {"uavcan.pub.feedback.id",      &state.esc_feedback_publish_port},
+  {"uavcan.pub.status.id",        &state.esc_status_publish_port},
+  {"uavcan.pub.power.id",         &state.esc_power_publish_port},
+  {"uavcan.pub.dynamics.id",      &state.esc_dynamics_publish_port},
+  {"id_in_esc_group",             &state.id_in_esc_group},
+  {"ttl_milliseconds",            &state.ttl_milliseconds}
+};
 /// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 
 
@@ -216,62 +230,22 @@ static void init_canard()
   {
     state.canard.node_id = stored_node_id;
   }
-  {
-    if (configGetDescr("id_in_esc_group", &_) != -ENOENT)
-    {
-      state.id_in_esc_group = configGet("id_in_esc_group");
-      if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
-      {
-        printf("no id_in_esc_group\n");
-      }
-    }
-    if (configGetDescr("ttl_milliseconds", &_) != -ENOENT)
-    {
-      state.ttl_milliseconds = configGet("ttl_milliseconds");
-    }
 
-    if (configGetDescr("control_mode_rpm", &_) != -ENOENT)
+  if (configGetDescr("control_mode_rpm", &_) != -ENOENT)
+  {
+    state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
+  }
+  for (auto &publish_port: publish_ports)
+  {
+    if (configGetDescr(publish_port.name.data(), &_) != -ENOENT)
     {
-      state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
-    }
-    if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
-    {
-      state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
-      if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
+      *publish_port.state_variable = configGet(publish_port.name.data());
+      if (*publish_port.state_variable == CONFIGURABLE_SUBJECT_ID)
       {
-        printf("no uavcan.pub.esc_heartbeat.id\n");
-      }
-    }
-    if (configGetDescr("uavcan.pub.feedback.id", &_) != -ENOENT)
-    {
-      state.esc_feedback_publish_port = configGet("uavcan.pub.feedback.id");
-      if (state.esc_feedback_publish_port == CONFIGURABLE_SUBJECT_ID)
+        printf("no %s\n", publish_port.name.data());
+      } else
       {
-        printf("no uavcan.pub.feedback.id\n");
-      }
-    }
-    if (configGetDescr("uavcan.pub.status.id", &_) != -ENOENT)
-    {
-      state.esc_status_publish_port = configGet("uavcan.pub.status.id");
-      if (state.esc_status_publish_port == CONFIGURABLE_SUBJECT_ID)
-      {
-        printf("no uavcan.pub.status.id\n");
-      }
-    }
-    if (configGetDescr("uavcan.pub.dynamics.id", &_) != -ENOENT)
-    {
-      state.esc_dynamics_publish_port = configGet("uavcan.pub.dynamics.id");
-      if (state.esc_dynamics_publish_port == CONFIGURABLE_SUBJECT_ID)
-      {
-        printf("no uavcan.pub.dynamics.id\n");
-      }
-    }
-    if (configGetDescr("uavcan.pub.power.id", &_) != -ENOENT)
-    {
-      state.esc_power_publish_port = configGet("uavcan.pub.power.id");
-      if (state.esc_power_publish_port == CONFIGURABLE_SUBJECT_ID)
-      {
-        printf("no uavcan.pub.power.id\n");
+        printf("has %s\n", publish_port.name.data());
       }
     }
   }
