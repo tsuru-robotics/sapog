@@ -55,7 +55,7 @@ struct : IHandler
           ttl_expiry_handler.state = &state;
           motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
           publish_esc_feedback(state);
-          (void) transfer;
+          transmit(state);
           return;
         } else if (state.control_mode == ControlMode::DUTYCYCLE)
         {
@@ -66,7 +66,7 @@ struct : IHandler
           ttl_expiry_handler.state = &state;
           motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
           publish_esc_feedback(state);
-          (void) transfer;
+          transmit(state);
           return;
         }
       }

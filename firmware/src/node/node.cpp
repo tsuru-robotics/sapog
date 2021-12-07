@@ -132,13 +132,13 @@ CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
 
 CONFIG_PARAM_INT("uavcan.pub.esc_heartbeat.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.pub.esc_feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("uavcan.pub.feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.pub.esc_power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("uavcan.pub.power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.pub.esc_dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("uavcan.pub.dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("uavcan.pub.esc_status.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+CONFIG_PARAM_INT("uavcan.pub.status.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
@@ -216,40 +216,66 @@ static void init_canard()
   {
     state.canard.node_id = stored_node_id;
   }
+  {
+    if (configGetDescr("id_in_esc_group", &_) != -ENOENT)
+    {
+      state.id_in_esc_group = configGet("id_in_esc_group");
+      if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
+      {
+        printf("no id_in_esc_group\n");
+      }
+    }
+    if (configGetDescr("ttl_milliseconds", &_) != -ENOENT)
+    {
+      state.ttl_milliseconds = configGet("ttl_milliseconds");
+    }
 
-  if (configGetDescr("id_in_esc_group", &_) != -ENOENT)
-  {
-    state.id_in_esc_group = configGet("id_in_esc_group");
-    if (state.id_in_esc_group == CONFIGURABLE_ID_IN_ESC_GROUP)
+    if (configGetDescr("control_mode_rpm", &_) != -ENOENT)
     {
-      printf("no id_in_esc_group\n");
+      state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
     }
-  }
-  if (configGetDescr("ttl_milliseconds", &_) != -ENOENT)
-  {
-    state.ttl_milliseconds = configGet("ttl_milliseconds");
+    if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
+    {
+      state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
+      if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
+      {
+        printf("no uavcan.pub.esc_heartbeat.id\n");
+      }
+    }
+    if (configGetDescr("uavcan.pub.feedback.id", &_) != -ENOENT)
+    {
+      state.esc_feedback_publish_port = configGet("uavcan.pub.feedback.id");
+      if (state.esc_feedback_publish_port == CONFIGURABLE_SUBJECT_ID)
+      {
+        printf("no uavcan.pub.feedback.id\n");
+      }
+    }
+    if (configGetDescr("uavcan.pub.status.id", &_) != -ENOENT)
+    {
+      state.esc_status_publish_port = configGet("uavcan.pub.status.id");
+      if (state.esc_status_publish_port == CONFIGURABLE_SUBJECT_ID)
+      {
+        printf("no uavcan.pub.status.id\n");
+      }
+    }
+    if (configGetDescr("uavcan.pub.dynamics.id", &_) != -ENOENT)
+    {
+      state.esc_dynamics_publish_port = configGet("uavcan.pub.dynamics.id");
+      if (state.esc_dynamics_publish_port == CONFIGURABLE_SUBJECT_ID)
+      {
+        printf("no uavcan.pub.dynamics.id\n");
+      }
+    }
+    if (configGetDescr("uavcan.pub.power.id", &_) != -ENOENT)
+    {
+      state.esc_power_publish_port = configGet("uavcan.pub.power.id");
+      if (state.esc_power_publish_port == CONFIGURABLE_SUBJECT_ID)
+      {
+        printf("no uavcan.pub.power.id\n");
+      }
+    }
   }
 
-  if (configGetDescr("control_mode_rpm", &_) != -ENOENT)
-  {
-    state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
-  }
-  if (configGetDescr("uavcan.pub.esc_heartbeat.id", &_) != -ENOENT)
-  {
-    state.esc_heartbeat_publish_port = configGet("uavcan.pub.esc_heartbeat.id");
-    if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
-    {
-      printf("no uavcan.pub.esc_heartbeat.id\n");
-    }
-  }
-  if (configGetDescr("uavcan.pub.esc_feedback.id", &_) != -ENOENT)
-  {
-    state.esc_feedback_publish_port = configGet("uavcan.pub.esc_feedback.id");
-    if (state.esc_feedback_publish_port == CONFIGURABLE_SUBJECT_ID)
-    {
-      printf("no uavcan.pub.esc_feedback.id\n");
-    }
-  }
   state.timing.started_at = get_monotonic_microseconds();
   for (auto &registered_port: registered_ports)
   {

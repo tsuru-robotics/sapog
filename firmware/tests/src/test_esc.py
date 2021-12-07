@@ -42,8 +42,14 @@ class TestESC:
                                   uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
             RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(138))),
-            RegisterPair("uavcan.sub.esc_feedback.id", "uavcan.pub.esc_feedback.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(139)))
+            RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(139))),
+            RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(140))),
+            RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(141))),
+            RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(142)))
         ]
         time.sleep(2)
         configure_registers(registers_array, prepared_node, prepared_sapogs)

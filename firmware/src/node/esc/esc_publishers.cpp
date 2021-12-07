@@ -10,6 +10,7 @@
 #include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
 #include "esc_publishers.hpp"
 #include "motor/motor.hpp"
+#include "temperature_sensor.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);
@@ -23,8 +24,8 @@ UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Status,
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_electricity_PowerTs,
                             0, 1);
 
-//UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_dynamics_rotation_PlanarTs,
-//                            0, 1);
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_dynamics_rotation_PlanarTs,
+                            0, 1);
 
 
 void publish_esc_heartbeat(node::state::State &state)
@@ -112,7 +113,7 @@ void publish_esc_status(node::state::State &state)
   status.motor_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
   status.controller_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
   status.motor_temperature.kelvin = 0;
-  status.controller_temperature.kelvin = 0;
+  status.controller_temperature.kelvin = temperature_sensor::get_temperature_K();
   auto size = serializer.serialize(status);
   if (size.has_value())
   {
@@ -167,30 +168,26 @@ void publish_esc_dynamics(node::state::State &state)
   uavcan_time_SynchronizedTimestamp_1_0 timestamp01{};
   planar01.kinematics.angular_velocity = uavcan_si_unit_angular_velocity_Scalar_1_0{};
   planar01.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
-  planar01._torque = 0;
+  planar01._torque = uavcan_si_unit_torque_Scalar_1_0{};
+  planar01._torque.newton_meter = 0;
   timestamp01.microsecond = get_monotonic_microseconds();
-  uint8_t serialized[reg_udral_physics_dynamics_rotation_PlanarTs_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_];
-  size_t serialized_size = sizeof(serialized);
-  int8_t error = reg_udral_physics_dynamics_rotation_PlanarTs_0_1_serialize_(&rotation, &serialized[0],
-                                                                             &serialized_size);
-  assert(error >= 0);
-  if (error < 0)
+  rotation.timestamp = timestamp01;
+  uavcan_l6::DSDL<reg_udral_physics_dynamics_rotation_PlanarTs_0_1>::Serializer serializer{};
+  auto size = serializer.serialize(rotation);
+  if (size.has_value())
   {
-    printf("Failed to serialize esc dynamics message with code %d\n", error);
-  }
-  CanardTransferMetadata rtm{};
-  rtm.transfer_kind = CanardTransferKindResponse;
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    CanardTransferMetadata rtm{};
+    rtm.transfer_kind = CanardTransferKindMessage;
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    {
+      (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                          get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
+                          &rtm,
+                          size.value(),
+                          serializer.getBuffer());
+    }
+  } else
   {
-    int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
-                                                     const_cast<CanardInstance *>(&state.canard),
-                                                     get_monotonic_microseconds() +
-                                                     ONE_SECOND_DEADLINE_usec,
-                                                     &rtm,
-                                                     serialized_size,
-                                                     serialized);
-
-    (void) number_of_frames_enqueued;
-    assert(number_of_frames_enqueued > 0);
+    assert(false);
   }
 }
