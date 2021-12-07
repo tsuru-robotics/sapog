@@ -10,6 +10,4 @@
 
 using namespace node::state;
 
-bool please_transmit(CanardFrame txf, CanardMicrosecond monotonic_micro_seconds, int index);
-
 int transmit(State &state);

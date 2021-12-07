@@ -76,7 +76,8 @@ class TestESC:
             for i in range(400):
                 wrap_await(pub.publish(rpm_message))
                 wrap_await(readiness_pub.publish(readiness_message))
-                if wrap_await(feedback_subscription.receive_for(0.3)) is None:
+                feedback_result = wrap_await(feedback_subscription.receive_for(0.3))
+                if feedback_result is None:
                     assert False
                     return
                 time.sleep(0.3)

@@ -83,6 +83,9 @@ void publish_esc_feedback(node::state::State &state)
       {
         CanardTransferMetadata rtm{};
         rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Feedback_0_1++;
+        rtm.priority = CanardPriorityNominal;
+        rtm.port_id = state.esc_feedback_publish_port;
+        rtm.remote_node_id = CANARD_NODE_ID_UNSET;
         rtm.transfer_kind = CanardTransferKindMessage;
         for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
@@ -134,6 +137,9 @@ void publish_esc_status(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.priority = CanardPriorityNominal;
+    rtm.port_id = state.esc_status_publish_port;
+    rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Status_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
@@ -163,6 +169,9 @@ void publish_esc_power(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.priority = CanardPriorityNominal;
+    rtm.port_id = state.esc_power_publish_port;
+    rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_electricity_PowerTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
@@ -195,6 +204,9 @@ void publish_esc_dynamics(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.priority = CanardPriorityNominal;
+    rtm.port_id = state.esc_dynamics_publish_port;
+    rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_dynamics_rotation_PlanarTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
