@@ -10,37 +10,37 @@
 class ILoopMethod
 {
 public:
-    ILoopMethod()
-    {}
+  ILoopMethod()
+  {}
 
-    virtual ~ILoopMethod()
-    {}
+  virtual ~ILoopMethod()
+  {}
 
-    virtual void operator()(node::state::State &state) = 0;
+  virtual void operator()(node::state::State &state) = 0;
 };
 
 class IStateAwareHandler
 {
 public:
-    node::state::State *state;
+  node::state::State *state;
 
-    IStateAwareHandler()
-    {}
+  IStateAwareHandler()
+  {}
 
-    virtual ~IStateAwareHandler()
-    {}
+  virtual ~IStateAwareHandler()
+  {}
 
-    virtual void operator()(node::state::State *state) = 0;
+  virtual void operator()(node::state::State *state) = 0;
 };
 
 class IHandler
 {
 public:
-    IHandler()
-    {}
+  IHandler()
+  {}
 
-    virtual ~IHandler()
-    {}
+  virtual ~IHandler()
+  {}
 
-    virtual void operator()(node::state::State &state, CanardRxTransfer *transfer) = 0;
+  virtual void operator()(node::state::State &state, CanardRxTransfer *transfer) = 0;
 };

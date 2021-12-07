@@ -16,9 +16,9 @@ namespace node::conf::wrapper
 {
 struct ConverterReturnType
 {
-    uavcan_register_Value_1_0 value;
-    bool _mutable = true;
-    bool persistent = true;
+  uavcan_register_Value_1_0 value;
+  bool _mutable = true;
+  bool persistent = true;
 };
 using function_type = ConverterReturnType(float);
 using converter_type = std::function<function_type>;
@@ -32,14 +32,14 @@ namespace conversion
 {
 enum class ConversionStatus
 {
-    NOT_SUPPORTED,
-    WRONG_TYPE,
-    SUCCESS
+  NOT_SUPPORTED,
+  WRONG_TYPE,
+  SUCCESS
 };
 struct ConversionResponse
 {
-    ConversionStatus conversion_status;
-    float value;
+  ConversionStatus conversion_status;
+  float value;
 };
 
 ConversionResponse extract_any_number(const uavcan_register_Value_1_0 &value, std::optional<ConfigDataType> param);

@@ -47,24 +47,24 @@ extern "C" {
  */
 enum motor_rtctl_state
 {
-	/**
-	 * Unpowered.
-	 * The motor can be rotated by an external force.
-	 * Next state: starting.
-	 */
-	MOTOR_RTCTL_STATE_IDLE,
+  /**
+   * Unpowered.
+   * The motor can be rotated by an external force.
+   * Next state: starting.
+   */
+  MOTOR_RTCTL_STATE_IDLE,
 
-	/**
-	 * Motor is attempting to start.
-	 * Next state: running on success, idle on failure.
-	 */
-	MOTOR_RTCTL_STATE_STARTING,
+  /**
+   * Motor is attempting to start.
+   * Next state: running on success, idle on failure.
+   */
+  MOTOR_RTCTL_STATE_STARTING,
 
-	/**
-	 * Motor is running in normal mode.
-	 * Next state: idle.
-	 */
-	MOTOR_RTCTL_STATE_RUNNING
+  /**
+   * Motor is running in normal mode.
+   * Next state: idle.
+   */
+  MOTOR_RTCTL_STATE_RUNNING
 };
 
 /**
@@ -72,9 +72,9 @@ enum motor_rtctl_state
  */
 enum motor_rtctl_forced_rotation
 {
-	MOTOR_RTCTL_FORCED_ROT_NONE,
-	MOTOR_RTCTL_FORCED_ROT_FORWARD,
-	MOTOR_RTCTL_FORCED_ROT_REVERSE,
+  MOTOR_RTCTL_FORCED_ROT_NONE,
+  MOTOR_RTCTL_FORCED_ROT_FORWARD,
+  MOTOR_RTCTL_FORCED_ROT_REVERSE,
 };
 
 /**
@@ -82,14 +82,14 @@ enum motor_rtctl_forced_rotation
  */
 struct motor_rtctl_hardware_info
 {
-	float current_shunt_resistance;
+  float current_shunt_resistance;
 };
 
 /**
  * Initialize the hardware and control logic
  * @return 0 on success, negative on error
  */
-int motor_rtctl_init(const struct motor_rtctl_hardware_info* hw_info);
+int motor_rtctl_init(const struct motor_rtctl_hardware_info *hw_info);
 
 /**
  * Safety feature.
@@ -155,7 +155,7 @@ void motor_rtctl_emergency(void);
  * @param [out] out_voltage Volts
  * @param [out] out_current Amperes
  */
-void motor_rtctl_get_input_voltage_current(float* out_voltage, float* out_current);
+void motor_rtctl_get_input_voltage_current(float *out_voltage, float *out_current);
 
 /**
  * Minimum safe comm period. Depends on PWM frequency.
@@ -199,7 +199,7 @@ int motor_rtctl_test_motor(void);
 /**
  * Designed for debug purposes. May be removed later.
  */
-void motor_rtctl_execute_cli_command(int argc, const char* argv[]);
+void motor_rtctl_execute_cli_command(int argc, const char *argv[]);
 
 #ifdef __cplusplus
 }

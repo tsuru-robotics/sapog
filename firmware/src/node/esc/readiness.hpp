@@ -21,26 +21,26 @@
 
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+  void operator()(node::state::State &state, CanardRxTransfer *transfer)
+  {
+    // ID in esc group needs to be set before readiness is set.
+    if (state.id_in_esc_group != CONFIGURABLE_ID_IN_ESC_GROUP)
     {
-        // ID in esc group needs to be set before readiness is set.
-        if (state.id_in_esc_group != CONFIGURABLE_ID_IN_ESC_GROUP)
+      (void) state;
+      reg_udral_service_common_Readiness_0_1 readiness{};
+      size_t size = transfer->payload_size;
+      if (reg_udral_service_common_Readiness_0_1_deserialize_(&readiness,
+                                                              (const uint8_t *) transfer->payload,
+                                                              &size) >= 0)
+      {
+        state.readiness = Readiness(readiness.value);
+        if (readiness.value == 3)
         {
-            (void) state;
-            reg_udral_service_common_Readiness_0_1 readiness{};
-            size_t size = transfer->payload_size;
-            if (reg_udral_service_common_Readiness_0_1_deserialize_(&readiness,
-                                                                    (const uint8_t *) transfer->payload,
-                                                                    &size) >= 0)
-            {
-                state.readiness = Readiness(readiness.value);
-                if (readiness.value == 3)
-                {
-                    printf("Readiness set to active.\n");
-                }
-            }
-            (void) transfer;
-            return;
+          printf("Readiness set to active.\n");
         }
+      }
+      (void) transfer;
+      return;
     }
+  }
 } sub_readiness_handler;

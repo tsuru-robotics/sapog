@@ -14,64 +14,64 @@ namespace node::state
 {
 struct Timing
 {
-    CanardMicrosecond next_pnp_request;
-    CanardMicrosecond started_at;
-    CanardMicrosecond current_time;
+  CanardMicrosecond next_pnp_request;
+  CanardMicrosecond started_at;
+  CanardMicrosecond current_time;
 };
 struct TransferIds
 {
-    uint64_t uavcan_node_heartbeat;
-    uint64_t uavcan_node_port_list;
-    uint64_t uavcan_pnp_allocation;
+  uint64_t uavcan_node_heartbeat;
+  uint64_t uavcan_node_port_list;
+  uint64_t uavcan_pnp_allocation;
 };
 enum class PNPStatus
 {
-    Subscribing,
-    TryingToSend,
-    SentRequest,
-    ReceivedResponse,
-    Done
+  Subscribing,
+  TryingToSend,
+  SentRequest,
+  ReceivedResponse,
+  Done
 };
 enum class Readiness
 {
-    SLEEP = 0,
-    STANDBY = 2,
-    ENGAGED = 3
+  SLEEP = 0,
+  STANDBY = 2,
+  ENGAGED = 3
 };
 enum class Health
 {
-    NOMINAL = 0,
-    ADVISORY = 1,
-    CAUTION = 2,
-    WARNING = 3
+  NOMINAL = 0,
+  ADVISORY = 1,
+  CAUTION = 2,
+  WARNING = 3
 };
 enum class ControlMode
 {
-    RPM,
-    DUTYCYCLE
+  RPM,
+  DUTYCYCLE
 };
 struct PlugAndPlay
 {
-    int request_count = 0;
-    uint64_t unique_id_hash;
-    PNPStatus status = PNPStatus::Subscribing;
-    bool anonymous = true;
+  int request_count = 0;
+  uint64_t unique_id_hash;
+  PNPStatus status = PNPStatus::Subscribing;
+  bool anonymous = true;
 };
 struct State
 {
-    bool is_restart_required = false;
-    Timing timing;
-    TransferIds transfer_ids;
-    PlugAndPlay plug_and_play;
-    CanardInstance canard;
-    bool is_save_requested = false;
-    CanardTxQueue queues[BXCAN_MAX_IFACE_INDEX + 1];
-    Readiness readiness;
-    Health health;
-    uint16_t id_in_esc_group;
-    uint16_t esc_heartbeat_publish_port;
-    uint16_t esc_feedback_publish_port;
-    ControlMode control_mode;
-    uint16_t ttl_milliseconds;
+  bool is_restart_required = false;
+  Timing timing;
+  TransferIds transfer_ids;
+  PlugAndPlay plug_and_play;
+  CanardInstance canard;
+  bool is_save_requested = false;
+  CanardTxQueue queues[BXCAN_MAX_IFACE_INDEX + 1];
+  Readiness readiness;
+  Health health;
+  uint16_t id_in_esc_group;
+  uint16_t esc_heartbeat_publish_port;
+  uint16_t esc_feedback_publish_port;
+  ControlMode control_mode;
+  uint16_t ttl_milliseconds;
 };
 }

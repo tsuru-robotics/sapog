@@ -18,54 +18,54 @@
 
 static uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 {
-    uavcan_node_GetInfo_Response_1_0 resp{};
-    resp.protocol_version.major = CANARD_UAVCAN_SPECIFICATION_VERSION_MAJOR;
-    resp.protocol_version.minor = CANARD_UAVCAN_SPECIFICATION_VERSION_MINOR;
+  uavcan_node_GetInfo_Response_1_0 resp{};
+  resp.protocol_version.major = CANARD_UAVCAN_SPECIFICATION_VERSION_MAJOR;
+  resp.protocol_version.minor = CANARD_UAVCAN_SPECIFICATION_VERSION_MINOR;
 
-    // The hardware version is not populated in this demo because it runs on no specific hardware.
-    // An embedded node like a servo would usually determine the version by querying the hardware.
+  // The hardware version is not populated in this demo because it runs on no specific hardware.
+  // An embedded node like a servo would usually determine the version by querying the hardware.
 
-    resp.software_version.major = FW_VERSION_MAJOR;
-    resp.software_version.minor = FW_VERSION_MINOR;
-    //resp.software_vcs_revision_id = FW_VERSION_MAJOR_MINOR_VCS_HASH;
-    // https://github.com/Zubax/sapog/blob/601f4580b71c3c4da65cc52237e62a163d6a6a16/firmware/src/uavcan_node/uavcan_node.cpp#L428
-    memcpy(resp.unique_id, board::read_unique_id().data(), sizeof(uint8_t[16]));
-    // The node name is the name of the product like a reversed Internet domain name (or like a Java package).
-    resp.name.count = strlen(NODE_NAME); // QUESTION: Does this string include a null terminator? It mustn't include it.
-    memcpy(&resp.name.elements, NODE_NAME, resp.name.count);
+  resp.software_version.major = FW_VERSION_MAJOR;
+  resp.software_version.minor = FW_VERSION_MINOR;
+  //resp.software_vcs_revision_id = FW_VERSION_MAJOR_MINOR_VCS_HASH;
+  // https://github.com/Zubax/sapog/blob/601f4580b71c3c4da65cc52237e62a163d6a6a16/firmware/src/uavcan_node/uavcan_node.cpp#L428
+  memcpy(resp.unique_id, board::read_unique_id().data(), sizeof(uint8_t[16]));
+  // The node name is the name of the product like a reversed Internet domain name (or like a Java package).
+  resp.name.count = strlen(NODE_NAME); // QUESTION: Does this string include a null terminator? It mustn't include it.
+  memcpy(&resp.name.elements, NODE_NAME, resp.name.count);
 
-    // The software image CRC and the Certificate of Authenticity are optional so not populated in this demo.
-    return resp;
+  // The software image CRC and the Certificate of Authenticity are optional so not populated in this demo.
+  return resp;
 }
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_GetInfo,
-1, 0);
+                            1, 0);
 namespace node::essential
 {
 struct : IHandler
 {
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+  void operator()(node::state::State &state, CanardRxTransfer *transfer)
+  {
+    uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
+    auto res = serializer.serialize(process_request_node_get_info());
+    if (res.has_value())
     {
-        uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
-        auto res = serializer.serialize(process_request_node_get_info());
-        if (res.has_value())
-        {
-            CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
-            rtm.transfer_kind = CanardTransferKindResponse;
-            for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
-            {
-                (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
-                                    transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,
-                                    &rtm,
-                                    res.value(),
-                                    serializer.getBuffer());
-            }
-        } else
-        {
-            assert(false);
-        }
-        return;
+      CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+      rtm.transfer_kind = CanardTransferKindResponse;
+      for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+      {
+        (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                            transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,
+                            &rtm,
+                            res.value(),
+                            serializer.getBuffer());
+      }
+    } else
+    {
+      assert(false);
     }
+    return;
+  }
 } uavcan_node_GetInfo_1_0_handler;
 }
 

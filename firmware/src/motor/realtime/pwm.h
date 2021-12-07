@@ -46,18 +46,18 @@ extern "C" {
 
 struct motor_pwm_commutation_step
 {
-	int_fast8_t positive;
-	int_fast8_t negative;
-	int_fast8_t floating;
+  int_fast8_t positive;
+  int_fast8_t negative;
+  int_fast8_t floating;
 };
 
 enum motor_pwm_phase_manip
 {
-	MOTOR_PWM_MANIP_LOW,
-	MOTOR_PWM_MANIP_HIGH,
-	MOTOR_PWM_MANIP_FLOATING,
-	MOTOR_PWM_MANIP_HALF,
-	MOTOR_PWM_MANIP_END_
+  MOTOR_PWM_MANIP_LOW,
+  MOTOR_PWM_MANIP_HIGH,
+  MOTOR_PWM_MANIP_FLOATING,
+  MOTOR_PWM_MANIP_HALF,
+  MOTOR_PWM_MANIP_END_
 };
 
 /**
@@ -92,7 +92,7 @@ void motor_pwm_emergency(void);
  */
 int motor_pwm_compute_pwm_val(float duty_cycle);
 
-void motor_pwm_set_step_from_isr(const struct motor_pwm_commutation_step* step, int pwm_val);
+void motor_pwm_set_step_from_isr(const struct motor_pwm_commutation_step *step, int pwm_val);
 
 /**
  * Should be called from high priority threads

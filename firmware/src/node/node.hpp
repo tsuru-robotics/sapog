@@ -20,17 +20,17 @@ namespace uavcan_node_1_0
 class UAVCANNode
 {
 public:
-    static int init();
+  static int init();
 };
 }
 
 struct RegisteredPort
 {
-    // uavcan.pub.PORT_NAME.id
-    const char *type;  // uavcan.pub.PORT_NAME.type
-    const char *name;
-    CanardTransferKind transfer_kind;
-    CanardRxSubscription subscription;
+  // uavcan.pub.PORT_NAME.id
+  const char *type;  // uavcan.pub.PORT_NAME.type
+  const char *name;
+  CanardTransferKind transfer_kind;
+  CanardRxSubscription subscription;
 };
 
 template<size_t N>

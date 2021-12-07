@@ -40,17 +40,17 @@ extern "C" {
 
 struct rpmctl_input
 {
-	int limit_mask;
-	float dt;
-	float pv;
-	float sp;
+  int limit_mask;
+  float dt;
+  float pv;
+  float sp;
 };
 
 int rpmctl_init(void);
 
 void rpmctl_reset(void);
 
-float rpmctl_update(const struct rpmctl_input* input);
+float rpmctl_update(const struct rpmctl_input *input);
 
 #ifdef __cplusplus
 }

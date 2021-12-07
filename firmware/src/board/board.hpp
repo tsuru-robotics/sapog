@@ -43,7 +43,9 @@
 namespace board
 {
 void heapLock();
+
 void heapUnlock();
+
 extern "C"
 {
 extern char __heap_base__;  // NOLINT
@@ -52,8 +54,9 @@ extern char __heap_end__;   // NOLINT
 
 os::watchdog::Timer init(unsigned watchdog_timeout_ms);
 
-void* allocate(std::size_t sz);
-void deallocate(const void* ptr);
+void *allocate(std::size_t sz);
+
+void deallocate(const void *ptr);
 
 /**
  * Performs an I2C transaction.
@@ -71,7 +74,7 @@ inline int i2c_exchange(std::uint8_t address,
                         const std::array<uint8_t, TxSize> &tx,
                         std::array<uint8_t, RxSize> &rx)
 {
-    return i2c_exchange(address, tx.data(), TxSize, rx.data(), RxSize);
+  return i2c_exchange(address, tx.data(), TxSize, rx.data(), RxSize);
 }
 
 __attribute__((noreturn))
@@ -84,8 +87,8 @@ typedef std::array<std::uint8_t, 12> UniqueID;
 
 struct HardwareVersion
 {
-    std::uint8_t major;
-    std::uint8_t minor;
+  std::uint8_t major;
+  std::uint8_t minor;
 };
 
 HardwareVersion detect_hardware_version();

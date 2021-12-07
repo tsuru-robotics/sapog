@@ -49,27 +49,29 @@ extern const int MOTOR_ADC_MIN_BLANKING_TIME_NANOSEC;
 
 struct motor_adc_sample
 {
-    uint64_t timestamp;
-    int phase_values[3];
-    int input_voltage;
-    int input_current;
+  uint64_t timestamp;
+  int phase_values[3];
+  int input_voltage;
+  int input_current;
 };
 
 
 int motor_adc_init(float current_shunt_resistance);
 
 void motor_adc_enable_from_isr(void);
+
 void motor_adc_disable_from_isr(void);
 
 struct motor_adc_sample motor_adc_get_last_sample(void);
 
 float motor_adc_convert_input_voltage(int raw);
+
 float motor_adc_convert_input_current(int raw);
 
 /**
  * No OS API can be used from this callback!
  */
-extern void motor_adc_sample_callback(const struct motor_adc_sample* sample);
+extern void motor_adc_sample_callback(const struct motor_adc_sample *sample);
 
 #ifdef __cplusplus
 }

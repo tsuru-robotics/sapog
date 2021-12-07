@@ -24,51 +24,51 @@ namespace node::loops
 {
 struct : ILoopMethod
 {
-    void operator()(node::state::State &state)
-    {
-        node::essential::publish_heartbeat(state.canard, state);
-        publish_esc_heartbeat(state);
-        publish_esc_feedback(state);
-        transmit(state);
-        // Before code below is uncommented, make sure that the node has an id.
-        // communications::publish_port_list(state.canard, state);
-    }
+  void operator()(node::state::State &state)
+  {
+    node::essential::publish_heartbeat(state.canard, state);
+    publish_esc_heartbeat(state);
+    publish_esc_feedback(state);
+    transmit(state);
+    // Before code below is uncommented, make sure that the node has an id.
+    // communications::publish_port_list(state.canard, state);
+  }
 } handle_1hz_loop;
 
 struct : ILoopMethod
 {
-    void operator()(node::state::State &state)
-    {
-        publish_port_list(state.canard, state);
-        transmit(state);
-    }
+  void operator()(node::state::State &state)
+  {
+    publish_port_list(state.canard, state);
+    transmit(state);
+  }
 } handle_5_second_loop;
 
 
 struct : ILoopMethod
 {
-    void operator()(node::state::State &state)
+  void operator()(node::state::State &state)
+  {
+    std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state, 0);
+    if (transfer.first.has_value())
     {
-        std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state, 0);
-        if (transfer.first.has_value())
-        {
-            CanardRxTransfer *canard_transfer = &transfer.first.value();
-            if (transfer.second != nullptr)
-            {
-                palWritePad(GPIOC, 11, 0);
-                printf("handler for: %d\n", transfer.first.value().metadata.port_id);
-                IHandler *handler = static_cast<IHandler *>(transfer.second);
-                handler->operator()(state, canard_transfer);
-                palWritePad(GPIOC, 11, 1);
-            } else
-            {
-                printf("Handler is a null pointer\n");
-            }
-            board::deallocate(static_cast<const uint8_t *>(transfer.first.value().payload));
-        } else
-        {
-        }
-        transmit(state);
+      CanardRxTransfer *canard_transfer = &transfer.first.value();
+      if (transfer.second != nullptr)
+      {
+        palWritePad(GPIOC, 11, 0);
+        printf("handler for: %d\n", transfer.first.value().metadata.port_id);
+        IHandler *handler = static_cast<IHandler *>(transfer.second);
+        handler->operator()(state, canard_transfer);
+        palWritePad(GPIOC, 11, 1);
+      } else
+      {
+        printf("Handler is a null pointer\n");
+      }
+      board::deallocate(static_cast<const uint8_t *>(transfer.first.value().payload));
+    } else
+    {
     }
+    transmit(state);
+  }
 } handle_fast_loop;
 }
