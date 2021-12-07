@@ -4,6 +4,7 @@
 #include <node/time.h>
 #include <node/units.hpp>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
+#include "reg/udral/service/actuator/common/Status_0_1.h"
 #include "esc_publishers.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
@@ -73,6 +74,19 @@ void publish_esc_feedback(node::state::State &state)
   }
 }
 
+
+void publish_esc_status(node::state::State &state)
+{
+  reg_udral_service_actuator_common_Status_0_1 status{};
+  reg_udral_service_actuator_common_FaultFlags_0_1 faultFlags01{};
+  faultFlags01 = status.fault_flags;
+  status.error_count = state.error_count;
+  status.fault_flags = faultFlags01;
+  status.motor_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
+  status.controller_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
+  status.motor_temperature.kelvin = 0;
+  status.controller_temperature.kelvin = 0;
+}
 
 void publish_esc_power(node::state::State &state)
 {

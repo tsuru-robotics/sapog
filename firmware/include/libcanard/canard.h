@@ -143,22 +143,22 @@ typedef uint8_t CanardTransferID;
 /// Transfer priority level mnemonics per the recommendations given in the UAVCAN Specification.
 typedef enum
 {
-    CanardPriorityExceptional = 0,
-    CanardPriorityImmediate = 1,
-    CanardPriorityFast = 2,
-    CanardPriorityHigh = 3,
-    CanardPriorityNominal = 4,  ///< Nominal priority level should be the default.
-    CanardPriorityLow = 5,
-    CanardPrioritySlow = 6,
-    CanardPriorityOptional = 7,
+  CanardPriorityExceptional = 0,
+  CanardPriorityImmediate = 1,
+  CanardPriorityFast = 2,
+  CanardPriorityHigh = 3,
+  CanardPriorityNominal = 4,  ///< Nominal priority level should be the default.
+  CanardPriorityLow = 5,
+  CanardPrioritySlow = 6,
+  CanardPriorityOptional = 7,
 } CanardPriority;
 
 /// Transfer kinds as defined by the UAVCAN Specification.
 typedef enum
 {
-    CanardTransferKindMessage = 0,  ///< Multicast, from publisher to all subscribers.
-    CanardTransferKindResponse = 1,  ///< Point-to-point, from server to client.
-    CanardTransferKindRequest = 2,  ///< Point-to-point, from client to server.
+  CanardTransferKindMessage = 0,  ///< Multicast, from publisher to all subscribers.
+  CanardTransferKindResponse = 1,  ///< Point-to-point, from server to client.
+  CanardTransferKindRequest = 2,  ///< Point-to-point, from client to server.
 } CanardTransferKind;
 #define CANARD_NUM_TRANSFER_KINDS 3
 
@@ -166,27 +166,27 @@ typedef enum
 /// The user code is not expected to interact with this type except if advanced introspection is required.
 struct CanardTreeNode
 {
-    CanardTreeNode *up;     ///< Do not access this field.
-    CanardTreeNode *lr[2];  ///< Left and right children of this node may be accessed for tree traversal.
-    int8_t bf;     ///< Do not access this field.
+  CanardTreeNode *up;     ///< Do not access this field.
+  CanardTreeNode *lr[2];  ///< Left and right children of this node may be accessed for tree traversal.
+  int8_t bf;     ///< Do not access this field.
 };
 
 /// CAN data frame with an extended 29-bit ID. RTR/Error frames are not used and therefore not modeled here.
 /// CAN frames with 11-bit ID are not used by UAVCAN/CAN and so they are not supported by the library.
 typedef struct
 {
-    /// 29-bit extended ID. The bits above 29-th shall be zero.
-    uint32_t extended_can_id;
+  /// 29-bit extended ID. The bits above 29-th shall be zero.
+  uint32_t extended_can_id;
 
-    /// The useful data in the frame. The length value is not to be confused with DLC!
-    /// If the payload is empty (payload_size = 0), the payload pointer may be NULL.
-    /// For RX frames: the library does not expect the lifetime of the pointee to extend beyond the point of return
-    /// from the API function. That is, the pointee can be invalidated immediately after the frame has been processed.
-    /// For TX frames: the frame and the payload are allocated within the same dynamic memory fragment, so their
-    /// lifetimes are identical; when the frame is freed, the payload is invalidated.
-    /// A more detailed overview of the dataflow and related resource management issues is provided in the API docs.
-    size_t payload_size;
-    const void *payload;
+  /// The useful data in the frame. The length value is not to be confused with DLC!
+  /// If the payload is empty (payload_size = 0), the payload pointer may be NULL.
+  /// For RX frames: the library does not expect the lifetime of the pointee to extend beyond the point of return
+  /// from the API function. That is, the pointee can be invalidated immediately after the frame has been processed.
+  /// For TX frames: the frame and the payload are allocated within the same dynamic memory fragment, so their
+  /// lifetimes are identical; when the frame is freed, the payload is invalidated.
+  /// A more detailed overview of the dataflow and related resource management issues is provided in the API docs.
+  size_t payload_size;
+  const void *payload;
 } CanardFrame;
 
 /// Conversion look-up table from CAN DLC to data length.
@@ -201,37 +201,37 @@ extern const uint8_t CanardCANLengthToDLC[65];
 /// transfers from an incoming stream of frames (possibly duplicated if redundant interfaces are used) during reception.
 typedef struct
 {
-    /// Per the Specification, all frames belonging to a given transfer shall share the same priority level.
-    /// If this is not the case, then this field contains the priority level of the last frame to arrive.
-    CanardPriority priority;
+  /// Per the Specification, all frames belonging to a given transfer shall share the same priority level.
+  /// If this is not the case, then this field contains the priority level of the last frame to arrive.
+  CanardPriority priority;
 
-    CanardTransferKind transfer_kind;
+  CanardTransferKind transfer_kind;
 
-    /// Subject-ID for message publications; service-ID for service requests/responses.
-    CanardPortID port_id;
+  /// Subject-ID for message publications; service-ID for service requests/responses.
+  CanardPortID port_id;
 
-    /// For outgoing message transfers the value shall be CANARD_NODE_ID_UNSET (otherwise the state is invalid).
-    /// For outgoing service transfers this is the destination address (invalid if unset).
-    /// For incoming non-anonymous transfers this is the node-ID of the origin.
-    /// For incoming anonymous transfers the value is reported as CANARD_NODE_ID_UNSET.
-    CanardNodeID remote_node_id;
+  /// For outgoing message transfers the value shall be CANARD_NODE_ID_UNSET (otherwise the state is invalid).
+  /// For outgoing service transfers this is the destination address (invalid if unset).
+  /// For incoming non-anonymous transfers this is the node-ID of the origin.
+  /// For incoming anonymous transfers the value is reported as CANARD_NODE_ID_UNSET.
+  CanardNodeID remote_node_id;
 
-    /// When responding to a service request, the response transfer SHALL have the same transfer-ID value as the
-    /// request because the client will match the response with the request based on that.
-    ///
-    /// When publishing a message transfer, the value SHALL be one greater than the previous transfer under the same
-    /// subject-ID; the initial value should be zero.
-    ///
-    /// When publishing a service request transfer, the value SHALL be one greater than the previous transfer under
-    /// the same service-ID addressed to the same server node-ID; the initial value should be zero.
-    ///
-    /// Upon overflow, the value SHALL be reset back to zero.
-    /// Values above CANARD_TRANSFER_ID_MAX are permitted -- the library will compute the modulo automatically.
-    /// For received transfers, the values never exceed CANARD_TRANSFER_ID_MAX.
-    ///
-    /// A simple and robust way of managing transfer-ID counters is to keep a separate static variable per subject-ID
-    /// and per (service-ID, server-node-ID) pair.
-    CanardTransferID transfer_id;
+  /// When responding to a service request, the response transfer SHALL have the same transfer-ID value as the
+  /// request because the client will match the response with the request based on that.
+  ///
+  /// When publishing a message transfer, the value SHALL be one greater than the previous transfer under the same
+  /// subject-ID; the initial value should be zero.
+  ///
+  /// When publishing a service request transfer, the value SHALL be one greater than the previous transfer under
+  /// the same service-ID addressed to the same server node-ID; the initial value should be zero.
+  ///
+  /// Upon overflow, the value SHALL be reset back to zero.
+  /// Values above CANARD_TRANSFER_ID_MAX are permitted -- the library will compute the modulo automatically.
+  /// For received transfers, the values never exceed CANARD_TRANSFER_ID_MAX.
+  ///
+  /// A simple and robust way of managing transfer-ID counters is to keep a separate static variable per subject-ID
+  /// and per (service-ID, server-node-ID) pair.
+  CanardTransferID transfer_id;
 } CanardTransferMetadata;
 
 /// Prioritized transmission queue that keeps CAN frames destined for transmission via one CAN interface.
@@ -241,52 +241,52 @@ typedef struct
 /// API functions that work with this type are named "canardTx*()", find them below.
 typedef struct CanardTxQueue
 {
-    /// The maximum number of frames this queue is allowed to contain. An attempt to push more will fail with an
-    /// out-of-memory error even if the memory is not exhausted. This value can be changed by the user at any moment.
-    /// The purpose of this limitation is to ensure that a blocked queue does not exhaust the heap memory.
-    size_t capacity;
+  /// The maximum number of frames this queue is allowed to contain. An attempt to push more will fail with an
+  /// out-of-memory error even if the memory is not exhausted. This value can be changed by the user at any moment.
+  /// The purpose of this limitation is to ensure that a blocked queue does not exhaust the heap memory.
+  size_t capacity;
 
-    /// The transport-layer maximum transmission unit (MTU). The value can be changed arbitrarily at any time between
-    /// pushes. It defines the maximum number of data bytes per CAN data frame in outgoing transfers via this queue.
-    ///
-    /// Only the standard values should be used as recommended by the specification;
-    /// otherwise, networking interoperability issues may arise. See recommended values CANARD_MTU_*.
-    ///
-    /// Valid values are any valid CAN frame data length value not smaller than 8.
-    /// Invalid values are treated as the nearest valid value. The default is the maximum valid value.
-    size_t mtu_bytes;
+  /// The transport-layer maximum transmission unit (MTU). The value can be changed arbitrarily at any time between
+  /// pushes. It defines the maximum number of data bytes per CAN data frame in outgoing transfers via this queue.
+  ///
+  /// Only the standard values should be used as recommended by the specification;
+  /// otherwise, networking interoperability issues may arise. See recommended values CANARD_MTU_*.
+  ///
+  /// Valid values are any valid CAN frame data length value not smaller than 8.
+  /// Invalid values are treated as the nearest valid value. The default is the maximum valid value.
+  size_t mtu_bytes;
 
-    /// The number of frames that are currently contained in the queue, initially zero.
-    /// Do not modify this field!
-    size_t size;
+  /// The number of frames that are currently contained in the queue, initially zero.
+  /// Do not modify this field!
+  size_t size;
 
-    /// The root of the priority queue is NULL if the queue is empty. Do not modify this field!
-    CanardTreeNode *root;
+  /// The root of the priority queue is NULL if the queue is empty. Do not modify this field!
+  CanardTreeNode *root;
 
-    /// This field can be arbitrarily mutated by the user. It is never accessed by the library.
-    /// Its purpose is to simplify integration with OOP interfaces.
-    void *user_reference;
+  /// This field can be arbitrarily mutated by the user. It is never accessed by the library.
+  /// Its purpose is to simplify integration with OOP interfaces.
+  void *user_reference;
 } CanardTxQueue;
 
 /// One frame stored in the transmission queue along with its metadata.
 struct CanardTxQueueItem
 {
-    /// Internal use only; do not access this field.
-    CanardTreeNode base;
+  /// Internal use only; do not access this field.
+  CanardTreeNode base;
 
-    /// Points to the next frame in this transfer or NULL. This field is mostly intended for own needs of the library.
-    /// Normally, the application would not use it because transfer frame ordering is orthogonal to global TX ordering.
-    /// It can be useful though for pulling pending frames from the TX queue if at least one frame of their transfer
-    /// failed to transmit; the idea is that if at least one frame is missing, the transfer will not be received by
-    /// remote nodes anyway, so all its remaining frames can be dropped from the queue at once using canardTxPop().
-    CanardTxQueueItem *next_in_transfer;
+  /// Points to the next frame in this transfer or NULL. This field is mostly intended for own needs of the library.
+  /// Normally, the application would not use it because transfer frame ordering is orthogonal to global TX ordering.
+  /// It can be useful though for pulling pending frames from the TX queue if at least one frame of their transfer
+  /// failed to transmit; the idea is that if at least one frame is missing, the transfer will not be received by
+  /// remote nodes anyway, so all its remaining frames can be dropped from the queue at once using canardTxPop().
+  CanardTxQueueItem *next_in_transfer;
 
-    /// This is the same value that is passed to canardTxPush().
-    /// Frames whose transmission deadline is in the past shall be dropped.
-    CanardMicrosecond tx_deadline_usec;
+  /// This is the same value that is passed to canardTxPush().
+  /// Frames whose transmission deadline is in the past shall be dropped.
+  CanardMicrosecond tx_deadline_usec;
 
-    /// The actual CAN frame data.
-    CanardFrame frame;
+  /// The actual CAN frame data.
+  CanardFrame frame;
 };
 
 /// Transfer subscription state. The application can register its interest in a particular kind of data exchanged
@@ -300,47 +300,43 @@ struct CanardTxQueueItem
 /// This is an intentional time-memory trade-off: use a large look-up table to ensure predictable temporal properties.
 typedef struct CanardRxSubscription
 {
-    CanardTreeNode base;  ///< Read-only DO NOT MODIFY THIS
+  CanardTreeNode base;  ///< Read-only DO NOT MODIFY THIS
 
-    CanardMicrosecond transfer_id_timeout_usec;
-    size_t extent;   ///< Read-only DO NOT MODIFY THIS
-    CanardPortID port_id;  ///< Read-only DO NOT MODIFY THIS
+  CanardMicrosecond transfer_id_timeout_usec;
+  size_t extent;   ///< Read-only DO NOT MODIFY THIS
+  CanardPortID port_id;  ///< Read-only DO NOT MODIFY THIS
 
-    /// This field can be arbitrarily mutated by the user. It is never accessed by the library.
-    /// Its purpose is to simplify integration with OOP interfaces.
-    void *user_reference;
+  /// This field can be arbitrarily mutated by the user. It is never accessed by the library.
+  /// Its purpose is to simplify integration with OOP interfaces.
+  void *user_reference;
 
-    /// The current architecture is an acceptable middle ground between worst-case execution time and memory
-    /// consumption. Instead of statically pre-allocating a dedicated RX session for each remote node-ID here in
-    /// this table, we only keep pointers, which are NULL by default, populating a new RX session dynamically
-    /// on an ad-hoc basis when we first receive a transfer from that node. This is O(1) because our memory
-    /// allocation routines are assumed to be O(1) and we make at most one allocation per remote node.
-    ///
-    /// A more predictable and simpler approach is to pre-allocate states here statically instead of keeping
-    /// just pointers, but it would push the size of this instance from about 0.5 KiB to ~3 KiB for a typical 32-bit
-    /// system. Since this is a general-purpose library, we have to pick a middle ground so we use the more complex
-    /// but more memory-efficient approach.
-    struct CanardInternalRxSession *sessions[CANARD_NODE_ID_MAX + 1U];  ///< Read-only DO NOT MODIFY THIS
+  /// The current architecture is an acceptable middle ground between worst-case execution time and memory
+  /// consumption. Instead of statically pre-allocating a dedicated RX session for each remote node-ID here in
+  /// this table, we only keep pointers, which are NULL by default, populating a new RX session dynamically
+  /// on an ad-hoc basis when we first receive a transfer from that node. This is O(1) because our memory
+  /// allocation routines are assumed to be O(1) and we make at most one allocation per remote node.
+  ///
+  /// A more predictable and simpler approach is to pre-allocate states here statically instead of keeping
+  /// just pointers, but it would push the size of this instance from about 0.5 KiB to ~3 KiB for a typical 32-bit
+  /// system. Since this is a general-purpose library, we have to pick a middle ground so we use the more complex
+  /// but more memory-efficient approach.
+  struct CanardInternalRxSession *sessions[CANARD_NODE_ID_MAX + 1U];  ///< Read-only DO NOT MODIFY THIS
 } CanardRxSubscription;
 
 /// Reassembled incoming transfer returned by canardRxAccept().
 typedef struct CanardRxTransfer
 {
-    CanardTransferMetadata metadata;
+  CanardTransferMetadata metadata;
 
-    /// The timestamp of the first received CAN frame of this transfer.
-    /// The time system may be arbitrary as long as the clock is monotonic (steady).
-    CanardMicrosecond timestamp_usec;
+  /// The timestamp of the first received CAN frame of this transfer.
+  /// The time system may be arbitrary as long as the clock is monotonic (steady).
+  CanardMicrosecond timestamp_usec;
 
-    /// If the payload is empty (payload_size = 0), the payload pointer may be NULL.
-    /// The application is required to deallocate the payload buffer after the transfer is processed.
-    size_t payload_size;
-    void *payload;
+  /// If the payload is empty (payload_size = 0), the payload pointer may be NULL.
+  /// The application is required to deallocate the payload buffer after the transfer is processed.
+  size_t payload_size;
+  void *payload;
 } CanardRxTransfer;
-
-/// The CanardInstance contains rx_subscriptions, this is used as a handler for a method that iterates over the
-/// subscriptions.
-typedef void *(*CanardSubscriptionIteratorHandler)(CanardRxSubscription *subscription);
 
 /// A pointer to the memory allocation function. The semantics are similar to malloc():
 ///     - The returned pointer shall point to an uninitialized block of memory that is at least "amount" bytes large.
@@ -362,30 +358,44 @@ typedef void (*CanardMemoryFree)(CanardInstance *ins, void *pointer);
 /// This is the core structure that keeps all of the states and allocated resources of the library instance.
 struct CanardInstance
 {
-    /// User pointer that can link this instance with other objects.
-    /// This field can be changed arbitrarily, the library does not access it after initialization.
-    /// The default value is NULL.
-    void *user_reference;
+  /// User pointer that can link this instance with other objects.
+  /// This field can be changed arbitrarily, the library does not access it after initialization.
+  /// The default value is NULL.
+  void *user_reference;
 
-    /// The node-ID of the local node.
-    /// Per the UAVCAN Specification, the node-ID should not be assigned more than once.
-    /// Invalid values are treated as CANARD_NODE_ID_UNSET. The default value is CANARD_NODE_ID_UNSET.
-    CanardNodeID node_id;
+  /// The node-ID of the local node.
+  /// Per the UAVCAN Specification, the node-ID should not be assigned more than once.
+  /// Invalid values are treated as CANARD_NODE_ID_UNSET. The default value is CANARD_NODE_ID_UNSET.
+  CanardNodeID node_id;
 
-    /// Dynamic memory management callbacks. See their type documentation for details.
-    /// They SHALL be valid function pointers at all times.
-    /// The time complexity models given in the API documentation are made on the assumption that the memory management
-    /// functions have constant complexity O(1).
-    ///
-    /// The following API functions may allocate memory:   canardRxAccept(), canardTxPush().
-    /// The following API functions may deallocate memory: canardRxAccept(), canardRxSubscribe(), canardRxUnsubscribe().
-    /// The exact memory requirement and usage model is specified for each function in its documentation.
-    CanardMemoryAllocate memory_allocate;
-    CanardMemoryFree memory_free;
+  /// Dynamic memory management callbacks. See their type documentation for details.
+  /// They SHALL be valid function pointers at all times.
+  /// The time complexity models given in the API documentation are made on the assumption that the memory management
+  /// functions have constant complexity O(1).
+  ///
+  /// The following API functions may allocate memory:   canardRxAccept(), canardTxPush().
+  /// The following API functions may deallocate memory: canardRxAccept(), canardRxSubscribe(), canardRxUnsubscribe().
+  /// The exact memory requirement and usage model is specified for each function in its documentation.
+  CanardMemoryAllocate memory_allocate;
+  CanardMemoryFree memory_free;
 
-    /// Read-only DO NOT MODIFY THIS
-    CanardTreeNode *rx_subscriptions[CANARD_NUM_TRANSFER_KINDS];
+  /// Read-only DO NOT MODIFY THIS
+  CanardTreeNode *rx_subscriptions[CANARD_NUM_TRANSFER_KINDS];
 };
+
+/// CAN acceptance filter configuration with an extended 29-bit ID utilizing an ID + mask filter scheme.
+/// Filter configuration can be programmed into a CAN controller to filter out irrelevant messages in hardware.
+/// This allows the software application to reduce CPU load spent on processing irrelevant messages.
+typedef struct CanardFilter
+{
+  /// 29-bit extended ID. Defines the extended CAN ID to filter incoming frames against.
+  /// The bits above 29-th shall be zero.
+  uint32_t extended_can_id;
+  /// 29-bit extended mask. Defines the bitmask used to enable/disable bits used to filter messages.
+  /// Only bits that are enabled are compared to the extended_can_id for filtering.
+  /// The bits above 29-th shall be zero.
+  uint32_t extended_mask;
+} CanardFilter;
 
 /// Construct a new library instance.
 /// The default values will be assigned as specified in the structure field documentation.
@@ -396,10 +406,6 @@ struct CanardInstance
 ///
 /// The time complexity is constant. This function does not invoke the dynamic memory manager.
 CanardInstance canardInit(const CanardMemoryAllocate memory_allocate, const CanardMemoryFree memory_free);
-
-/// Use depth first search to iterate over every subscription in canardInstance rx_subscriptions
-void iterateOverRxSubscriptions(CanardInstance canardInstance, CanardSubscriptionIteratorHandler *handler);
-
 
 /// Construct a new transmission queue instance with the specified values for capacity and mtu_bytes.
 /// No memory allocation is going to take place until the queue is actually pushed to.
@@ -642,6 +648,50 @@ int8_t canardRxSubscribe(CanardInstance *const ins,
 int8_t canardRxUnsubscribe(CanardInstance *const ins,
                            const CanardTransferKind transfer_kind,
                            const CanardPortID port_id);
+
+/// Utilities for generating CAN controller hardware acceptance filter configurations
+/// to accept specific subjects, services, or nodes.
+///
+/// Complex applications will likely subscribe to more subject IDs than there are
+/// acceptance filters available in the CAN hardware. In this case, the application
+/// should implement filter consolidation. See canardConsolidateFilters()
+/// as well as the UAVCAN specification for details.
+
+/// Generate an acceptance filter configuration to accept a specific subject ID.
+CanardFilter canardMakeFilterForSubject(const CanardPortID subject_id);
+
+/// Generate an acceptance filter configuration to accept both requests and responses for a specific service.
+///
+/// Users may prefer to instead use a catch-all acceptance filter configuration for accepting
+/// all service requests and responses targeted at the specified local node ID.
+/// See canardMakeFilterForServices() for this.
+CanardFilter canardMakeFilterForService(const CanardPortID service_id, const CanardNodeID local_node_id);
+
+/// Generate an acceptance filter configuration to accept all service
+/// requests and responses targeted to the specified local node ID.
+///
+/// Due to the relatively low frequency of service transfers expected on a network,
+/// and the fact that a service directed at a specific node is not likely to be rejected by that node,
+/// a user may prefer to use this over canardMakeFilterForService()
+/// in order to simplify the API usage and reduce the number of required hardware CAN acceptance filters.
+CanardFilter canardMakeFilterForServices(const CanardNodeID local_node_id);
+
+/// Consolidate two acceptance filter configurations into a single configuration.
+///
+/// Complex applications will likely subscribe to more subject IDs than there are
+/// acceptance filters available in the CAN hardware. In this case, the application
+/// should implement filter consolidation. While this may make it impossible to create
+/// a 'perfect' filter that only accepts desired subject IDs, the application should apply
+/// consolidation in a manner that minimizes the number of undesired messages that pass
+/// through the hardware acceptance filters and require software filtering (implemented by canardRxSubscribe).
+///
+/// While optimal choice of filter consolidation is a function of the number of available hardware filters,
+/// the set of transfers needed by the application, and the expected frequency of occurrence
+/// of all possible distinct transfers on the bus, it is possible to generate a quasi-optimal configuration
+/// if information about the frequency of occurrence of different transfers is not known.
+/// For details, see the "Automatic hardware acceptance filter configuration" note under the UAVCAN/CAN section
+/// in the Transport Layer chapter of the UAVCAN specification.
+CanardFilter canardConsolidateFilters(const CanardFilter *const a, const CanardFilter *const b);
 
 #ifdef __cplusplus
 }

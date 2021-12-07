@@ -82,7 +82,8 @@ void print_can_error_if_exists()
 
   static Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
                       Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-                      Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()}
+                      Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()},
+                      Loop{handle_esc_status_loop, SECOND_IN_MICROSECONDS / 10, get_monotonic_microseconds()}
   };
   printf("Has this node_id after pnp: %d\n", state.canard.node_id);
   // Loops begin running
@@ -136,6 +137,8 @@ CONFIG_PARAM_INT("uavcan.pub.esc_feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFI
 CONFIG_PARAM_INT("uavcan.pub.esc_power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_INT("uavcan.pub.esc_dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
+
+CONFIG_PARAM_INT("uavcan.pub.esc_status.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_BOOL("control_mode_rpm", true)
 

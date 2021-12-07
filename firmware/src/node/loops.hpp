@@ -18,6 +18,7 @@
 #include "node/essential/heartbeat.hpp"
 #include "node/essential/port_list.hpp"
 #include "node/esc/esc_publishers.hpp"
+#include "node/esc/esc_publishers.hpp"
 
 
 namespace node::loops
@@ -44,6 +45,14 @@ struct : ILoopMethod
   }
 } handle_5_second_loop;
 
+struct : ILoopMethod
+{
+  void operator()(node::state::State &state)
+  {
+    publish_esc_status(state);
+    transmit(state);
+  }
+} handle_esc_status_loop;
 
 struct : ILoopMethod
 {
@@ -71,4 +80,5 @@ struct : ILoopMethod
     transmit(state);
   }
 } handle_fast_loop;
+
 }

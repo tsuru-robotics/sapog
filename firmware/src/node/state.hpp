@@ -7,6 +7,7 @@
 
 #include <zubax_chibios/config/config.hpp>
 #include <libcanard/canard.h>
+#include "reg/udral/service/actuator/common/FaultFlags_0_1.h"
 
 #define CONFIGURABLE_ID_IN_ESC_GROUP 0xFFFF
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
@@ -73,5 +74,7 @@ struct State
   uint16_t esc_feedback_publish_port;
   ControlMode control_mode;
   uint16_t ttl_milliseconds;
+  uint32_t error_count;
+  reg_udral_service_actuator_common_FaultFlags_0_1 fault_flags;
 };
 }
