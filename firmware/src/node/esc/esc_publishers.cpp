@@ -5,7 +5,10 @@
 #include <node/units.hpp>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
 #include "reg/udral/service/actuator/common/Status_0_1.h"
+#include "reg/udral/physics/electricity/PowerTs_0_1.h"
+#include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
 #include "esc_publishers.hpp"
+#include "motor/motor.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);
@@ -88,12 +91,27 @@ void publish_esc_status(node::state::State &state)
   status.controller_temperature.kelvin = 0;
 }
 
+#include "reg/udral/physics/electricity/PowerTs_0_1.h"
+#include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
+
 void publish_esc_power(node::state::State &state)
 {
-  (void) state;
+  reg_udral_physics_electricity_PowerTs_0_1 power{};
+  uavcan_si_unit_voltage_Scalar_1_0 voltage{};
+  uavcan_si_unit_electric_current_Scalar_1_0 current{};
+  motor_get_input_voltage_current(&voltage.volt, &current.ampere);
+  power.value.voltage = voltage;
+  power.value.current = current;
 }
 
 void publish_esc_dynamics(node::state::State &state)
 {
-  (void) state;
+  reg_udral_physics_dynamics_rotation_PlanarTs_0_1 rotation{};
+  reg_udral_physics_dynamics_rotation_Planar_0_1 planar01{};
+  uavcan_time_SynchronizedTimestamp_1_0 timestamp01{};
+  planar01.kinematics.angular_velocity = uavcan_si_unit_angular_velocity_Scalar_1_0{};
+  planar01.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
+  planar01._torque = 0;
+  timestamp01.microsecond = get_monotonic_microseconds();
+
 }
