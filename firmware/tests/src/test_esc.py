@@ -11,6 +11,10 @@ add_deps()
 import uavcan.primitive.array.Integer64_1_0
 import reg.udral.service.common.Readiness_0_1
 import reg.udral.service.actuator.common.sp.Scalar_0_1
+import reg.udral.service.actuator.common.Feedback_0_1
+import reg.udral.service.actuator.common.Status_0_1
+import reg.udral.physics.electricity.PowerTs_0_1
+import reg.udral.physics.dynamics.rotation.PlanarTs_0_1
 import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
@@ -66,6 +70,7 @@ class TestESC:
         wrap_await(readiness_pub.publish(readiness_message))
         rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(2000))
         pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
+        feedback_subscription = prepared_node.make_subscriber()
         try:
             for i in range(400):
                 wrap_await(pub.publish(rpm_message))

@@ -11,6 +11,7 @@
 #include "esc_publishers.hpp"
 #include "motor/motor.hpp"
 #include "temperature_sensor.hpp"
+#include "node/transmit.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);
@@ -78,6 +79,7 @@ void publish_esc_feedback(node::state::State &state)
         rtm.transfer_kind = CanardTransferKindMessage;
         for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
+          printf("Published feedback\n");
           (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                               get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
                               &rtm,
@@ -91,7 +93,6 @@ void publish_esc_feedback(node::state::State &state)
     }
     if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
     {
-      printf("Time for sending power and dynamics reports.\n");
       state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds, 20k us delay
       if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
       {
@@ -102,6 +103,7 @@ void publish_esc_feedback(node::state::State &state)
         publish_esc_power(state);
       }
     }
+    transmit(state);
   }
 }
 

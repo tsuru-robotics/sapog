@@ -2,11 +2,9 @@
 every 5 seconds on Sapog so that's the maximum amount of time that has to be waited to verify if it works."""
 from _await_wrap import wrap_await
 import asyncio
-from test import restarted_sapogs
-from test import fix_imports
-from test import make_registry
+from utils import make_registry, restarted_sapogs, add_deps
 
-fix_imports()
+add_deps()
 import pyuavcan
 from pyuavcan.presentation._presentation import MessageClass
 from pyuavcan.application import Node, make_node, NodeInfo, register
