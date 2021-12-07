@@ -12,6 +12,8 @@
 #include "motor/motor.hpp"
 #include "temperature_sensor.hpp"
 #include "node/transmit.hpp"
+#include "hal.h"
+#include <stm32f105xc.h>
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);
@@ -46,6 +48,7 @@ void publish_esc_heartbeat(node::state::State &state)
   {
     CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.transfer_id = state.transfer_ids.reg_udral_service_common_Heartbeat_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
@@ -62,10 +65,13 @@ void publish_esc_heartbeat(node::state::State &state)
 
 void publish_esc_feedback(node::state::State &state)
 {
+
   if (state.readiness != node::state::Readiness::SLEEP)
   {
+
     if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
     {
+      palWritePad(GPIOC, 12, 1);
       uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
       reg_udral_service_actuator_common_Feedback_0_1 fb{};
       fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
@@ -76,20 +82,23 @@ void publish_esc_feedback(node::state::State &state)
       if (res.has_value())
       {
         CanardTransferMetadata rtm{};
+        rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Feedback_0_1++;
         rtm.transfer_kind = CanardTransferKindMessage;
         for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
         {
-          printf("Published feedback\n");
+
           (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                               get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
                               &rtm,
                               res.value(),
                               serializer.getBuffer());
+
         }
       } else
       {
         assert(false);
       }
+      palWritePad(GPIOC, 12, 0);
     }
     if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
     {
@@ -125,6 +134,7 @@ void publish_esc_status(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Status_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
@@ -153,6 +163,7 @@ void publish_esc_power(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.transfer_id = state.transfer_ids.reg_udral_physics_electricity_PowerTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
@@ -184,6 +195,7 @@ void publish_esc_dynamics(node::state::State &state)
   {
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
+    rtm.transfer_id = state.transfer_ids.reg_udral_physics_dynamics_rotation_PlanarTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),

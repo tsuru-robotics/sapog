@@ -178,7 +178,7 @@ static bool unsubscribe_plug_and_play_response(State &state)
 
 static bool receive_plug_and_play_response(State &state)
 {
-  std::optional<CanardRxTransfer> transfer = receive_transfer(state, 0).first;
+  std::optional<CanardRxTransfer> transfer = receive_transfer(state).first;
   if (transfer.has_value())
   {
 

@@ -24,6 +24,11 @@ struct TransferIds
   uint64_t uavcan_node_heartbeat;
   uint64_t uavcan_node_port_list;
   uint64_t uavcan_pnp_allocation;
+  uint64_t reg_udral_physics_electricity_PowerTs_0_1;
+  uint64_t reg_udral_physics_dynamics_rotation_PlanarTs_0_1;
+  uint64_t reg_udral_service_actuator_common_Status_0_1;
+  uint64_t reg_udral_service_actuator_common_Feedback_0_1;
+  uint64_t reg_udral_service_common_Heartbeat_0_1;
 };
 enum class PNPStatus
 {

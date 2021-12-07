@@ -50,7 +50,6 @@ struct : IHandler
         {
           float rotations_per_second = setpoint.value / 2.0 / 3.14159265358979f;
           unsigned int rpm = rotations_per_second * 60;
-          printf("RPM: %d\n", rpm);
           motor_set_rpm(rpm, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;
           motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
@@ -60,7 +59,6 @@ struct : IHandler
         } else if (state.control_mode == ControlMode::DUTYCYCLE)
         {
           float dc = setpoint.value;
-          printf("DC: %f\n", (float) dc);
           // the range is clipped in here
           motor_set_duty_cycle(dc, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;
@@ -100,7 +98,6 @@ struct : IHandler
   void operator()(node::state::State &state, CanardRxTransfer *transfer)
   {
     reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
-    printf("ESC handler\n");
     size_t temp_payload_size{transfer->payload_size};
     auto result = reg_udral_physics_electricity_PowerTs_0_1_deserialize_(&power_ts,
                                                                          (const uint8_t *) transfer->payload,

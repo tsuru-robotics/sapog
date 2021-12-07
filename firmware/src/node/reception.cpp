@@ -10,20 +10,20 @@
 #include "transmit.hpp"
 #include "node.hpp"
 
-std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state, int if_index)
+std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state)
 {
   CanardFrame frame{};
 
   std::array<std::uint8_t, 8> payload_array{};
   frame.payload = &payload_array;
 
-  for (uint16_t i = 0;
-       i < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); i += (BXCAN_MAX_IFACE_INDEX + 1))
+  for (uint16_t j = 0;
+       j < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); j += (BXCAN_MAX_IFACE_INDEX + 1))
   {
     bool queue_i_had_something[BXCAN_MAX_IFACE_INDEX + 1] = {};
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
-      bool bxCanQueueHadSomething = bxCANPop(if_index,
+      bool bxCanQueueHadSomething = bxCANPop(i,
                                              &frame.extended_can_id,
                                              &frame.payload_size, payload_array.data());
       queue_i_had_something[i] = bxCanQueueHadSomething;
@@ -34,7 +34,7 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
 
-      const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(), &frame, if_index,
+      const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(), &frame, i,
                                                   &transfer, &this_subscription);
       //this_subscription->
       if (canard_result > 0)
@@ -54,9 +54,9 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
                     [](bool i) { return i == false; }))
     {
       //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
-      palWritePad(GPIOC, 14, 1);
-      chThdSleepMicroseconds(100);
-      palWritePad(GPIOC, 14, 0);
+      //palWritePad(GPIOC, 14, 1);
+      chThdSleepMicroseconds(60);
+      //palWritePad(GPIOC, 14, 0);
       return {};
     }
   }

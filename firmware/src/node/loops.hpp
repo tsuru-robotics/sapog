@@ -58,17 +58,17 @@ struct : ILoopMethod
 {
   void operator()(node::state::State &state)
   {
-    std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state, 0);
+    std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state);
     if (transfer.first.has_value())
     {
       CanardRxTransfer *canard_transfer = &transfer.first.value();
       if (transfer.second != nullptr)
       {
-        palWritePad(GPIOC, 11, 0);
+        //palWritePad(GPIOC, 11, 0);
         printf("handler for: %d\n", transfer.first.value().metadata.port_id);
         IHandler *handler = static_cast<IHandler *>(transfer.second);
         handler->operator()(state, canard_transfer);
-        palWritePad(GPIOC, 11, 1);
+        //palWritePad(GPIOC, 11, 1);
       } else
       {
         printf("Handler is a null pointer\n");
