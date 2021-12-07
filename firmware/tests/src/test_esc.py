@@ -61,13 +61,16 @@ class TestESC:
         time.sleep(4)
         allocate_nr_of_nodes(len(prepared_sapogs.keys()))
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
+        readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = prepared_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         wrap_await(readiness_pub.publish(readiness_message))
-
         rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(2000))
         pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
-        for i in range(400):
-            wrap_await(pub.publish(rpm_message))
-            wrap_await(readiness_pub.publish(readiness_message))
-            time.sleep(0.3)
-        time.sleep(0.3)
+        try:
+            for i in range(400):
+                wrap_await(pub.publish(rpm_message))
+                wrap_await(readiness_pub.publish(readiness_message))
+                time.sleep(0.3)
+        except KeyboardInterrupt:
+            print("Interrupted")
+            wrap_await(readiness_pub.publish(readiness_stop_message))
