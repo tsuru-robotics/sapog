@@ -4,6 +4,7 @@
 #include <node/time.h>
 #include <node/units.hpp>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
+#include <cstdio>
 #include "reg/udral/service/actuator/common/Status_0_1.h"
 #include "reg/udral/physics/electricity/PowerTs_0_1.h"
 #include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
@@ -15,6 +16,16 @@ UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Feedback,
                             0, 1);
+
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_actuator_common_Status,
+                            0, 1);
+
+UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_electricity_PowerTs,
+                            0, 1);
+
+//UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_dynamics_rotation_PlanarTs,
+//                            0, 1);
+
 
 void publish_esc_heartbeat(node::state::State &state)
 {
@@ -60,7 +71,7 @@ void publish_esc_feedback(node::state::State &state)
     auto res = serializer.serialize(fb);
     if (res.has_value())
     {
-      CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
+      CanardTransferMetadata rtm{};
       rtm.transfer_kind = CanardTransferKindMessage;
       for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
       {
@@ -75,11 +86,24 @@ void publish_esc_feedback(node::state::State &state)
       assert(false);
     }
   }
+  if (state.next_send_power_dynamics_time > get_monotonic_microseconds())
+  {
+    state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds delay
+    if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
+    {
+      publish_esc_dynamics(state);
+    }
+    if (state.esc_power_publish_port != CONFIGURABLE_SUBJECT_ID)
+    {
+      publish_esc_power(state);
+    }
+  }
 }
 
 
 void publish_esc_status(node::state::State &state)
 {
+  uavcan_l6::DSDL<reg_udral_service_actuator_common_Status_0_1>::Serializer serializer{};
   reg_udral_service_actuator_common_Status_0_1 status{};
   reg_udral_service_actuator_common_FaultFlags_0_1 faultFlags01{};
   faultFlags01 = status.fault_flags;
@@ -91,17 +115,32 @@ void publish_esc_status(node::state::State &state)
   status.controller_temperature.kelvin = 0;
 }
 
-#include "reg/udral/physics/electricity/PowerTs_0_1.h"
-#include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
-
 void publish_esc_power(node::state::State &state)
 {
+  uavcan_l6::DSDL<reg_udral_physics_electricity_PowerTs_0_1>::Serializer serializer{};
   reg_udral_physics_electricity_PowerTs_0_1 power{};
   uavcan_si_unit_voltage_Scalar_1_0 voltage{};
   uavcan_si_unit_electric_current_Scalar_1_0 current{};
   motor_get_input_voltage_current(&voltage.volt, &current.ampere);
   power.value.voltage = voltage;
   power.value.current = current;
+  auto size = serializer.serialize(power);
+  if (size.has_value())
+  {
+    CanardTransferMetadata rtm{};
+    rtm.transfer_kind = CanardTransferKindMessage;
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    {
+      (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                          get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
+                          &rtm,
+                          size.value(),
+                          serializer.getBuffer());
+    }
+  } else
+  {
+    assert(false);
+  }
 }
 
 void publish_esc_dynamics(node::state::State &state)
@@ -113,5 +152,28 @@ void publish_esc_dynamics(node::state::State &state)
   planar01.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
   planar01._torque = 0;
   timestamp01.microsecond = get_monotonic_microseconds();
+  uint8_t serialized[reg_udral_physics_dynamics_rotation_PlanarTs_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_];
+  size_t serialized_size = sizeof(serialized);
+  int8_t error = reg_udral_physics_dynamics_rotation_PlanarTs_0_1_serialize_(&rotation, &serialized[0],
+                                                                             &serialized_size);
+  assert(error >= 0);
+  if (error < 0)
+  {
+    printf("Failed to serialize esc dynamics message with code %d\n", error);
+  }
+  CanardTransferMetadata rtm{};
+  rtm.transfer_kind = CanardTransferKindResponse;
+  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  {
+    int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                     const_cast<CanardInstance *>(&state.canard),
+                                                     get_monotonic_microseconds() +
+                                                     ONE_SECOND_DEADLINE_usec,
+                                                     &rtm,
+                                                     serialized_size,
+                                                     serialized);
 
+    (void) number_of_frames_enqueued;
+    assert(number_of_frames_enqueued > 0);
+  }
 }

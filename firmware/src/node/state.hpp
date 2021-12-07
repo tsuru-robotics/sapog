@@ -72,9 +72,13 @@ struct State
   uint16_t id_in_esc_group;
   uint16_t esc_heartbeat_publish_port;
   uint16_t esc_feedback_publish_port;
+  uint16_t esc_status_publish_port;
+  uint16_t esc_power_publish_port;
+  uint16_t esc_dynamics_publish_port;
   ControlMode control_mode;
   uint16_t ttl_milliseconds;
   uint32_t error_count;
   reg_udral_service_actuator_common_FaultFlags_0_1 fault_flags;
+  CanardMicrosecond next_send_power_dynamics_time;
 };
 }
