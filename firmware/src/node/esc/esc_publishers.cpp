@@ -86,9 +86,9 @@ void publish_esc_feedback(node::state::State &state)
       assert(false);
     }
   }
-  if (state.next_send_power_dynamics_time > get_monotonic_microseconds())
+  if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
   {
-    state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds delay
+    state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds, 20k us delay
     if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
     {
       publish_esc_dynamics(state);
@@ -113,6 +113,23 @@ void publish_esc_status(node::state::State &state)
   status.controller_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
   status.motor_temperature.kelvin = 0;
   status.controller_temperature.kelvin = 0;
+  auto size = serializer.serialize(status);
+  if (size.has_value())
+  {
+    CanardTransferMetadata rtm{};
+    rtm.transfer_kind = CanardTransferKindMessage;
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    {
+      (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                          get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
+                          &rtm,
+                          size.value(),
+                          serializer.getBuffer());
+    }
+  } else
+  {
+    assert(false);
+  }
 }
 
 void publish_esc_power(node::state::State &state)
