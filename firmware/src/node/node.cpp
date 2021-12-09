@@ -207,6 +207,17 @@ static void init_canard()
     RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN2RST;
 #endif
   }
+  {
+    os::CriticalSectionLocker lock;
+    nvicEnableVector(CAN1_TX_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    nvicEnableVector(CAN1_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    nvicEnableVector(CAN1_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+# if BXCAN_MAX_IFACE_INDEX > 0
+    nvicEnableVector(CAN2_TX_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    nvicEnableVector(CAN2_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    nvicEnableVector(CAN2_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+# endif
+  }
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)

@@ -1,25 +1,16 @@
+/*
+ * Copyright (c) 2021 Zubax, zubax.com
+ * Distributed under the MIT License, available in the file LICENSE.
+ * Author: Silver Valdvee <silver.valdvee@zubax.com>
+ */
 #pragma once
-
-#include <hal.h>
-#include "reception.hpp"
 /**
  * IRQ handler macros
  */
-#if UAVCAN_STM32_CHIBIOS
 # define UAVCAN_STM32_IRQ_HANDLER(id)  CH_IRQ_HANDLER(id)
 # define UAVCAN_STM32_IRQ_PROLOGUE()    CH_IRQ_PROLOGUE()
 # define UAVCAN_STM32_IRQ_EPILOGUE()    CH_IRQ_EPILOGUE()
-#elif UAVCAN_STM32_NUTTX
-# define UAVCAN_STM32_IRQ_HANDLER(id)  int id(int irq, FAR void* context, FAR void *arg)
-# define UAVCAN_STM32_IRQ_PROLOGUE()
-# define UAVCAN_STM32_IRQ_EPILOGUE()    return 0;
-#else
-# define UAVCAN_STM32_IRQ_HANDLER(id)  void id(void)
-# define UAVCAN_STM32_IRQ_PROLOGUE()
-# define UAVCAN_STM32_IRQ_EPILOGUE()
-#endif
 
-#if UAVCAN_STM32_CHIBIOS
 /**
  * Priority mask for timer and CAN interrupts.
  */
@@ -30,40 +21,11 @@
 #   define UAVCAN_STM32_IRQ_PRIORITY_MASK  CORTEX_MAX_KERNEL_PRIORITY
 #  endif
 # endif
-#endif
 
 UAVCAN_STM32_IRQ_HANDLER(CAN2_RX0_IRQHandler);
 
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX0_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(2);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
 UAVCAN_STM32_IRQ_HANDLER(CAN2_RX1_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX1_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(2);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
 
 UAVCAN_STM32_IRQ_HANDLER(CAN1_RX0_IRQHandler);
 
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX0_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
 UAVCAN_STM32_IRQ_HANDLER(CAN1_RX1_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX1_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
