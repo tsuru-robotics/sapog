@@ -106,7 +106,7 @@ void plug_and_play_loop(State &state)
         needs_pnp = false;
         break;
     }
-    chThdSleep(1);
+    chThdSleepMicroseconds(30);
   }
 out_of_loop:;
 }

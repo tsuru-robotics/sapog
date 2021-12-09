@@ -17,16 +17,19 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
   std::array<std::uint8_t, 8> payload_array{};
   frame.payload = &payload_array;
 
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   for (uint16_t j = 0;
        j < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); j += (BXCAN_MAX_IFACE_INDEX + 1))
   {
-    bool queue_i_had_something[BXCAN_MAX_IFACE_INDEX + 1] = {};
+    bool a_queue_had_something = false;
+
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
     {
+
       bool bxCanQueueHadSomething = bxCANPop(i,
                                              &frame.extended_can_id,
                                              &frame.payload_size, payload_array.data());
-      queue_i_had_something[i] = bxCanQueueHadSomething;
+      a_queue_had_something = bxCanQueueHadSomething;
       // The transfer is actually not stored here in this narrow scoped variable
       // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
       // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
@@ -50,12 +53,20 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
         }
       }
     }
-    if (std::all_of(std::begin(queue_i_had_something), std::end(queue_i_had_something),
-                    [](bool i) { return i == false; }))
+    bool canSleep = true;
+    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    {
+      if (a_queue_had_something == true || canardTxPeek(&state.queues[i]) != nullptr)
+      {
+        canSleep = false;
+      }
+    }
+
+    if (canSleep)
     {
       //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
       //palWritePad(GPIOC, 14, 1);
-      chThdSleepMicroseconds(60);
+      chThdSleepMicroseconds(10);
       //palWritePad(GPIOC, 14, 0);
       return {};
     }

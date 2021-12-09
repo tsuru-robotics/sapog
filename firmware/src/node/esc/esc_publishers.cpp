@@ -71,7 +71,6 @@ void publish_esc_feedback(node::state::State &state)
 
     if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
     {
-      palWritePad(GPIOC, 12, 1);
       uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
       reg_udral_service_actuator_common_Feedback_0_1 fb{};
       fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
@@ -101,7 +100,6 @@ void publish_esc_feedback(node::state::State &state)
       {
         assert(false);
       }
-      palWritePad(GPIOC, 12, 0);
     }
     if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
     {
