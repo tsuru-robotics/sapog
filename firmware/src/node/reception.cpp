@@ -9,6 +9,7 @@
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
 #include "node.hpp"
+#include "can_interrupt.hpp"
 
 std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state)
 {
@@ -79,5 +80,18 @@ bool not_implemented_handler(const State &state, const CanardRxTransfer *const t
   (void) transfer;
   (void) state;
   return true;
+}
+
+void receive_and_queue_for_processing(const uint8_t interface_index)
+{
+  can_interrupt::frame frame{};
+  bool bxCanQueueHadSomething = bxCANPop(interface_index,
+                                         &frame.extended_can_id,
+                                         &frame.payload_size, frame.payload.data());
+  if (!bxCanQueueHadSomething)
+  {
+    assert(false);
+  }
+  can_interrupt::fifo_queue.push(frame);
 }
 

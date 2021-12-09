@@ -24,6 +24,9 @@ using namespace node::state;
 
 void process_received_transfer(const State &state, const CanardRxTransfer *const transfer);
 
+// This function adds the received  transfer to a list in state that contains pairs of transfers and their handlers.
+void receive_and_queue_for_processing(const uint8_t interface_index);
+
 std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state);
 
 bool not_implemented_handler(const State &state, const CanardRxTransfer *const transfer);

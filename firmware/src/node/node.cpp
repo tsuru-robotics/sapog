@@ -29,6 +29,7 @@
 #include "node/essential/note.hpp"
 #include "node/essential/register_list.hpp"
 #include "node/subscription_macros.hpp"
+#include "can_interrupt_handler.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -60,72 +61,6 @@ static State state{};
 static THD_WORKING_AREA(_wa_control_thread,
                         1024 * 4);
 
-#include <hal.h>
-/**
- * IRQ handler macros
- */
-#if UAVCAN_STM32_CHIBIOS
-# define UAVCAN_STM32_IRQ_HANDLER(id)  CH_IRQ_HANDLER(id)
-# define UAVCAN_STM32_IRQ_PROLOGUE()    CH_IRQ_PROLOGUE()
-# define UAVCAN_STM32_IRQ_EPILOGUE()    CH_IRQ_EPILOGUE()
-#elif UAVCAN_STM32_NUTTX
-# define UAVCAN_STM32_IRQ_HANDLER(id)  int id(int irq, FAR void* context, FAR void *arg)
-# define UAVCAN_STM32_IRQ_PROLOGUE()
-# define UAVCAN_STM32_IRQ_EPILOGUE()    return 0;
-#else
-# define UAVCAN_STM32_IRQ_HANDLER(id)  void id(void)
-# define UAVCAN_STM32_IRQ_PROLOGUE()
-# define UAVCAN_STM32_IRQ_EPILOGUE()
-#endif
-
-#if UAVCAN_STM32_CHIBIOS
-/**
- * Priority mask for timer and CAN interrupts.
- */
-# ifndef UAVCAN_STM32_IRQ_PRIORITY_MASK
-#  if (CH_KERNEL_MAJOR == 2)
-#   define UAVCAN_STM32_IRQ_PRIORITY_MASK  CORTEX_PRIORITY_MASK(CORTEX_MAX_KERNEL_PRIORITY)
-#  else // ChibiOS 3+
-#   define UAVCAN_STM32_IRQ_PRIORITY_MASK  CORTEX_MAX_KERNEL_PRIORITY
-#  endif
-# endif
-#endif
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX0_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX0_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  uavcan_stm32::handleRxInterrupt(1, 0);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX1_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX1_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  uavcan_stm32::handleRxInterrupt(1, 1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX0_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX0_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  uavcan_stm32::handleRxInterrupt(0, 0);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX1_IRQHandler);
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX1_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  uavcan_stm32::handleRxInterrupt(0, 1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
 
 void print_can_error_if_exists()
 {
