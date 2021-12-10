@@ -22,7 +22,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 
 using namespace node::state;
 
-void process_received_transfer(const State &state, const CanardRxTransfer *const transfer);
+void accept_transfers(State &state);
 
 // This function adds the received  transfer to a list in state that contains pairs of transfers and their handlers.
 void receive_and_queue_for_processing(const uint8_t interface_index);

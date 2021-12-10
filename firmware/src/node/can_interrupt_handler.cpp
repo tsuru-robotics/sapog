@@ -5,35 +5,60 @@
  */
 #include <hal.h>
 #include "reception.hpp"
-#include "can_interrupt_handler.hpp"
 
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX0_IRQHandler)
+extern "C" {
+/**
+* IRQ handler macros
+*/
+# define UAVCAN_STM32_IRQ_HANDLER(id)  CH_IRQ_HANDLER(id)
+# define UAVCAN_STM32_IRQ_PROLOGUE()    CH_IRQ_PROLOGUE()
+# define UAVCAN_STM32_IRQ_EPILOGUE()    CH_IRQ_EPILOGUE()
+
+/**
+ * Priority mask for timer and CAN interrupts.
+ */
+
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX0_HANDLER);
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX1_HANDLER);
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX0_HANDLER);
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX1_HANDLER);
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX0_HANDLER)
 {
   UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(2);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
-
-UAVCAN_STM32_IRQ_HANDLER(CAN2_RX1_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(2);
-  UAVCAN_STM32_IRQ_EPILOGUE();
-}
-
-
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX0_IRQHandler)
-{
-  UAVCAN_STM32_IRQ_PROLOGUE();
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   receive_and_queue_for_processing(1);
   UAVCAN_STM32_IRQ_EPILOGUE();
 }
 
 
-UAVCAN_STM32_IRQ_HANDLER(CAN1_RX1_IRQHandler)
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX1_HANDLER)
 {
   UAVCAN_STM32_IRQ_PROLOGUE();
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   receive_and_queue_for_processing(1);
   UAVCAN_STM32_IRQ_EPILOGUE();
+}
+
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX0_HANDLER)
+{
+  UAVCAN_STM32_IRQ_PROLOGUE();
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
+  receive_and_queue_for_processing(0);
+  UAVCAN_STM32_IRQ_EPILOGUE();
+}
+
+
+UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX1_HANDLER)
+{
+  UAVCAN_STM32_IRQ_PROLOGUE();
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
+  receive_and_queue_for_processing(0);
+  UAVCAN_STM32_IRQ_EPILOGUE();
+}
 }

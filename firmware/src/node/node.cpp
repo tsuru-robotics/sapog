@@ -30,8 +30,10 @@
 #include "node/essential/register_list.hpp"
 #include "node/subscription_macros.hpp"
 #include "can_interrupt_handler.hpp"
+#include "print_can_error.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
+
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -61,15 +63,6 @@ static State state{};
 static THD_WORKING_AREA(_wa_control_thread,
                         1024 * 4);
 
-
-void print_can_error_if_exists()
-{
-  uint32_t error_code = ((volatile BxCANType *) 0x40006400U)->ESR;
-  if (error_code != 0)
-  {
-    printf("%ld\n", error_code);
-  }
-}
 
 [[noreturn]] static void control_thread(void *arg)
 {
@@ -193,6 +186,8 @@ PublishConfigurablePort publish_ports[] = {
 
 static void init_canard()
 {
+  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
+
   {
     /* https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
     AHB/APB bridges (APB) page 49
@@ -207,13 +202,31 @@ static void init_canard()
     RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN2RST;
 #endif
   }
+  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
   {
-    os::CriticalSectionLocker lock;
-    nvicEnableVector(CAN1_TX_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    for (int j = 0; j < 3; ++j)
+    {
+      receive_and_queue_for_processing(i);
+    }
+  }
+
+//  {
+//    os::CriticalSectionLocker lock;
+//    BXCAN1->IER = BXCAN_IER_TMEIE | BXCAN_IER_FMPIE0 | BXCAN_IER_FFIE0 | BXCAN_IER_FOVIE0 |
+//                  BXCAN_IER_FMPIE1 | BXCAN_IER_FFIE1 | BXCAN_IER_FOVIE1 | BXCAN_IER_EWGIE |
+//                  BXCAN_IER_EPVIE | BXCAN_IER_BOFIE | BXCAN_IER_LECIE | BXCAN_IER_ERRIE |
+//                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
+//# if BXCAN_MAX_IFACE_INDEX > 0
+//    BXCAN2->IER = BXCAN_IER_TMEIE | BXCAN_IER_FMPIE0 | BXCAN_IER_FFIE0 | BXCAN_IER_FOVIE0 |
+//                  BXCAN_IER_FMPIE1 | BXCAN_IER_FFIE1 | BXCAN_IER_FOVIE1 | BXCAN_IER_EWGIE |
+//                  BXCAN_IER_EPVIE | BXCAN_IER_BOFIE | BXCAN_IER_LECIE | BXCAN_IER_ERRIE |
+//                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
+//#endif
+//  }
+  {
     nvicEnableVector(CAN1_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
     nvicEnableVector(CAN1_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
 # if BXCAN_MAX_IFACE_INDEX > 0
-    nvicEnableVector(CAN2_TX_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
     nvicEnableVector(CAN2_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
     nvicEnableVector(CAN2_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
 # endif
@@ -224,6 +237,7 @@ static void init_canard()
   {
     printf("%d\n", bxCANConfigure(i, timings, false));
   }
+
   state.canard = canardInit(&canardAllocate, &canardFree);
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
   {

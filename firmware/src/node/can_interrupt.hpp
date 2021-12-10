@@ -11,6 +11,8 @@
 
 #define DEVICE_MAX_QUEUES (3)
 #define DEVICE_QUEUE_FULL_TIME_us (192)
+// This is just the number I remember from looking at the logic analyzer showing signals from test points toggled by
+// reception
 #define PROCESSING_DELAY_us (700)
 #define REQUIRED_FRAME_BUFFERS ((std::uint8_t)(PROCESSING_DELAY_us / DEVICE_QUEUE_FULL_TIME_us * DEVICE_MAX_QUEUES)+1)
 struct fifo_queue_item
@@ -23,6 +25,6 @@ struct fifo_queue_item
 namespace can_interrupt
 {
 using frame = fifo_queue_item;
-extern silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS>
-  fifo_queue;
+extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS>, BXCAN_MAX_IFACE_INDEX>
+  fifo_queues;
 }

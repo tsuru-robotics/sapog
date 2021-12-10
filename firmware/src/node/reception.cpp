@@ -10,6 +10,31 @@
 #include "transmit.hpp"
 #include "node.hpp"
 #include "can_interrupt.hpp"
+#include "node/interfaces/IHandler.hpp"
+
+void accept_transfers(State &state)
+{
+  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  {
+    while (can_interrupt::fifo_queues[i].counter > 0)
+    {
+      auto fifo_queue_item = can_interrupt::fifo_queues[i].pop();
+      CanardRxTransfer transfer{};
+      CanardRxSubscription *this_subscription;
+      const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(), &fifo_queue_item.frame,
+                                                  i,
+                                                  &transfer, &this_subscription);
+      if (this_subscription->user_reference != nullptr)
+      {
+        IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
+        handler->operator()(state, &transfer);
+        board::deallocate(static_cast<const uint8_t *>(transfer.payload));
+        (void) canard_result;
+      }
+    }
+  }
+
+}
 
 std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state)
 {
@@ -18,7 +43,7 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
   std::array<std::uint8_t, 8> payload_array{};
   frame.payload = &payload_array;
 
-  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
+  //palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   for (uint16_t j = 0;
        j < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); j += (BXCAN_MAX_IFACE_INDEX + 1))
   {
@@ -65,10 +90,7 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
 
     if (canSleep)
     {
-      //palWritePad(GPIOC, 14, ~palReadPad(GPIOC, 14));
-      //palWritePad(GPIOC, 14, 1);
       chThdSleepMicroseconds(10);
-      //palWritePad(GPIOC, 14, 0);
       return {};
     }
   }
@@ -88,10 +110,9 @@ void receive_and_queue_for_processing(const uint8_t interface_index)
   bool bxCanQueueHadSomething = bxCANPop(interface_index,
                                          &frame.extended_can_id,
                                          &frame.payload_size, frame.payload.data());
-  if (!bxCanQueueHadSomething)
+  if (bxCanQueueHadSomething)
   {
-    assert(false);
+    can_interrupt::fifo_queues[interface_index].push(frame);
   }
-  can_interrupt::fifo_queue.push(frame);
 }
 

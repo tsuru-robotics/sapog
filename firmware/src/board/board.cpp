@@ -42,6 +42,10 @@
 #include <cstdio>
 #include "o1heap/o1heap.h"
 
+extern "C" void _unhandled_exception()
+{
+  os::applicationHaltHook();
+}
 // Clock config validation
 #if STM32_PREDIV1_VALUE != 2
 # error STM32_PREDIV1_VALUE

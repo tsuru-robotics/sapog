@@ -12,5 +12,6 @@ namespace can_interrupt
 {
 // 3 queues get filled in 192 microseconds, 5 * 192 microseconds is more than the time it takes for something to process
 // the queue while the motor is running on a higher priority thread (approximately 700 microseconds)
-silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS> fifo_queue{};
+std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS>, BXCAN_MAX_IFACE_INDEX>
+  fifo_queues{};
 }

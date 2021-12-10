@@ -58,7 +58,7 @@ struct : ILoopMethod
 {
   void operator()(node::state::State &state)
   {
-    std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state);
+    /*std::pair<std::optional<CanardRxTransfer>, void *> transfer = receive_transfer(state);
     if (transfer.first.has_value())
     {
       CanardRxTransfer *canard_transfer = &transfer.first.value();
@@ -76,7 +76,8 @@ struct : ILoopMethod
       board::deallocate(static_cast<const uint8_t *>(transfer.first.value().payload));
     } else
     {
-    }
+    }*/
+    accept_transfers(state);
     transmit(state);
   }
 } handle_fast_loop;

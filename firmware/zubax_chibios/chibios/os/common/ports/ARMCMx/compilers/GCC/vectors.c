@@ -43,135 +43,242 @@
  * @notapi
  */
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
-void _unhandled_exception(void) {
+__attribute__((weak)) void _unhandled_exception(void)
+{
 /*lint -restore*/
 
-  while (true) {
+  while (true)
+  {
   }
 }
 
 #if !defined(__DOXYGEN__)
 extern uint32_t __main_stack_end__;
+
 void Reset_Handler(void);
+
 void NMI_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void HardFault_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void MemManage_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void BusFault_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void UsageFault_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector1C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector20(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector24(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector28(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void SVC_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void DebugMon_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector34(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void PendSV_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void SysTick_Handler(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector40(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector44(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector48(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector4C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #if CORTEX_NUM_VECTORS > 4
+
 void Vector50(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector54(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector58(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector5C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 8
+
 void Vector60(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector64(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector68(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector6C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 12
+
 void Vector70(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector74(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector78(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector7C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 16
+
 void Vector80(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector84(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector88(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector8C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 20
+
 void Vector90(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector94(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector98(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector9C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 24
+
 void VectorA0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorA4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorA8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorAC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 28
+
 void VectorB0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorB4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorB8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorBC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 32
+
 void VectorC0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorC4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorC8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorCC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 36
+
 void VectorD0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorD4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorD8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorDC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 40
+
 void VectorE0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorE4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorE8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorEC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 44
+
 void VectorF0(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorF4(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorF8(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void VectorFC(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 48
+
 void Vector100(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector104(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector108(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector10C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 52
+
 void Vector110(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector114(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector118(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector11C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 56
+
 void Vector120(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector124(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector128(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector12C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 60
+
 void Vector130(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector134(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector138(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector13C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 64
+
 void Vector140(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector144(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector148(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector14C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 68
+
 void Vector150(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector154(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector158(void) __attribute__((weak, alias("_unhandled_exception")));
+
 void Vector15C(void) __attribute__((weak, alias("_unhandled_exception")));
+
 #endif
 #if CORTEX_NUM_VECTORS > 72
 void Vector160(void) __attribute__((weak, alias("_unhandled_exception")));
@@ -440,62 +547,62 @@ __attribute__ ((used, aligned(128), section(VECTORS_SECTION)))
 /*lint -save -e9075 [8.4] All symbols are invoked from asm context.*/
 vectors_t _vectors = {
 /*lint -restore*/
-  &__main_stack_end__,Reset_Handler,      NMI_Handler,        HardFault_Handler,
-  MemManage_Handler,  BusFault_Handler,   UsageFault_Handler, Vector1C,
-  Vector20,           Vector24,           Vector28,           SVC_Handler,
-  DebugMon_Handler,   Vector34,           PendSV_Handler,     SysTick_Handler,
+  &__main_stack_end__, Reset_Handler, NMI_Handler, HardFault_Handler,
+  MemManage_Handler, BusFault_Handler, UsageFault_Handler, Vector1C,
+  Vector20, Vector24, Vector28, SVC_Handler,
+  DebugMon_Handler, Vector34, PendSV_Handler, SysTick_Handler,
   {
-    Vector40,           Vector44,           Vector48,           Vector4C,
+    Vector40, Vector44, Vector48, Vector4C,
 #if CORTEX_NUM_VECTORS > 4
-    Vector50,           Vector54,           Vector58,           Vector5C,
+    Vector50, Vector54, Vector58, Vector5C,
 #endif
 #if CORTEX_NUM_VECTORS > 8
-    Vector60,           Vector64,           Vector68,           Vector6C,
+    Vector60, Vector64, Vector68, Vector6C,
 #endif
 #if CORTEX_NUM_VECTORS > 12
-    Vector70,           Vector74,           Vector78,           Vector7C,
+    Vector70, Vector74, Vector78, Vector7C,
 #endif
 #if CORTEX_NUM_VECTORS > 16
-    Vector80,           Vector84,           Vector88,           Vector8C,
+    Vector80, Vector84, Vector88, Vector8C,
 #endif
 #if CORTEX_NUM_VECTORS > 20
-    Vector90,           Vector94,           Vector98,           Vector9C,
+    Vector90, Vector94, Vector98, Vector9C,
 #endif
 #if CORTEX_NUM_VECTORS > 24
-    VectorA0,           VectorA4,           VectorA8,           VectorAC,
+    VectorA0, VectorA4, VectorA8, VectorAC,
 #endif
 #if CORTEX_NUM_VECTORS > 28
-    VectorB0,           VectorB4,           VectorB8,           VectorBC,
+    VectorB0, VectorB4, VectorB8, VectorBC,
 #endif
 #if CORTEX_NUM_VECTORS > 32
-    VectorC0,           VectorC4,           VectorC8,           VectorCC,
+    VectorC0, VectorC4, VectorC8, VectorCC,
 #endif
 #if CORTEX_NUM_VECTORS > 36
-    VectorD0,           VectorD4,           VectorD8,           VectorDC,
+    VectorD0, VectorD4, VectorD8, VectorDC,
 #endif
 #if CORTEX_NUM_VECTORS > 40
-    VectorE0,           VectorE4,           VectorE8,           VectorEC,
+    VectorE0, VectorE4, VectorE8, VectorEC,
 #endif
 #if CORTEX_NUM_VECTORS > 44
-    VectorF0,           VectorF4,           VectorF8,           VectorFC,
+    VectorF0, VectorF4, VectorF8, VectorFC,
 #endif
 #if CORTEX_NUM_VECTORS > 48
-    Vector100,          Vector104,          Vector108,          Vector10C,
+    Vector100, Vector104, Vector108, Vector10C,
 #endif
 #if CORTEX_NUM_VECTORS > 52
-    Vector110,          Vector114,          Vector118,          Vector11C,
+    Vector110, Vector114, Vector118, Vector11C,
 #endif
 #if CORTEX_NUM_VECTORS > 56
-    Vector120,          Vector124,          Vector128,          Vector12C,
+    Vector120, Vector124, Vector128, Vector12C,
 #endif
 #if CORTEX_NUM_VECTORS > 60
-    Vector130,          Vector134,          Vector138,          Vector13C,
+    Vector130, Vector134, Vector138, Vector13C,
 #endif
 #if CORTEX_NUM_VECTORS > 64
-    Vector140,          Vector144,          Vector148,          Vector14C,
+    Vector140, Vector144, Vector148, Vector14C,
 #endif
 #if CORTEX_NUM_VECTORS > 68
-    Vector150,          Vector154,          Vector158,          Vector15C,
+    Vector150, Vector154, Vector158, Vector15C,
 #endif
 #if CORTEX_NUM_VECTORS > 72
     Vector160,          Vector164,          Vector168,          Vector16C,

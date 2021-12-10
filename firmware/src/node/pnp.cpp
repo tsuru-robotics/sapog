@@ -215,5 +215,5 @@ static bool save_node_id(State &state)
   data2.integer64 = data;
   printf("writing %d to node_id\n", state.canard.node_id);
   uavcan_register_Value_1_0_select_integer64_(&data2);
-  return ::config::registers::getInstance().registerWrite("uavcan_node_id", &data2);
+  return ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
 }

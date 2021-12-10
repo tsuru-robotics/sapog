@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cassert>
+#include "zubax_chibios/sys/sys.hpp"
 
 namespace silver_template_library
 {
@@ -16,7 +17,7 @@ class Queue
 {
 public:
   std::array<T, size> array;
-  std::size_t counter;
+  int counter;
 
   T pop();
 
@@ -26,12 +27,18 @@ public:
 template<typename T, int size>
 T Queue<T, size>::pop()
 {
+  os::CriticalSectionLocker lock;
+  if (counter == -1)
+  {
+    assert(false);
+  }
   return this->array.at(counter--);
 }
 
 template<typename T, int size>
 void Queue<T, size>::push(T element)
 {
+  os::CriticalSectionLocker lock;
   if (++counter > size)
   {
     counter = 0;
