@@ -11,7 +11,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include <libcanard/canard.h>
 #include <uavcan/node/GetInfo_1_0.h>
 #include <board/board.hpp>
-#include "state.hpp"
+#include "src/node/state/state.hpp"
 #include "units.hpp"
 #include <cstddef>
 #include <cstdio>

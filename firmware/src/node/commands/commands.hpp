@@ -16,7 +16,7 @@
 #include <node/units.hpp>
 #include <node/time.h>
 #include <motor/motor.hpp>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
 #include <node/stop_gap.hpp>

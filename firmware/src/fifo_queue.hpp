@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cassert>
+#include <cstdio>
 #include "zubax_chibios/sys/sys.hpp"
 
 namespace silver_template_library
@@ -39,6 +40,7 @@ void Queue<T, size>::push(T element)
 {
   if (++counter >= size)
   {
+    //printf("Fifo queue filled up!\n");
     counter = 0;
     assert(false);
   }

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <libcanard/canard.h>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 
 /*
  * Copyright (c) 2021 Zubax, zubax.com

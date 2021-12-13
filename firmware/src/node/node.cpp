@@ -6,31 +6,33 @@
 #define NUNAVUT_ASSERT assert
 
 #include "node.hpp"
-#include <cstddef>
-#include <ch.h>
-#include "bxcan/bxcan.h"
-#include "uavcan/_register/Access_1_0.h"
-#include "libcanard/canard.h"
-#include "state.hpp"
-#include "units.hpp"
-#include "time.h"
 #include "loops.hpp"
+#include "src/node/state/state.hpp"
+#include "units.hpp"
 #include <node/loops/loop.hpp>
 #include "board/board.hpp"
+#include <ch.h>
+#include "time.h"
+#include <cstddef>
+#include "bxcan/bxcan.h"
+#include "libcanard/canard.h"
+#include "uavcan/_register/Access_1_0.h"
 #include "reg/udral/physics/acoustics/Note_0_1.h"
+#include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
 #include "node/commands/commands.hpp"
 #include <uavcan/node/ExecuteCommand_1_1.h>
 #include <node/essential/access.hpp>
 #include <node/essential/get_info.hpp>
-#include <node/esc/esc.hpp>
-#include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
-#include <bxcan/bxcan_registers.h>
-#include <node/esc/readiness.hpp>
 #include "node/essential/note.hpp"
 #include "node/essential/register_list.hpp"
-#include "node/subscription_macros.hpp"
-#include "can_interrupt_handler.hpp"
+#include <node/esc/esc.hpp>
+#include <bxcan/bxcan_registers.h>
+#include <node/esc/readiness.hpp>
+#include "src/node/can_interrupt/can_interrupt_handler.hpp"
 #include "print_can_error.hpp"
+#include "node_config_macros/node_config.hpp"
+#include "node/dynamic_port_ids/registered_ports.hpp"
+#include "node/dynamic_port_ids/publish_configurable_port.hpp"
 
 #define CONFIGURABLE_SUBJECT_ID 0xFFFF
 
@@ -58,7 +60,6 @@ using namespace board;
 
 static void init_canard();
 
-static State state{};
 // This defines _wa_control_thread
 static THD_WORKING_AREA(_wa_control_thread,
                         1024 * 4);
@@ -73,6 +74,14 @@ static THD_WORKING_AREA(_wa_control_thread,
   // Plug and play feature
   state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
   node::pnp::plug_and_play_loop(state);
+  {
+    nvicEnableVector(CAN1_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
+    nvicEnableVector(CAN1_RX1_IRQn, CORTEX_MINIMUM_PRIORITY);
+# if BXCAN_MAX_IFACE_INDEX > 0
+    nvicEnableVector(CAN2_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
+    nvicEnableVector(CAN2_RX1_IRQn, CORTEX_MINIMUM_PRIORITY);
+# endif
+  }
   // Loops are created
 
   static Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
@@ -115,25 +124,11 @@ bool is_port_configurable(RegisteredPort &reg)
 }
 
 
-CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.sub.setpoint.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
 CONFIG_PARAM_INT("id_in_esc_group", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
 
-CONFIG_PARAM_INT("uavcan.sub.readiness.id", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
 
 CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
 
-CONFIG_PARAM_INT("uavcan.pub.esc_heartbeat.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.pub.feedback.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.pub.power.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.pub.dynamics.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
-
-CONFIG_PARAM_INT("uavcan.pub.status.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
 CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
@@ -147,40 +142,7 @@ struct : IHandler
 } empty_handler;
 
 
-RegisteredPort registered_ports[] =
-  {
-    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
-    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
-                                  &uavcan_node_ExecuteCommand_Request_1_1_handler),
-    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
-                                  &node::essential::uavcan_register_Access_1_0_handler),
-    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_List, 1, 0,
-                                  &node::essential::uavcan_register_List_1_0_handler),
-    CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
-                                         0, 1,
-                                         &reg_udral_physics_acoustics_Note_0_1_handler),
-    CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(setpoint, reg_udral_service_actuator_common_sp_Scalar,
-                                         0, 1,
-                                         &setpoint_handler),
-    CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(readiness, reg_udral_service_common_Readiness,
-                                         0, 1,
-                                         &sub_readiness_handler)
-  };
 
-struct PublishConfigurablePort
-{
-  std::string_view name;
-  uint16_t *state_variable;
-};
-PublishConfigurablePort publish_ports[] = {
-  {"uavcan.pub.esc_heartbeat.id", &state.esc_heartbeat_publish_port},
-  {"uavcan.pub.feedback.id",      &state.esc_feedback_publish_port},
-  {"uavcan.pub.status.id",        &state.esc_status_publish_port},
-  {"uavcan.pub.power.id",         &state.esc_power_publish_port},
-  {"uavcan.pub.dynamics.id",      &state.esc_dynamics_publish_port},
-  {"id_in_esc_group",             &state.id_in_esc_group},
-  {"ttl_milliseconds",            &state.ttl_milliseconds}
-};
 /// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 
 
@@ -223,14 +185,7 @@ static void init_canard()
 //                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
 //#endif
 //  }
-  {
-    nvicEnableVector(CAN1_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
-    nvicEnableVector(CAN1_RX1_IRQn, CORTEX_MINIMUM_PRIORITY - 1);
-# if BXCAN_MAX_IFACE_INDEX > 0
-    nvicEnableVector(CAN2_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
-    nvicEnableVector(CAN2_RX1_IRQn, CORTEX_MINIMUM_PRIORITY - 1);
-# endif
-  }
+
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
@@ -244,7 +199,11 @@ static void init_canard()
     state.queues[i] = canardTxInit(100, 8);
   }
   ConfigParam _{};
-  bool value_exists = false;//configGetDescr("uavcan.node.id", &_) != -ENOENT;
+#ifdef FORGET_NODE_ID
+  bool value_exists = false;
+#else
+  bool value_exists = configGetDescr("uavcan.node.id", &_) != -ENOENT;
+#endif
   float stored_node_id = CANARD_NODE_ID_UNSET;
   if (value_exists)
   {
@@ -319,14 +278,6 @@ static void init_canard()
     printf("New sub %s: %d, res=%d\n", registered_port.name, registered_port.subscription.port_id, res);
   }
 }
-
-std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators()
-{
-  return {
-    std::begin(registered_ports), std::end(registered_ports)
-  };
-}
-
 
 int UAVCANNode::init()
 {

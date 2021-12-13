@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 
 using namespace node::state;
 namespace node::pnp

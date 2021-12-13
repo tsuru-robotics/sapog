@@ -24,7 +24,7 @@ def allocate_nr_of_nodes(nr: int, continuous: bool = False):
     allocated_hw_ids = []
     allocation_counter = 0
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = 6
     with make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01) as node:

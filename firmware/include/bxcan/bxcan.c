@@ -4,7 +4,7 @@
 
 #include "bxcan.h"
 #include "bxcan_registers.h"
-#include "node/can_interrupt_handler.hpp"
+#include "src/node/can_interrupt/can_interrupt_handler.hpp"
 #include "stm32f105xc.h"
 #include "nvic.h"
 #include <assert.h>
@@ -246,7 +246,7 @@ bool bxCANConfigure(const uint8_t iface_index,  //
   {
     // Build an IER mask for all non-reserved bits.
     const uint32_t ier_mask = BXCAN_IER_FMPIE0 | BXCAN_IER_FMPIE1; // Valdvee
-    
+
     bxcan_base->IER = ier_mask;         // We need no interrupts.
     bxcan_base->MCR &= ~BXCAN_MCR_SLEEP;  // Exit sleep mode.
     bxcan_base->MCR |= BXCAN_MCR_INRQ;    // Request init

@@ -1,6 +1,6 @@
 #include <reg/udral/service/common/Heartbeat_0_1.h>
 #include <node/stop_gap.hpp>
-#include <node/state.hpp>
+#include "src/node/state/state.hpp"
 #include <node/time.h>
 #include <node/units.hpp>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>

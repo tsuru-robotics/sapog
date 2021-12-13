@@ -12,7 +12,7 @@
 #include <node/esc/esc_publishers.hpp>
 #include "node/pnp.hpp"
 #include "node/time.h"
-#include "state.hpp"
+#include "src/node/state/state.hpp"
 #include "publishers.hpp"
 #include "reception.hpp"
 #include "node/essential/heartbeat.hpp"

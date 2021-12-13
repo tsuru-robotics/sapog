@@ -3,8 +3,8 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
-#include <hal.h>
-#include "reception.hpp"
+#include "zubax_chibios/chibios/os/hal/include/hal.h"
+#include "src/node/reception.hpp"
 
 extern "C" {
 /**

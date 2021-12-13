@@ -9,7 +9,7 @@
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
 #include "node.hpp"
-#include "can_interrupt.hpp"
+#include "src/node/can_interrupt/extern_queue.hpp"
 #include "node/interfaces/IHandler.hpp"
 
 void accept_transfers(State &state)

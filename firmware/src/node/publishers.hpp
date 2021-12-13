@@ -6,7 +6,7 @@
 #pragma once
 
 #include "units.hpp"
-#include "state.hpp"
+#include "src/node/state/state.hpp"
 #include "transmit.hpp"
 #include <iterator>
 #include <uavcan/node/port/List_0_1.h>

@@ -4,10 +4,4 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #pragma once
-
-#include <libcanard/canard.h>
-#include "src/node/state/state.hpp"
-
-using namespace node::state;
-
-int transmit(State &state);
+#define FORGET_NODE_ID

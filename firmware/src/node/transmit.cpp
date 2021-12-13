@@ -9,7 +9,7 @@
 #include <stm32f105xc.h>
 #include <hal.h>
 #include "transmit.hpp"
-#include "state.hpp"
+#include "src/node/state/state.hpp"
 #include "libcanard/canard.h"
 #include "time.h"
 

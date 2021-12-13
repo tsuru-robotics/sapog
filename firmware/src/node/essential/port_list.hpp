@@ -6,7 +6,7 @@
 #pragma once
 
 #include <libcanard/canard.h>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 
 
 void publish_port_list(CanardInstance &canard, node::state::State &state);

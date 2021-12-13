@@ -22,6 +22,6 @@ struct fifo_queue_item
 namespace can_interrupt
 {
 using frame = fifo_queue_item;
-extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS + 100>, BXCAN_MAX_IFACE_INDEX>
+extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS + 70>, BXCAN_MAX_IFACE_INDEX + 1>
   fifo_queues;
 }

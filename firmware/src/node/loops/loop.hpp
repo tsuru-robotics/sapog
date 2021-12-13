@@ -7,7 +7,7 @@
 
 #include <libcanard/canard.h>
 #include <functional>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 #include <node/interfaces/IHandler.hpp>
 
 class Loop

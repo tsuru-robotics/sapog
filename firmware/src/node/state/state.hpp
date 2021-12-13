@@ -5,8 +5,8 @@
  */
 #pragma once
 
-#include <zubax_chibios/config/config.hpp>
-#include <libcanard/canard.h>
+#include "zubax_chibios/zubax_chibios/config/config.hpp"
+#include "libcanard/canard.h"
 #include "reg/udral/service/actuator/common/FaultFlags_0_1.h"
 
 #define CONFIGURABLE_ID_IN_ESC_GROUP 0xFFFF
@@ -87,3 +87,4 @@ struct State
   CanardMicrosecond next_send_power_dynamics_time;
 };
 }
+extern node::state::State state{};

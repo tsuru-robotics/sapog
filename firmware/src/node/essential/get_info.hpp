@@ -6,7 +6,7 @@
 #pragma once
 
 #include <libcanard/canard.h>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 #include <node/stop_gap.hpp>
 #include <cstdio>
 #include <uavcan/node/GetInfo_1_0.h>

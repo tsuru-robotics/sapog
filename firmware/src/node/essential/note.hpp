@@ -5,9 +5,9 @@
  */
 #pragma once
 
-#include <node/state.hpp>
+#include "src/node/state/state.hpp"
 #include <libcanard/canard.h>
-#include <node/state.hpp>
+#include "src/node/state/state.hpp"
 #include <motor/motor.hpp>
 #include "note.hpp"
 #include "reg/udral/physics/acoustics/Note_0_1.h"

@@ -7,7 +7,7 @@
 
 #include <libcanard/canard.h>
 #include <uavcan/node/Heartbeat_1_0.h>
-#include "node/state.hpp"
+#include "src/node/state/state.hpp"
 
 namespace node::essential
 {
