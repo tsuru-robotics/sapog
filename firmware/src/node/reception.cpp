@@ -18,6 +18,7 @@ void accept_transfers(State &state)
   {
     while (can_interrupt::fifo_queues[i].counter > 0)
     {
+      printf("Removed one item from the queue\n");
       auto fifo_queue_item = can_interrupt::fifo_queues[i].pop();
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;

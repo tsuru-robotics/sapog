@@ -9,12 +9,12 @@
 #include "fifo_queue.hpp"
 #include "libcanard/canard.h"
 
-#define DEVICE_MAX_QUEUES (3)
-#define DEVICE_QUEUE_FULL_TIME_us (192)
+#define DEVICE_MAX_QUEUES (3U)
+#define DEVICE_QUEUE_FULL_TIME_us (192U)
 // This is just the number I remember from looking at the logic analyzer showing signals from test points toggled by
 // reception
-#define PROCESSING_DELAY_us (700)
-#define REQUIRED_FRAME_BUFFERS ((std::uint8_t)(PROCESSING_DELAY_us / DEVICE_QUEUE_FULL_TIME_us * DEVICE_MAX_QUEUES)+1)
+#define PROCESSING_DELAY_us (700U)
+#define REQUIRED_FRAME_BUFFERS ((std::uint8_t)(PROCESSING_DELAY_us / DEVICE_QUEUE_FULL_TIME_us * DEVICE_MAX_QUEUES*2)+1U)
 struct fifo_queue_item
 {
   CanardFrame frame;

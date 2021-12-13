@@ -17,7 +17,7 @@ class Queue
 {
 public:
   std::array<T, size> array;
-  int counter;
+  int counter = 0;
 
   T pop();
 
@@ -38,7 +38,6 @@ T Queue<T, size>::pop()
 template<typename T, int size>
 void Queue<T, size>::push(T element)
 {
-  os::CriticalSectionLocker lock;
   if (++counter > size)
   {
     counter = 0;
