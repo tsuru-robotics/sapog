@@ -18,13 +18,10 @@
 struct fifo_queue_item
 {
   CanardFrame frame;
-  std::array<std::uint8_t, 8> payload;
-  size_t payload_size;
-  uint32_t extended_can_id;
 };
 namespace can_interrupt
 {
 using frame = fifo_queue_item;
-extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS>, BXCAN_MAX_IFACE_INDEX>
+extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS + 100>, BXCAN_MAX_IFACE_INDEX>
   fifo_queues;
 }

@@ -27,7 +27,6 @@ public:
 template<typename T, int size>
 T Queue<T, size>::pop()
 {
-  os::CriticalSectionLocker lock;
   if (counter == -1)
   {
     assert(false);
@@ -38,7 +37,7 @@ T Queue<T, size>::pop()
 template<typename T, int size>
 void Queue<T, size>::push(T element)
 {
-  if (++counter > size)
+  if (++counter >= size)
   {
     counter = 0;
     assert(false);

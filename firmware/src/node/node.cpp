@@ -223,15 +223,14 @@ static void init_canard()
 //                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
 //#endif
 //  }
-  /*{
-    os::CriticalSectionLocker lock;
-    nvicEnableVector(CAN1_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
-    nvicEnableVector(CAN1_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+  {
+    nvicEnableVector(CAN1_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
+    nvicEnableVector(CAN1_RX1_IRQn, CORTEX_MINIMUM_PRIORITY - 1);
 # if BXCAN_MAX_IFACE_INDEX > 0
-    nvicEnableVector(CAN2_RX0_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
-    nvicEnableVector(CAN2_RX1_IRQn, UAVCAN_STM32_IRQ_PRIORITY_MASK);
+    nvicEnableVector(CAN2_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
+    nvicEnableVector(CAN2_RX1_IRQn, CORTEX_MINIMUM_PRIORITY - 1);
 # endif
-  }*/
+  }
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)

@@ -109,8 +109,8 @@ void receive_and_queue_for_processing(const uint8_t interface_index)
 {
   can_interrupt::frame frame{};
   bool bxCanQueueHadSomething = bxCANPop(interface_index,
-                                         &frame.extended_can_id,
-                                         &frame.payload_size, frame.payload.data());
+                                         &frame.frame.extended_can_id,
+                                         &frame.frame.payload_size, &frame.frame.payload);
   if (bxCanQueueHadSomething)
   {
     can_interrupt::fifo_queues[interface_index].push(frame);
