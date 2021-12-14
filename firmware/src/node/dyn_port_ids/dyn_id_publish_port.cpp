@@ -5,7 +5,9 @@
  */
 
 #include "dyn_id_publish_port.hpp"
+#include "node/state/state.hpp"
 
+using namespace node::state;
 DynIDPublishPort publish_ports[] = {
   {"uavcan.pub.esc_heartbeat.id", &state.publish_ports.esc_heartbeat},
   {"uavcan.pub.feedback.id",      &state.publish_ports.esc_feedback},

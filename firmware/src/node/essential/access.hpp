@@ -26,7 +26,7 @@
 
 #pragma once
 
-std::string_view find_type_name(const char *const request_name);
+std::string_view find_type_name(std::string_view request_name);
 
 struct RegisterCriteria
 {

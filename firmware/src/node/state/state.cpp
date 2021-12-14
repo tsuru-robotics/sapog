@@ -6,4 +6,8 @@
 
 #include "state.hpp"
 
-node::state::State state{};
+namespace node::state
+{
+State state{};
+}
+

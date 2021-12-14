@@ -9,12 +9,12 @@
 #include "type_names.hpp"
 #include "access.hpp"
 
-std::string_view find_type_name(const char *const request_name)
+std::string_view find_type_name(std::string_view request_name)
 {
   std::string_view found_type_name{};
   for (auto &iter: types_names)
   {
-    if (std::string_view(iter.name) == std::string_view(request_name))
+    if (iter.name == request_name)
     {
       found_type_name = iter.type_name;
     }

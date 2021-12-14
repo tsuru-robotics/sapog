@@ -90,5 +90,5 @@ struct State
   reg_udral_service_actuator_common_FaultFlags_0_1 fault_flags;
   CanardMicrosecond next_send_power_dynamics_time;
 };
+extern State state;
 }
-extern node::state::State state;
