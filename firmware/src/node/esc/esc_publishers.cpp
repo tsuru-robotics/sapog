@@ -33,7 +33,7 @@ UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_dynamics_rotation_PlanarTs,
 
 void publish_esc_heartbeat(node::state::State &state)
 {
-  if (state.esc_heartbeat_publish_port == CONFIGURABLE_SUBJECT_ID)
+  if (state.publish_ports.esc_heartbeat == CONFIGURABLE_SUBJECT_ID)
   {
     return;
   }
@@ -69,7 +69,7 @@ void publish_esc_feedback(node::state::State &state)
   if (state.readiness != node::state::Readiness::SLEEP)
   {
 
-    if (state.esc_feedback_publish_port != CONFIGURABLE_SUBJECT_ID)
+    if (state.publish_ports.esc_feedback != CONFIGURABLE_SUBJECT_ID)
     {
       uavcan_l6::DSDL<reg_udral_service_actuator_common_Feedback_0_1>::Serializer serializer{};
       reg_udral_service_actuator_common_Feedback_0_1 fb{};
@@ -83,7 +83,7 @@ void publish_esc_feedback(node::state::State &state)
         CanardTransferMetadata rtm{};
         rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Feedback_0_1++;
         rtm.priority = CanardPriorityNominal;
-        rtm.port_id = state.esc_feedback_publish_port;
+        rtm.port_id = state.publish_ports.esc_feedback;
         rtm.remote_node_id = CANARD_NODE_ID_UNSET;
         rtm.transfer_kind = CanardTransferKindMessage;
         for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
@@ -104,11 +104,11 @@ void publish_esc_feedback(node::state::State &state)
     if (get_monotonic_microseconds() > state.next_send_power_dynamics_time)
     {
       state.next_send_power_dynamics_time = get_monotonic_microseconds() + 20'000;  // 50 Hz, 0.02 seconds, 20k us delay
-      if (state.esc_dynamics_publish_port != CONFIGURABLE_SUBJECT_ID)
+      if (state.publish_ports.esc_dynamics != CONFIGURABLE_SUBJECT_ID)
       {
         publish_esc_dynamics(state);
       }
-      if (state.esc_power_publish_port != CONFIGURABLE_SUBJECT_ID)
+      if (state.publish_ports.esc_power != CONFIGURABLE_SUBJECT_ID)
       {
         publish_esc_power(state);
       }
@@ -136,7 +136,7 @@ void publish_esc_status(node::state::State &state)
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
     rtm.priority = CanardPriorityNominal;
-    rtm.port_id = state.esc_status_publish_port;
+    rtm.port_id = state.publish_ports.esc_status;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Status_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
@@ -168,7 +168,7 @@ void publish_esc_power(node::state::State &state)
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
     rtm.priority = CanardPriorityNominal;
-    rtm.port_id = state.esc_power_publish_port;
+    rtm.port_id = state.publish_ports.esc_power;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_electricity_PowerTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
@@ -203,7 +203,7 @@ void publish_esc_dynamics(node::state::State &state)
     CanardTransferMetadata rtm{};
     rtm.transfer_kind = CanardTransferKindMessage;
     rtm.priority = CanardPriorityNominal;
-    rtm.port_id = state.esc_dynamics_publish_port;
+    rtm.port_id = state.publish_ports.esc_dynamics;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_dynamics_rotation_PlanarTs_0_1++;
     for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)

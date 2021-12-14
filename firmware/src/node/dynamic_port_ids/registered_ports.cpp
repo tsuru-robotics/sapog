@@ -7,6 +7,14 @@
 #include <utility>
 #include "registered_ports.hpp"
 #include "node/subscription_macros.hpp"
+#include "node/commands/commands.hpp"
+#include "node/essential/access.hpp"
+#include <node/essential/get_info.hpp>
+#include <uavcan/node/ExecuteCommand_1_1.h>
+#include "node/essential/register_list.hpp"
+#include "node/essential/note.hpp"
+#include "node/esc/esc.hpp"
+#include "node/esc/readiness.hpp"
 
 
 RegisteredPort registered_ports[] =

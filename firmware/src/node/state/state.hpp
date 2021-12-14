@@ -63,6 +63,14 @@ struct PlugAndPlay
   PNPStatus status = PNPStatus::Subscribing;
   bool anonymous = true;
 };
+struct PublishPorts
+{
+  uint16_t esc_heartbeat;
+  uint16_t esc_status;
+  uint16_t esc_power;
+  uint16_t esc_feedback;
+  uint16_t esc_dynamics;
+};
 struct State
 {
   bool is_restart_required = false;
@@ -75,11 +83,7 @@ struct State
   Readiness readiness;
   Health health;
   uint16_t id_in_esc_group;
-  uint16_t esc_heartbeat_publish_port;
-  uint16_t esc_feedback_publish_port;
-  uint16_t esc_status_publish_port;
-  uint16_t esc_power_publish_port;
-  uint16_t esc_dynamics_publish_port;
+  PublishPorts publish_ports;
   ControlMode control_mode;
   uint16_t ttl_milliseconds;
   uint32_t error_count;
@@ -87,4 +91,4 @@ struct State
   CanardMicrosecond next_send_power_dynamics_time;
 };
 }
-extern node::state::State state{};
+extern node::state::State state;

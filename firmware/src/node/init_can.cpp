@@ -3,39 +3,13 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
-#define NUNAVUT_ASSERT assert
 
-#include "node.hpp"
-#include "loops.hpp"
-#include "src/node/state/state.hpp"
-#include "units.hpp"
-#include <node/loops/loop.hpp>
-#include "board/board.hpp"
-#include <ch.h>
-#include "time.h"
-#include <cstddef>
-#include "bxcan/bxcan.h"
+#include <cerrno>
+#include "init_can.hpp"
 #include "libcanard/canard.h"
-#include "uavcan/_register/Access_1_0.h"
-#include "reg/udral/physics/acoustics/Note_0_1.h"
-#include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
-#include "node/commands/commands.hpp"
-#include <uavcan/node/ExecuteCommand_1_1.h>
-#include <node/essential/access.hpp>
-#include <node/essential/get_info.hpp>
-#include "node/essential/note.hpp"
-#include "node/essential/register_list.hpp"
-#include <node/esc/esc.hpp>
-#include <bxcan/bxcan_registers.h>
-#include <node/esc/readiness.hpp>
-#include "src/node/can_interrupt/can_interrupt_handler.hpp"
-#include "print_can_error.hpp"
-#include "node_config_macros/node_config.hpp"
-#include "node/dynamic_port_ids/registered_ports.hpp"
+#include "board/board.hpp"
+#include "reception.hpp"
 #include "node/dynamic_port_ids/publish_configurable_port.hpp"
-
-#define CONFIGURABLE_SUBJECT_ID 0xFFFF
-
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -48,103 +22,6 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
   (void) ins;
   board::deallocate(pointer);
 }
-
-
-extern void board::die(int error);
-
-extern void *const ConfigStorageAddress;
-constexpr unsigned ConfigStorageSize = 1024;
-
-using namespace uavcan_node_1_0;
-using namespace board;
-
-static void init_canard();
-
-// This defines _wa_control_thread
-static THD_WORKING_AREA(_wa_control_thread,
-                        1024 * 4);
-
-
-[[noreturn]] static void control_thread(void *arg)
-{
-  using namespace node::loops;
-  (void) arg;
-  init_canard();
-  chRegSetThreadName("uavcan_thread");
-  // Plug and play feature
-  state.plug_and_play.anonymous = state.canard.node_id > CANARD_NODE_ID_MAX;
-  node::pnp::plug_and_play_loop(state);
-  {
-    nvicEnableVector(CAN1_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
-    nvicEnableVector(CAN1_RX1_IRQn, CORTEX_MINIMUM_PRIORITY);
-# if BXCAN_MAX_IFACE_INDEX > 0
-    nvicEnableVector(CAN2_RX0_IRQn, CORTEX_MINIMUM_PRIORITY);
-    nvicEnableVector(CAN2_RX1_IRQn, CORTEX_MINIMUM_PRIORITY);
-# endif
-  }
-  // Loops are created
-
-  static Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
-                      Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-                      Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()},
-                      Loop{handle_esc_status_loop, SECOND_IN_MICROSECONDS / 10, get_monotonic_microseconds()}
-  };
-  printf("Has this node_id after pnp: %d\n", state.canard.node_id);
-  // Loops begin running
-  while (true)
-  {
-    print_can_error_if_exists();
-    if (state.is_save_requested)
-    {
-      state.is_save_requested = false;
-      configSave();
-    }
-    if (state.is_restart_required && !os::isRebootRequested())
-    {
-      printf("Sent %d remaining frames before restarting\n", transmit(state));
-      os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
-    }
-    CanardMicrosecond current_time = get_monotonic_microseconds();
-    for (Loop &loop: loops)
-    {
-      if (loop.is_time_to_execute(current_time))
-      {
-        loop.handler(state);
-        loop.increment_next_execution();
-      } else
-      {
-      }
-    }
-  }
-}
-
-bool is_port_configurable(RegisteredPort &reg)
-{
-  return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
-}
-
-
-CONFIG_PARAM_INT("id_in_esc_group", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
-
-
-CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
-
-
-CONFIG_PARAM_BOOL("control_mode_rpm", true)
-
-struct : IHandler
-{
-  void operator()(node::state::State &_state, CanardRxTransfer *transfer)
-  {
-    (void) _state;
-    (void) transfer;
-  }
-} empty_handler;
-
-
-
-/// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
-
 
 static void init_canard()
 {
@@ -221,17 +98,19 @@ static void init_canard()
   {
     state.control_mode = configGet("control_mode_rpm") == true ? ControlMode::RPM : ControlMode::DUTYCYCLE;
   }
-  for (auto &publish_port: publish_ports)
+  auto it_pair = get_publish_port_iterators();
+
+  for (auto &publish_port = it_pair.first; publish_port != it_pair.second; publish_port++)
   {
-    if (configGetDescr(publish_port.name.data(), &_) != -ENOENT)
+    if (configGetDescr(publish_port->name.data(), &_) != -ENOENT)
     {
-      *publish_port.state_variable = configGet(publish_port.name.data());
-      if (*publish_port.state_variable == CONFIGURABLE_SUBJECT_ID)
+      *publish_port->state_variable = configGet(publish_port->name.data());
+      if (*publish_port->state_variable == CONFIGURABLE_SUBJECT_ID)
       {
-        printf("no %s\n", publish_port.name.data());
+        printf("no %s\n", publish_port->name.data());
       } else
       {
-        printf("has %s\n", publish_port.name.data());
+        printf("has %s\n", publish_port->name.data());
       }
     }
   }
@@ -277,13 +156,4 @@ static void init_canard()
     assert(res >= 0); // This is to make sure that the subscription was successful.
     printf("New sub %s: %d, res=%d\n", registered_port.name, registered_port.subscription.port_id, res);
   }
-}
-
-int UAVCANNode::init()
-{
-  if (!chThdCreateStatic(_wa_control_thread, sizeof(_wa_control_thread), NORMALPRIO, control_thread, nullptr))
-  {
-    return -1;
-  }
-  return 0;
 }

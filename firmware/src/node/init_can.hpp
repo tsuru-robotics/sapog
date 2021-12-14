@@ -4,6 +4,6 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 
-#include "state.hpp"
+#pragma once
 
-node::state::State state{};
+static void init_canard();

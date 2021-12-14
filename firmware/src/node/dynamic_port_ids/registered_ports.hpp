@@ -16,3 +16,6 @@ struct RegisteredPort
   CanardTransferKind transfer_kind;
   CanardRxSubscription subscription;
 };
+
+template<size_t N>
+extern inline std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators();

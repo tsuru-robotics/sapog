@@ -16,7 +16,7 @@ static const int max_frames_to_process_per_iteration = 1000;
 #include <cstddef>
 #include <cstdio>
 #include "time.h"
-#include "node.hpp"
+#include "node_control_thread.hpp"
 #include <board/unique_id.h>
 #include <bxcan/bxcan.h>
 

@@ -7,7 +7,7 @@
 #include <uavcan/node/port/List_0_1.h>
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <node/units.hpp>
-#include <node/node.hpp>
+#include "src/node/node_control_thread.hpp"
 #include <cstdio>
 #include <node/time.h>
 #include "port_list.hpp"

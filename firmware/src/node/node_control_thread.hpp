@@ -25,9 +25,6 @@ public:
 }
 
 
-template<size_t N>
-extern inline std::pair<RegisteredPort *, RegisteredPort *> get_ports_info_iterators();
-
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array
 std::pair<RegisteredPort *, RegisteredPort *>

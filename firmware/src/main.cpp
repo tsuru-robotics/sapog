@@ -47,7 +47,7 @@
 #include <motor/motor.hpp>
 #include <cstring>
 #include <sys/unistd.h>
-#include "node/node.hpp"
+#include "node/node_control_thread.hpp"
 #include <stdio.h>
 
 namespace
