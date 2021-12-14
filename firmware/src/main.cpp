@@ -94,7 +94,7 @@ os::watchdog::Timer init()
   }
 
   // Initializing console after delay to ensure that CLI is flushed
-  usleep(300000); // 0.3 seconds
+  chThdSleepMilliseconds(300);
   console_init();
 
   return wdt;
@@ -103,7 +103,7 @@ os::watchdog::Timer init()
 [[maybe_unused]] void do_startup_beep()
 {
   motor_beep(1000, 100);
-  ::usleep(200 * 1000);
+  chThdSleepMilliseconds(200);
   motor_beep(1000, 100);
 }
 
@@ -182,7 +182,7 @@ void applicationHaltHook()
 int main()
 {
   auto wdt = init();
-  printf("\n\n\n\nBooted\n");
+  printf("\n\n\nBooted\n");
   chThdSetPriority(NORMALPRIO);
 
   //do_startup_beep();
@@ -195,9 +195,7 @@ int main()
    * TODO: Report status flags via vendor-specific status field.
    */
   //BackgroundConfigManager bg_config_manager;
-  uavcan_node_1_0::UAVCANNode node{};
-  (void) node;
-  node.init();
+  uavcan_node_1_0::init();
   while (!os::isRebootRequested())
   {
     wdt.reset();
@@ -211,9 +209,9 @@ int main()
     }
 
     //bg_config_manager.poll();
-    ::usleep(500 * 1000); // 500 milliseconds
+    chThdSleepMilliseconds(500);
   }
-  ::usleep(100 * 1000); // 100 milliseconds
+  chThdSleepMilliseconds(100);
   motor_stop();
   board::reboot();
   return 0;

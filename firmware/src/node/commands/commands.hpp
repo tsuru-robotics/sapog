@@ -19,6 +19,7 @@
 #include "src/node/state/state.hpp"
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
+#include "node/interfaces/IHandler.hpp"
 #include <node/stop_gap.hpp>
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,

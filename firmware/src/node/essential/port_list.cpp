@@ -26,7 +26,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     m.publishers.sparse_list.elements[(*cnt)++].value = uavcan_node_port_List_0_1_FIXED_PORT_ID_;
   }
 
-  auto iterators = get_ports_info_iterators();
+  auto iterators = get_dyn_subscription_iterators();
   for (auto &iter = iterators.first; iter < iterators.second; iter++)
   {
     if (iter->transfer_kind == CanardTransferKindRequest)

@@ -12,22 +12,10 @@
 #include <deque>
 #include <array>
 #include "src/node/state/state.hpp"
+#include "node/dyn_port_ids/dyn_id_subscriptions.hpp"
 
-#ifndef SAPOG_UAVCAN_NODE_1_0_HPP
-#define SAPOG_UAVCAN_NODE_1_0_HPP
+#pragma once
 namespace uavcan_node_1_0
 {
-class UAVCANNode
-{
-public:
-  static int init();
-};
+int init();
 }
-
-
-// This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
-// the subscriptions array
-std::pair<RegisteredPort *, RegisteredPort *>
-get_ports_info_iterators();
-
-#endif //SAPOG_UAVCAN_NODE_1_0_HPP

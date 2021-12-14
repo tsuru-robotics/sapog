@@ -19,8 +19,12 @@
 #include <motor/motor.hpp>
 #include <node/interfaces/IHandler.hpp>
 #include "node/esc/esc_publishers.hpp"
+#include "node/transmit.hpp"
 #include <algorithm>
 #include <motor/motor_ttl_expiry_handler.hpp>
+
+using Readiness = node::state::Readiness;
+using ControlMode = node::state::ControlMode;
 
 struct : IStateAwareHandler
 {

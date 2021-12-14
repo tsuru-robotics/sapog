@@ -4,9 +4,9 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 
-#include "publish_configurable_port.hpp"
+#include "dyn_id_publish_port.hpp"
 
-PublishConfigurablePort publish_ports[] = {
+DynIDPublishPort publish_ports[] = {
   {"uavcan.pub.esc_heartbeat.id", &state.publish_ports.esc_heartbeat},
   {"uavcan.pub.feedback.id",      &state.publish_ports.esc_feedback},
   {"uavcan.pub.status.id",        &state.publish_ports.esc_status},
@@ -16,7 +16,7 @@ PublishConfigurablePort publish_ports[] = {
   {"ttl_milliseconds",            &state.ttl_milliseconds}
 };
 
-inline std::pair<PublishConfigurablePort *, PublishConfigurablePort *> get_publish_port_iterators()
+std::pair<DynIDPublishPort *, DynIDPublishPort *> get_publish_port_iterators()
 {
   return {std::begin(publish_ports), std::end(publish_ports)};
 }

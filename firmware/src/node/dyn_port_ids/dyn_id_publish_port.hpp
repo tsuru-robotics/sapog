@@ -9,10 +9,10 @@
 #include "node/state/state.hpp"
 #include <string_view>
 
-struct PublishConfigurablePort
+struct DynIDPublishPort
 {
   std::string_view name;
   uint16_t *state_variable;
 };
 
-extern inline std::pair<PublishConfigurablePort *, PublishConfigurablePort *> get_publish_port_iterators();
+extern std::pair<DynIDPublishPort *, DynIDPublishPort *> get_publish_port_iterators();

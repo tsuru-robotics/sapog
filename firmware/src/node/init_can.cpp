@@ -9,7 +9,7 @@
 #include "libcanard/canard.h"
 #include "board/board.hpp"
 #include "reception.hpp"
-#include "node/dynamic_port_ids/publish_configurable_port.hpp"
+#include "node/dyn_port_ids/dyn_id_publish_port.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -23,7 +23,8 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
   board::deallocate(pointer);
 }
 
-static void init_canard()
+
+void init_canard()
 {
   palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
 
@@ -116,36 +117,37 @@ static void init_canard()
   }
 
   state.timing.started_at = get_monotonic_microseconds();
-  for (auto &registered_port: registered_ports)
+  auto it_pair2 = get_dyn_subscription_iterators();
+  for (auto &dyn_id_subscription = it_pair2.first; dyn_id_subscription != it_pair2.second; dyn_id_subscription++)
   {
-    if (registered_port.subscription.port_id == CONFIGURABLE_SUBJECT_ID)
+    if (dyn_id_subscription->subscription.port_id == CONFIGURABLE_SUBJECT_ID)
     {
-      if (configGetDescr(registered_port.name, &_) != -ENOENT)
+      if (configGetDescr(dyn_id_subscription->name, &_) != -ENOENT)
       {
-        float new_port = configGet(registered_port.name);
+        float new_port = configGet(dyn_id_subscription->name);
         if ((int) new_port == CONFIGURABLE_SUBJECT_ID)
         {
-          printf("no %s\n", registered_port.name);
+          printf("no %s\n", dyn_id_subscription->name);
           continue;
         }
-        registered_port.subscription.port_id = new_port;
+        dyn_id_subscription->subscription.port_id = new_port;
       } else
       {
-        printf("no %s\n", registered_port.type);
+        printf("no %s\n", dyn_id_subscription->type);
         continue;
       }
     }
-    const int8_t res =  //
+    const int8_t res =
       canardRxSubscribe(&state.canard,
-                        registered_port.transfer_kind,
-                        registered_port.subscription.port_id,
-                        registered_port.subscription.extent,
-                        registered_port.subscription.transfer_id_timeout_usec,
-                        &registered_port.subscription);
+                        dyn_id_subscription->transfer_kind,
+                        dyn_id_subscription->subscription.port_id,
+                        dyn_id_subscription->subscription.extent,
+                        dyn_id_subscription->subscription.transfer_id_timeout_usec,
+                        &dyn_id_subscription->subscription);
 
-    if (registered_port.subscription.user_reference == nullptr)
+    if (dyn_id_subscription->subscription.user_reference == nullptr)
     {
-      printf("no handler %s\n", registered_port.name);
+      printf("no handler %s\n", dyn_id_subscription->name);
       continue;
     }
     if (res < 0)
@@ -154,6 +156,6 @@ static void init_canard()
     }
     chThdSleepMicroseconds(400);
     assert(res >= 0); // This is to make sure that the subscription was successful.
-    printf("New sub %s: %d, res=%d\n", registered_port.name, registered_port.subscription.port_id, res);
+    printf("New sub %s: %d, res=%d\n", dyn_id_subscription->name, dyn_id_subscription->subscription.port_id, res);
   }
 }

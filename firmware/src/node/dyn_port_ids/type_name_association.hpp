@@ -5,5 +5,8 @@
  */
 
 #pragma once
-
-void init_canard();
+struct type_name_association
+{
+  const char *name;
+  const char *type_name;
+};

@@ -33,7 +33,7 @@ struct : IHandler
                                                               (const uint8_t *) transfer->payload,
                                                               &size) >= 0)
       {
-        state.readiness = Readiness(readiness.value);
+        state.readiness = node::state::Readiness(readiness.value);
         if (readiness.value == 3)
         {
           printf("Readiness set to active.\n");

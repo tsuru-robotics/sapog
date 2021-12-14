@@ -8,7 +8,6 @@
 #include "uavcan/_register/Name_1_0.h"
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
-#include "node_control_thread.hpp"
 #include "src/node/can_interrupt/extern_queue.hpp"
 #include "node/interfaces/IHandler.hpp"
 

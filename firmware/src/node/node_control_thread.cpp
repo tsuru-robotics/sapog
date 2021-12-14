@@ -15,10 +15,9 @@
 #include "time.h"
 #include <cstddef>
 #include "libcanard/canard.h"
-#include <node/essential/access.hpp>
 #include <bxcan/bxcan_registers.h>
 #include "print_can_error.hpp"
-#include "node/dynamic_port_ids/registered_ports.hpp"
+#include "node/dyn_port_ids/dyn_id_subscriptions.hpp"
 #include "init_can.hpp"
 
 
@@ -43,14 +42,11 @@ void enable_interrupt_handlers()
 # endif
 }
 
-// This defines _wa_control_thread
 static THD_WORKING_AREA(_wa_uavcan_thread,
                         1024 * 4);
 
-
 [[noreturn]] static void uavcan_thread(void *arg)
 {
-  using namespace node::loops;
   (void) arg;
   init_canard();
   chRegSetThreadName("uavcan_thread");
@@ -73,36 +69,23 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
       os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
     }
     CanardMicrosecond current_time = get_monotonic_microseconds();
-    for (Loop &loop: loops)
+    for (Loop &loop: node::loops::loops)
     {
       if (loop.is_time_to_execute(current_time))
       {
         loop.handler(state);
         loop.increment_next_execution();
-      } else
-      {
       }
     }
   }
 }
 
-bool is_port_configurable(RegisteredPort &reg)
-{
-  return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
-}
 
 
-CONFIG_PARAM_INT("id_in_esc_group", CONFIGURABLE_ID_IN_ESC_GROUP, 0, CONFIGURABLE_ID_IN_ESC_GROUP)
-
-
-CONFIG_PARAM_INT("ttl_milliseconds", 500, 4, 500)
-
-
-CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
 /// Get a pair of iterators, one points to the start of the subscriptions array and the other points to the end of it.
 
-int UAVCANNode::init()
+int uavcan_node_1_0::init()
 {
   if (!chThdCreateStatic(_wa_uavcan_thread, sizeof(_wa_uavcan_thread), NORMALPRIO, uavcan_thread,
                          nullptr))
