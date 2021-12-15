@@ -32,7 +32,6 @@
  *
  ****************************************************************************/
 
-#include "bootloader_interface.hpp"
 #include <cstdint>
 
 namespace uavcan_node

@@ -5,7 +5,7 @@
  */
 #define NUNAVUT_ASSERT assert
 
-#include "node_control_thread.hpp"
+#include "uavcan_thread.hpp"
 #include "loops.hpp"
 #include "src/node/state/state.hpp"
 #include "units.hpp"

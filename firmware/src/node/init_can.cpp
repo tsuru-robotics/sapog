@@ -10,6 +10,7 @@
 #include "board/board.hpp"
 #include "reception.hpp"
 #include "node/dyn_port_ids/dyn_id_publish_port.hpp"
+#include "node_config_macros/node_config.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {

@@ -18,6 +18,7 @@
 struct fifo_queue_item
 {
   CanardFrame frame;
+  std::array<std::uint8_t, CANARD_MTU_CAN_CLASSIC> payload;
 };
 namespace can_interrupt
 {

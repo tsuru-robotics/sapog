@@ -4,6 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 #include "loop.hpp"
+#include "node/time.h"
 #include <utility>
 
 bool Loop::is_time_to_execute(CanardMicrosecond current_time) const
@@ -13,12 +14,12 @@ bool Loop::is_time_to_execute(CanardMicrosecond current_time) const
 
 void Loop::increment_next_execution()
 {
-  this->next_execution_at += this->next_loop_delay;
+  this->next_execution_at = get_monotonic_microseconds() + this->next_loop_delay;
 }
 
-Loop::Loop(ILoopMethod &_handler, CanardMicrosecond _next_loop_delay, CanardMicrosecond _current_time) :
+Loop::Loop(ILoopMethod &_handler, CanardMicrosecond _next_loop_delay) :
   next_loop_delay(_next_loop_delay),
-  next_execution_at(_current_time - 1),
+  next_execution_at(0),
   handler(_handler)
 {
 }

@@ -8,6 +8,7 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
+#include <optional>
 #include "zubax_chibios/sys/sys.hpp"
 
 namespace silver_template_library
@@ -20,17 +21,17 @@ public:
   std::array<T, size> array;
   int counter = 0;
 
-  T pop();
+  std::optional<T> pop();
 
   void push(T element);
 };
 
 template<typename T, int size>
-T Queue<T, size>::pop()
+std::optional<T> Queue<T, size>::pop()
 {
   if (counter == -1)
   {
-    assert(false);
+    return {};
   }
   return this->array.at(counter--);
 }

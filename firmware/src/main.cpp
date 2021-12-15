@@ -47,7 +47,7 @@
 #include <motor/motor.hpp>
 #include <cstring>
 #include <sys/unistd.h>
-#include "node/node_control_thread.hpp"
+#include "node/uavcan_thread.hpp"
 #include <stdio.h>
 
 namespace
@@ -94,7 +94,7 @@ os::watchdog::Timer init()
   }
 
   // Initializing console after delay to ensure that CLI is flushed
-  chThdSleepMilliseconds(300);
+  usleep(300000); // 0.3 seconds
   console_init();
 
   return wdt;
@@ -103,7 +103,7 @@ os::watchdog::Timer init()
 [[maybe_unused]] void do_startup_beep()
 {
   motor_beep(1000, 100);
-  chThdSleepMilliseconds(200);
+  ::usleep(200 * 1000);
   motor_beep(1000, 100);
 }
 
@@ -182,12 +182,12 @@ void applicationHaltHook()
 int main()
 {
   auto wdt = init();
-  printf("\n\n\nBooted\n");
   chThdSetPriority(NORMALPRIO);
 
   //do_startup_beep();
 
   motor_confirm_initialization();
+  printf("\n\n\n\nBooted\n");
 
   /*
    * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.
@@ -209,9 +209,9 @@ int main()
     }
 
     //bg_config_manager.poll();
-    chThdSleepMilliseconds(500);
+    ::usleep(500 * 1000); // 500 milliseconds
   }
-  chThdSleepMilliseconds(100);
+  ::usleep(100 * 1000); // 100 milliseconds
   motor_stop();
   board::reboot();
   return 0;

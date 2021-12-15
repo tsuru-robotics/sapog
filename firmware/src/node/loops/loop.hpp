@@ -13,7 +13,7 @@
 class Loop
 {
 public:
-  Loop(ILoopMethod &_handler, CanardMicrosecond _next_loop_delay, CanardMicrosecond current_time);
+  Loop(ILoopMethod &_handler, CanardMicrosecond _next_loop_delay);
 
   CanardMicrosecond next_loop_delay;
 

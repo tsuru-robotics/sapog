@@ -85,9 +85,9 @@ struct : ILoopMethod
   }
 } handle_fast_loop;
 
-static Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS, get_monotonic_microseconds()},
-                    Loop{handle_fast_loop, QUEUE_TIME_FRAME, get_monotonic_microseconds()},
-                    Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5, get_monotonic_microseconds()},
-                    Loop{handle_esc_status_loop, SECOND_IN_MICROSECONDS / 10, get_monotonic_microseconds()}
+Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS},
+             Loop{handle_fast_loop, QUEUE_TIME_FRAME},
+             Loop{handle_5_second_loop, SECOND_IN_MICROSECONDS * 5},
+             Loop{handle_esc_status_loop, SECOND_IN_MICROSECONDS / 10}
 };
 }

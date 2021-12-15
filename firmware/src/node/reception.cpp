@@ -15,21 +15,32 @@ void accept_transfers(State &state)
 {
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
   {
-    while (can_interrupt::fifo_queues[i].counter > 0)
+    while (can_interrupt::fifo_queues[i].counter >= 0)
     {
-      printf("Removed one item from the queue\n");
       auto fifo_queue_item = can_interrupt::fifo_queues[i].pop();
+      if (!fifo_queue_item.has_value())
+      {
+        break;
+      }
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
-      const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(), &fifo_queue_item.frame,
-                                                  i,
-                                                  &transfer, &this_subscription);
-      if (this_subscription->user_reference != nullptr)
+      volatile const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(),
+                                                           &fifo_queue_item.value().frame,
+                                                           i,
+                                                           &transfer, &this_subscription);
+
+      if (canard_result == 1)
       {
-        IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
-        handler->operator()(state, &transfer);
-        board::deallocate(static_cast<const uint8_t *>(transfer.payload));
-        (void) canard_result;
+        if (this_subscription->user_reference != nullptr)
+        {
+          IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
+          handler->operator()(state, &transfer);
+          board::deallocate(static_cast<const uint8_t *>(transfer.payload));
+          printf("Transfer\n");
+        }
+      } else if (canard_result == 0)
+      {
+        printf("Frame\n");
       }
     }
   }
@@ -109,7 +120,8 @@ void receive_and_queue_for_processing(const uint8_t interface_index)
   can_interrupt::frame frame{};
   bool bxCanQueueHadSomething = bxCANPop(interface_index,
                                          &frame.frame.extended_can_id,
-                                         &frame.frame.payload_size, &frame.frame.payload);
+                                         &frame.frame.payload_size, &frame.payload);
+  frame.frame.payload = &frame.payload;
   if (bxCanQueueHadSomething)
   {
     can_interrupt::fifo_queues[interface_index].push(frame);
