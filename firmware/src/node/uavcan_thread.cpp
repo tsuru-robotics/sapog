@@ -17,7 +17,7 @@
 #include "libcanard/canard.h"
 #include <bxcan/bxcan_registers.h>
 #include "print_can_error.hpp"
-#include "node/dyn_port_ids/subscriptions.hpp"
+#include "node/register_values/subscriptions.hpp"
 #include "init_can.hpp"
 
 

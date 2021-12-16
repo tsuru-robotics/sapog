@@ -82,7 +82,7 @@ class TestESC:
                 # if feedback_result is None:
                 #     assert False
                 #     return
-                time.sleep(0.05)
+                time.sleep(0.2)
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
             # communications are still available

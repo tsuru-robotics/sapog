@@ -9,9 +9,9 @@
 #include "libcanard/canard.h"
 #include "board/board.hpp"
 #include "reception.hpp"
-#include "node/dyn_port_ids/dyn_id_publish_port.hpp"
+#include "node/register_values/dyn_id_publish_port.hpp"
 #include "node_config_macros/node_config.hpp"
-#include "node/dyn_port_ids/parameters.hpp"
+#include "node/register_values/parameters.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {

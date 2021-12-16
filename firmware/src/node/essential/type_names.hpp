@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "node/dyn_port_ids/type_name_association.hpp"
+#include "node/register_values/type_name_association.hpp"
 
 type_name_association types_names[] = {
   {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
