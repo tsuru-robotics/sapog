@@ -33,9 +33,10 @@ void accept_transfers(State &state)
       auto fifo_queue_item = can_interrupt::fifo_queues[i].pop();
       if (!fifo_queue_item.has_value())
       {
+        can_interrupt::fifo_queues[i].reset();
         break;
       }
-      printf("queues: %08x\n", reinterpret_cast<int>(&can_interrupt::fifo_queues));
+//      printf("queues: %08x\n", reinterpret_cast<int>(&can_interrupt::fifo_queues));
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
       volatile const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(),
@@ -45,22 +46,22 @@ void accept_transfers(State &state)
 
       if (canard_result == 1)
       {
-        printf("Transfer\n");
+//        printf("Transfer\n");
         if (this_subscription->user_reference != nullptr)
         {
-          printf("subscription\n");
+//          printf("subscription\n");
           IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
           handler->operator()(state, &transfer);
           board::deallocate(static_cast<const uint8_t *>(transfer.payload));
         }
       } else if (canard_result == 0)
       {
-        printf("Queue %08x      ", static_cast<unsigned>(fifo_queue_item.value().frame.extended_can_id));
-        for (std::size_t x = 0; x < fifo_queue_item.value().frame.payload_size; x++)
-        {
-          printf("%02x ", fifo_queue_item.value().payload[x]);
-        }
-        printf("\n");
+//        printf("Queue %08x      ", static_cast<unsigned>(fifo_queue_item.value().frame.extended_can_id));
+//        for (std::size_t x = 0; x < fifo_queue_item.value().frame.payload_size; x++)
+//        {
+//          printf("%02x ", fifo_queue_item.value().payload[x]);
+//        }
+//        printf("\n");
       }
     }
   }

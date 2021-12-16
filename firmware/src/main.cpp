@@ -209,9 +209,9 @@ int main()
     }
 
     //bg_config_manager.poll();
-    ::usleep(500 * 1000); // 500 milliseconds
+    chThdSleepMilliseconds(500);
   }
-  ::usleep(100 * 1000); // 100 milliseconds
+  chThdSleepMilliseconds(100);
   motor_stop();
   board::reboot();
   return 0;

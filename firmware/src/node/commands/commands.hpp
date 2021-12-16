@@ -41,6 +41,7 @@ struct : IHandler
         case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+          printf("Restart is requested.\n");
           break;
         case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_STORE_PERSISTENT_STATES:
           if (motor_is_idle())

@@ -632,10 +632,10 @@ CANARD_PRIVATE bool rxTryParseFrame(const CanardMicrosecond timestamp_usec,
     valid = valid && ((out->payload_size >= MFT_NON_LAST_FRAME_PAYLOAD_MIN) || out->end_of_transfer);
     // A frame that is a part of a multi-frame transfer cannot be empty (tail byte not included).
     valid = valid && ((out->payload_size > 0) || (out->start_of_transfer && out->end_of_transfer));
-    if (out->port_id == 384)
-    {
-      __asm volatile ("bkpt #0\n"); // Break into the debugger
-    }
+//    if (out->port_id == 384)
+//    {
+//      __asm volatile ("bkpt #0\n"); // Break into the debugger
+//    }
   }
   return valid;
 }
