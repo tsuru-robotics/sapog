@@ -12,7 +12,7 @@
 #include <deque>
 #include <array>
 #include "src/node/state/state.hpp"
-#include "node/dyn_port_ids/dyn_id_subscriptions.hpp"
+#include "node/dyn_port_ids/subscriptions.hpp"
 
 #pragma once
 namespace uavcan_node_1_0

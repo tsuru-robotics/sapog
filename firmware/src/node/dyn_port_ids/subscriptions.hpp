@@ -8,7 +8,7 @@
 
 #include "libcanard/canard.h"
 
-struct DynIdSubscription
+struct AnySubscription
 {
   const char *type;
   const char *name;
@@ -18,6 +18,6 @@ struct DynIdSubscription
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array
-extern std::pair<DynIdSubscription *, DynIdSubscription *> get_dyn_subscription_iterators();
+extern std::pair<AnySubscription *, AnySubscription *> get_dyn_subscription_iterators();
 
-bool is_port_configurable(DynIdSubscription &reg);
+bool is_port_configurable(AnySubscription &reg);

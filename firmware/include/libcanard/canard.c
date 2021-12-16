@@ -578,7 +578,7 @@ CANARD_PRIVATE bool rxTryParseFrame(const CanardMicrosecond timestamp_usec,
   CANARD_ASSERT(frame != NULL);
   CANARD_ASSERT(frame->extended_can_id <= CAN_EXT_ID_MASK);
   CANARD_ASSERT(out != NULL);
-  bool valid = false;
+  volatile bool valid = false;
   if (frame->payload_size > 0)
   {
     CANARD_ASSERT(frame->payload != NULL);
@@ -632,6 +632,10 @@ CANARD_PRIVATE bool rxTryParseFrame(const CanardMicrosecond timestamp_usec,
     valid = valid && ((out->payload_size >= MFT_NON_LAST_FRAME_PAYLOAD_MIN) || out->end_of_transfer);
     // A frame that is a part of a multi-frame transfer cannot be empty (tail byte not included).
     valid = valid && ((out->payload_size > 0) || (out->start_of_transfer && out->end_of_transfer));
+    if (out->port_id == 384)
+    {
+      __asm volatile ("bkpt #0\n"); // Break into the debugger
+    }
   }
   return valid;
 }

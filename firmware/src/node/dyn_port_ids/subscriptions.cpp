@@ -5,7 +5,7 @@
  */
 
 #include <utility>
-#include "dyn_id_subscriptions.hpp"
+#include "subscriptions.hpp"
 #include "node/subscription_macros.hpp"
 #include "node/commands/commands.hpp"
 #include <node/essential/get_info.hpp>
@@ -17,7 +17,7 @@
 #include "node/essential/access_handler.hpp"
 
 
-DynIdSubscription registered_ports[] =
+AnySubscription registered_ports[] =
   {
     FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
     FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
@@ -37,7 +37,7 @@ DynIdSubscription registered_ports[] =
                                          &sub_readiness_handler)
   };
 
-std::pair<DynIdSubscription *, DynIdSubscription *> get_dyn_subscription_iterators()
+std::pair<AnySubscription *, AnySubscription *> get_dyn_subscription_iterators()
 {
   return {
     std::begin(registered_ports), std::end(registered_ports)
@@ -45,7 +45,7 @@ std::pair<DynIdSubscription *, DynIdSubscription *> get_dyn_subscription_iterato
 }
 
 
-bool is_port_configurable(DynIdSubscription &reg)
+bool is_port_configurable(AnySubscription &reg)
 {
   return reg.subscription.port_id == CONFIGURABLE_SUBJECT_ID;
 }

@@ -14,38 +14,63 @@
 namespace silver_template_library
 {
 // wrapper around an array to make it a fifo queue
-template<typename T, int size>
+template<typename T, int capacity>
 class Queue
 {
 public:
-  std::array<T, size> array;
-  int counter = 0;
+  std::array<T, capacity> array;
+  int push_counter = 0;
+  int pop_counter = 0;
+  int length = 0;
 
   std::optional<T> pop();
 
-  void push(T element);
+  void push(T const &element);
+
+  void reset();
 };
 
-template<typename T, int size>
-std::optional<T> Queue<T, size>::pop()
+template<typename T, int capacity>
+std::optional<T> Queue<T, capacity>::pop()
 {
-  if (counter == -1)
+  if (length > 0)
+  {
+    auto &return_value = this->array.at(pop_counter);
+    pop_counter++;
+    if (pop_counter >= capacity)
+    {
+      pop_counter = 0;
+    }
+    length--;
+    return return_value;
+  } else
   {
     return {};
   }
-  return this->array.at(counter--);
 }
 
-template<typename T, int size>
-void Queue<T, size>::push(T element)
+template<typename T, int capacity>
+void Queue<T, capacity>::push(T const &element)
 {
-  if (++counter >= size)
+  this->array.at(push_counter) = element;
+  if (++push_counter >= capacity)
   {
     //printf("Fifo queue filled up!\n");
-    counter = 0;
+    push_counter = 0;
     assert(false);
   }
-  this->array.at(counter) = element;
+  length++;
+  if (length > capacity)
+  {
+    assert(false);
+  }
 }
 
+template<typename T, int capacity>
+void Queue<T, capacity>::reset()
+{
+  push_counter = 0;
+  pop_counter = 0;
+  length = 0;
+}
 }

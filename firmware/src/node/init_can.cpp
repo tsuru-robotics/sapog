@@ -11,6 +11,7 @@
 #include "reception.hpp"
 #include "node/dyn_port_ids/dyn_id_publish_port.hpp"
 #include "node_config_macros/node_config.hpp"
+#include "node/dyn_port_ids/parameters.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -119,7 +120,7 @@ void init_canard()
 
   state.timing.started_at = get_monotonic_microseconds();
   auto it_pair2 = get_dyn_subscription_iterators();
-  for (auto &dyn_id_subscription = it_pair2.first; dyn_id_subscription != it_pair2.second; dyn_id_subscription++)
+  for (auto dyn_id_subscription = it_pair2.first; dyn_id_subscription != it_pair2.second; dyn_id_subscription++)
   {
     if (dyn_id_subscription->subscription.port_id == CONFIGURABLE_SUBJECT_ID)
     {

@@ -27,7 +27,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
   }
 
   auto iterators = get_dyn_subscription_iterators();
-  for (auto &iter = iterators.first; iter < iterators.second; iter++)
+  for (auto iter = iterators.first; iter < iterators.second; iter++)
   {
     if (iter->transfer_kind == CanardTransferKindRequest)
     {

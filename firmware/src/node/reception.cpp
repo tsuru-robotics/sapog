@@ -11,17 +11,31 @@
 #include "src/node/can_interrupt/extern_queue.hpp"
 #include "node/interfaces/IHandler.hpp"
 
+void receive_and_queue_for_processing(const uint8_t interface_index)
+{
+  can_interrupt::frame frame{};
+  bool bxCanQueueHadSomething = bxCANPop(interface_index,
+                                         &frame.frame.extended_can_id,
+                                         &frame.frame.payload_size, frame.payload.data());
+  frame.frame.payload = frame.payload.data();
+  if (bxCanQueueHadSomething)
+  {
+    can_interrupt::fifo_queues[interface_index].push(frame);
+  }
+}
+
 void accept_transfers(State &state)
 {
   for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
   {
-    while (can_interrupt::fifo_queues[i].counter >= 0)
+    while (true)
     {
       auto fifo_queue_item = can_interrupt::fifo_queues[i].pop();
       if (!fifo_queue_item.has_value())
       {
         break;
       }
+      printf("queues: %08x\n", reinterpret_cast<int>(&can_interrupt::fifo_queues));
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
       volatile const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(),
@@ -31,21 +45,27 @@ void accept_transfers(State &state)
 
       if (canard_result == 1)
       {
+        printf("Transfer\n");
         if (this_subscription->user_reference != nullptr)
         {
+          printf("subscription\n");
           IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
           handler->operator()(state, &transfer);
           board::deallocate(static_cast<const uint8_t *>(transfer.payload));
-          printf("Transfer\n");
         }
       } else if (canard_result == 0)
       {
-        printf("Frame\n");
+        printf("Queue %08x      ", static_cast<unsigned>(fifo_queue_item.value().frame.extended_can_id));
+        for (std::size_t x = 0; x < fifo_queue_item.value().frame.payload_size; x++)
+        {
+          printf("%02x ", fifo_queue_item.value().payload[x]);
+        }
+        printf("\n");
       }
     }
   }
-
 }
+
 
 std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state)
 {
@@ -113,18 +133,5 @@ bool not_implemented_handler(const State &state, const CanardRxTransfer *const t
   (void) transfer;
   (void) state;
   return true;
-}
-
-void receive_and_queue_for_processing(const uint8_t interface_index)
-{
-  can_interrupt::frame frame{};
-  bool bxCanQueueHadSomething = bxCANPop(interface_index,
-                                         &frame.frame.extended_can_id,
-                                         &frame.frame.payload_size, &frame.payload);
-  frame.frame.payload = &frame.payload;
-  if (bxCanQueueHadSomething)
-  {
-    can_interrupt::fifo_queues[interface_index].push(frame);
-  }
 }
 

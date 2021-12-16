@@ -15,10 +15,39 @@
 // reception
 #define PROCESSING_DELAY_us (700U)
 #define REQUIRED_FRAME_BUFFERS ((std::uint8_t)(PROCESSING_DELAY_us / DEVICE_QUEUE_FULL_TIME_us * DEVICE_MAX_QUEUES*2)+1U)
+
 struct fifo_queue_item
 {
-  CanardFrame frame;
-  std::array<std::uint8_t, CANARD_MTU_CAN_CLASSIC> payload;
+  CanardFrame frame{};
+  std::array<std::uint8_t, CANARD_MTU_CAN_CLASSIC> payload{};
+
+  fifo_queue_item() noexcept
+  {
+    frame.payload = payload.data();
+  }
+
+  ~fifo_queue_item() noexcept = default;
+
+  fifo_queue_item(const fifo_queue_item &other) noexcept: frame(other.frame), payload(other.payload)
+  {
+    frame.payload = payload.data();
+  }
+
+  auto operator=(
+    const fifo_queue_item &other
+  ) noexcept -> fifo_queue_item &
+  {
+    frame = other.frame;
+    payload = other.payload;
+    frame.payload = payload.data();
+    return *this;
+  }
+
+  fifo_queue_item(const fifo_queue_item &&other) = delete;
+
+  auto operator=(
+    const fifo_queue_item &&other
+  ) noexcept -> fifo_queue_item & = delete;
 };
 namespace can_interrupt
 {

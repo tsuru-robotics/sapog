@@ -115,7 +115,7 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
     transfer_deserialized = transfer_deserialized.replace("transfer_id", "t_id")
     transfer_deserialized = transfer_deserialized.replace("), {})", "")
     transfer_deserialized = transfer_deserialized.replace("service_id=", "")
-    transfer_deserialized = transfer_type + " " + transfer_deserialized
+    transfer_deserialized = transfer_type + " " + transfer_deserialized + "\n" + format_payload_hex_view_trace(trace)
     return transfer_deserialized
 
 
