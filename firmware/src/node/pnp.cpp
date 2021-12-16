@@ -146,9 +146,7 @@ static bool send_plug_and_play_request(State &state)
                                                        &rtm,
                                                        serialized_size,
                                                        serialized);
-
       (void) number_of_frames_enqueued;
-      assert(number_of_frames_enqueued > 0);
     }
     transmit(state);
     return true;

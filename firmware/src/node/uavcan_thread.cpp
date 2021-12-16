@@ -77,7 +77,7 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
         loop.increment_next_execution();
       }
     }
-    chThdSleepMicroseconds(50);
+    chThdSleepMicroseconds(100);
   }
 }
 

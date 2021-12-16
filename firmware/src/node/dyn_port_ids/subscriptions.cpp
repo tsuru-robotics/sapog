@@ -19,22 +19,27 @@
 
 AnySubscription registered_ports[] =
   {
-    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler),
+    FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_GetInfo, 1, 0, &node::essential::uavcan_node_GetInfo_1_0_handler,
+                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
     FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_node_ExecuteCommand, 1, 1,
-                                  &uavcan_node_ExecuteCommand_Request_1_1_handler),
+                                  &uavcan_node_ExecuteCommand_Request_1_1_handler,
+                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
     FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_Access, 1, 0,
-                                  &node::essential::uavcan_register_Access_1_0_handler),
+                                  &node::essential::uavcan_register_Access_1_0_handler,
+                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
     FIXED_ID_SERVICE_SUBSCRIPTION(uavcan_register_List, 1, 0,
-                                  &node::essential::uavcan_register_List_1_0_handler),
+                                  &node::essential::uavcan_register_List_1_0_handler,
+                                  CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
     CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(note_response, reg_udral_physics_acoustics_Note,
                                          0, 1,
-                                         &reg_udral_physics_acoustics_Note_0_1_handler),
+                                         &reg_udral_physics_acoustics_Note_0_1_handler,
+                                         CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
     CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(setpoint, reg_udral_service_actuator_common_sp_Scalar,
                                          0, 1,
-                                         &setpoint_handler),
+                                         &setpoint_handler, 90000),
     CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(readiness, reg_udral_service_common_Readiness,
                                          0, 1,
-                                         &sub_readiness_handler)
+                                         &sub_readiness_handler, CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC)
   };
 
 std::pair<AnySubscription *, AnySubscription *> get_dyn_subscription_iterators()

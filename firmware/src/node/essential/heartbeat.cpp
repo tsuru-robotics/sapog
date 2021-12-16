@@ -39,9 +39,7 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
                                                        &rtm,
                                                        serialized_size.value(),
                                                        serializer.getBuffer());
-
       (void) number_of_frames_enqueued;
-      assert(number_of_frames_enqueued > 0);
     }
   }
 }

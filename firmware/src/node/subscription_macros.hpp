@@ -10,51 +10,53 @@
 ._port_id=0,
 
 
-#define ANY_SUBSCRIPTION(_id, _type, _name, __extent, __kind, handler)                     \
+#define ANY_SUBSCRIPTION(_id, _type, _name, __extent, __kind, handler, timeout)            \
 {                                                                                          \
 .type=str(_type),                                                                          \
 .name=_name,                                                                               \
 .transfer_kind=__kind,                                                                     \
 .subscription = {                                                                          \
 .base=CanardTreeNode{},                                                                    \
-.transfer_id_timeout_usec = CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,                      \
-.extent = __extent,                                                                       \
-.port_id=_id,                                                                             \
-.user_reference=(void *) handler,                                                           \
-.sessions={}                                                                             \
+.transfer_id_timeout_usec = timeout,                                                       \
+.extent = __extent,                                                                        \
+.port_id=_id,                                                                              \
+.user_reference=(void *) handler,                                                          \
+.sessions={}                                                                               \
 }}
 
-#define FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, kind, sep)   \
+#define FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, kind, sep, timeout) \
 ANY_SUBSCRIPTION(                                                                               \
 nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                              \
 nunavut_type##sep##version_major##_##version_minor,                                             \
 nunavut_type##_##version_major##_##version_minor##_FULL_NAME_,                                  \
 nunavut_type##sep##version_major##_##version_minor##_EXTENT_BYTES_,                             \
 kind,                                                                                           \
-handler                                                                                         \
+handler,                                                                                               \
+timeout\
 )
 
-#define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
+#define FIXED_ID_SERVICE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, timeout) \
 FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler,                 \
-CanardTransferKindRequest, _Request_)
+CanardTransferKindRequest, _Request_, timeout)
 
 #define FIXED_ID_MESSAGE_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler) \
 FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, CanardTransferKindMessage, _)
 
 
-#define CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, kind)   \
+#define CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, kind, timeout)   \
 ANY_SUBSCRIPTION(                                                                                            \
 CONFIGURABLE_SUBJECT_ID,                                                                                     \
 nunavut_type,                                                                                                \
 str(uavcan.sub.port_name.id),                                                                                \
 nunavut_type##_##version_major##_##version_minor##_EXTENT_BYTES_,                                            \
 kind,                                                                                                        \
-handler                                                                                                      \
+handler,                                                                                                     \
+timeout                                                                                                      \
 )
 
-#define CONFIGURABLE_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
-CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindRequest)
+#define CONFIGURABLE_ID_SERVICE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, timeout) \
+CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindRequest, timeout)
 
-#define CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler) \
-CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindMessage)
+#define CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, timeout) \
+CONFIGURABLE_ID_SUBSCRIPTION(port_name, nunavut_type, version_major, version_minor, handler, CanardTransferKindMessage, timeout)
 

@@ -125,9 +125,7 @@ bool respond_to_access(node::state::State &state, std::basic_string_view<char> r
                                                      &rtm,
                                                      serialized_size,
                                                      serialized);
-
     (void) number_of_frames_enqueued;
-    assert(number_of_frames_enqueued > 0);
   }
   printf("Responded.\n");
   return true;

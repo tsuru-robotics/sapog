@@ -61,7 +61,6 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
                                                        serialized_size,
                                                        serialized);
       (void) number_of_frames_enqueued;
-      assert(number_of_frames_enqueued > 0);
     }
   }
 }

@@ -31,6 +31,7 @@ struct : IStateAwareHandler
   void operator()(node::state::State *state)
   {
     assert(state != nullptr);
+    printf("Readiness expired!!!\n");
     if (state != nullptr)
     {
       state->readiness = Readiness::STANDBY;
@@ -54,6 +55,7 @@ struct : IHandler
         {
           float rotations_per_second = setpoint.value / 2.0 / 3.14159265358979f;
           unsigned int rpm = rotations_per_second * 60;
+          printf("%d\n", state.ttl_milliseconds);
           motor_set_rpm(rpm, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;
           motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);

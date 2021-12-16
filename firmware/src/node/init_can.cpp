@@ -117,6 +117,17 @@ void init_canard()
       }
     }
   }
+  for (auto &svir = it_pair.first; svir != it_pair.second; svir++)
+  {
+    if (configGetDescr(svir->name.data(), &_) != -ENOENT)
+    {
+      *svir->state_variable = configGet(svir->name.data());
+      printf("has %s\n", svir->name.data());
+    } else
+    {
+      printf("no %s\n", svir->name.data());
+    }
+  }
 
   state.timing.started_at = get_monotonic_microseconds();
   auto it_pair2 = get_dyn_subscription_iterators();

@@ -57,12 +57,19 @@ void Queue<T, capacity>::push(T const &element)
   {
     //printf("Fifo queue filled up!\n");
     push_counter = 0;
-    assert(false);
   }
   length++;
   if (length > capacity)
   {
-    assert(false);
+    // Then we basically pop one element to make room for the new one.
+    // This happens say when one of the can cables gets destroyed and replaced in flight
+    // then the connection that was resurrected will have a full queue
+    length = capacity; // like length--;
+    pop_counter++;
+    if (pop_counter >= capacity)
+    {
+      pop_counter = 0;
+    }
   }
 }
 

@@ -72,9 +72,7 @@ void RegisterListHandlerType::operator()(node::state::State &state, CanardRxTran
                                                        &rtm,
                                                        res.value(),
                                                        serializer.getBuffer());
-
       (void) number_of_frames_enqueued;
-      assert(number_of_frames_enqueued > 0);
     }
   }
   return;

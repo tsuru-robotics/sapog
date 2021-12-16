@@ -44,6 +44,8 @@ class TestESC:
                                   uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(0))),
             EmbeddedDeviceRegPair("control_mode_rpm",
                                   uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
+            EmbeddedDeviceRegPair("ttl_milliseconds",
+                                  uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(300))),
             RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(138))),
             RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
@@ -73,14 +75,14 @@ class TestESC:
         feedback_subscription = prepared_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                               "feedback")
         try:
-            for i in range(400):
+            for i in range(40000):
                 wrap_await(pub.publish(rpm_message))
                 wrap_await(readiness_pub.publish(readiness_message))
-                feedback_result = wrap_await(feedback_subscription.receive_for(0.3))
-                if feedback_result is None:
-                    assert False
-                    return
-                time.sleep(0.3)
+                # feedback_result = wrap_await(feedback_subscription.receive_for(0.3))
+                # if feedback_result is None:
+                #     assert False
+                #     return
+                time.sleep(0.05)
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
             # communications are still available
