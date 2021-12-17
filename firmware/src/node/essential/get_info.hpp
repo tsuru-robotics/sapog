@@ -13,7 +13,7 @@
 #include <board/unique_id.h>
 #include <node/units.hpp>
 #include <node/interfaces/IHandler.hpp>
-
+#include "board/board.hpp"
 #include "get_info.hpp"
 
 uavcan_node_GetInfo_Response_1_0 process_request_node_get_info();
@@ -32,7 +32,7 @@ struct : IHandler
     {
       CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
       rtm.transfer_kind = CanardTransferKindResponse;
-      for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+      for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
       {
         (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                             transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,

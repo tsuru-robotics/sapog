@@ -10,6 +10,7 @@
 #include "transmit.hpp"
 #include "src/node/can_interrupt/extern_queue.hpp"
 #include "node/interfaces/IHandler.hpp"
+#include "board/board.hpp"
 
 void receive_and_queue_for_processing(const uint8_t interface_index)
 {
@@ -26,7 +27,7 @@ void receive_and_queue_for_processing(const uint8_t interface_index)
 
 void accept_transfers(State &state)
 {
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     while (true)
     {
@@ -77,21 +78,20 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
 
   //palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   for (uint16_t j = 0;
-       j < (max_frames_to_process_per_iteration * BXCAN_MAX_IFACE_INDEX); j += (BXCAN_MAX_IFACE_INDEX + 1))
+       j < (max_frames_to_process_per_iteration * board::detect_hardware_version().minor); j += (
+    board::detect_hardware_version().minor +
+    1))
   {
     bool a_queue_had_something = false;
 
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
 
       bool bxCanQueueHadSomething = bxCANPop(i,
                                              &frame.extended_can_id,
                                              &frame.payload_size, payload_array.data());
       a_queue_had_something = bxCanQueueHadSomething;
-      // The transfer is actually not stored here in this narrow scoped variable
-      // Canard has an internal storage to make sure that it can receive frames in any order and assemble them into
-      // transfers. If I now take a frame from bxCANPop and libcanard finds that it completes a transfer, it will
-      // assign the transfer to the given CanardTransfer object. Not a bug!
+      // The transfer payload is actually not stored here in this narrow scoped variable
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
 
@@ -112,7 +112,7 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
       }
     }
     bool canSleep = true;
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
       if (a_queue_had_something == true || canardTxPeek(&state.queues[i]) != nullptr)
       {

@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <node/time.h>
 #include "port_list.hpp"
+#include "board/board.hpp"
 
 void publish_port_list(CanardInstance &canard, node::state::State &state)
 {
@@ -51,7 +52,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.priority = CanardPriorityOptional;
     rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++);
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
       int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                        const_cast<CanardInstance *>(&state.canard),

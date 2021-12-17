@@ -8,6 +8,7 @@
 #include "uavcan/_register/Access_1_0.h"
 #include "type_names.hpp"
 #include "access.hpp"
+#include "board/board.hpp"
 
 std::string_view find_type_name(std::string_view request_name)
 {
@@ -116,7 +117,7 @@ bool respond_to_access(node::state::State &state, std::basic_string_view<char> r
   printf("Serialized.\n");
   CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
   rtm.transfer_kind = CanardTransferKindResponse;
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                      const_cast<CanardInstance *>(&state.canard),

@@ -9,9 +9,10 @@
 #include "libcanard/canard.h"
 #include "board/board.hpp"
 #include "reception.hpp"
-#include "node/register_values/dyn_id_publish_port.hpp"
+#include "node/register_values/register_variables.hpp"
 #include "node_config_macros/node_config.hpp"
 #include "node/register_values/parameters.hpp"
+#include "board/board.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {
@@ -29,7 +30,6 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
 void init_canard()
 {
   palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
-
   {
     /* https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
     AHB/APB bridges (APB) page 49
@@ -38,13 +38,17 @@ void init_canard()
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
     RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
     RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
+    printf("Current minor version is %d\n", board::detect_hardware_version().minor);
 #if BXCAN_MAX_IFACE_INDEX > 0
-    RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
-    RCC->APB1RSTR |= RCC_APB1RSTR_CAN2RST;
-    RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN2RST;
+    if (board::detect_hardware_version().minor == 1)
+    {
+      RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
+      RCC->APB1RSTR |= RCC_APB1RSTR_CAN2RST;
+      RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN2RST;
+    }
 #endif
   }
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -68,13 +72,13 @@ void init_canard()
 
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     printf("%d\n", bxCANConfigure(i, timings, false));
   }
 
   state.canard = canardInit(&canardAllocate, &canardFree);
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     state.queues[i] = canardTxInit(100, 8);
   }

@@ -63,7 +63,7 @@ struct : IHandler
       {
         CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
         rtm.transfer_kind = CanardTransferKindResponse;
-        for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+        for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
         {
           int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                            const_cast<CanardInstance *>(&state.canard),

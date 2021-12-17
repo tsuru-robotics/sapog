@@ -14,7 +14,7 @@
 #include <node/time.h>
 #include <node/stop_gap.hpp>
 #include "heartbeat.hpp"
-
+#include "board/board.hpp"
 
 std::string_view all_register_names[] = {
   "uavcan.sub.note_response.id", "uavcan.sub.note_response.type",
@@ -63,7 +63,7 @@ void RegisterListHandlerType::operator()(node::state::State &state, CanardRxTran
     auto res = serializer.serialize(response_value);
     CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
     rtm.transfer_kind = CanardTransferKindResponse;
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
       int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                        const_cast<CanardInstance *>(&state.canard),

@@ -7,6 +7,7 @@
 #include <node/units.hpp>
 #include <node/time.h>
 #include <node/stop_gap.hpp>
+#include "board/board.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(uavcan_node_Heartbeat,
                             1, 0);
@@ -30,7 +31,7 @@ void publish_heartbeat(CanardInstance &canard, node::state::State &state)
     rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_heartbeat++);
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.priority = CanardPriorityNominal;
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
       int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                        const_cast<CanardInstance *>(&state.canard),

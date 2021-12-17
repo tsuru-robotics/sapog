@@ -19,15 +19,15 @@ import uavcan.register.List_1_0
 
 
 class TestRegisters:
-    # def test_register_list(self, prepared_node, prepared_sapogs):
-    #     assert len(prepared_sapogs.keys()) > 0
-    #     for node_id in prepared_sapogs.keys():
-    #         service_client = prepared_node.make_client(uavcan.register.List_1_0, node_id)
-    #         service_client.response_timeout = 1
-    #         msg = uavcan.register.List_1_0.Request(20)
-    #         result = wrap_await(service_client.call(msg))
-    #         print(result)
-    #         assert result is not None
+    def test_register_list(self, prepared_node, prepared_sapogs):
+        assert len(prepared_sapogs.keys()) > 0
+        for node_id in prepared_sapogs.keys():
+            service_client = prepared_node.make_client(uavcan.register.List_1_0, node_id)
+            service_client.response_timeout = 1
+            msg = uavcan.register.List_1_0.Request(20)
+            result = wrap_await(service_client.call(msg))
+            print(result)
+            assert result is not None
 
     def test_write_unsupported_sapog_register(self, prepared_node, prepared_sapogs):
         """Checks if the response is empty when writing to a register that doesn't exit on Sapog.

@@ -53,7 +53,14 @@
 static void cmd_cfg(BaseSequentialStream *, int argc, char *argv[])
 {
   // TODO: refuse to save/erase while the motor is running
-  os::config::executeCLICommand(argc, argv);
+  /*for (int x = 0; x < argc; x++)
+  {
+    printf("%d %s\n", x, argv[x]);
+  }*/
+  if (!motor_is_running()) // This needs to check for the actual use of save/erase, motor controls should still work
+  {
+    os::config::executeCLICommand(argc, argv);
+  }
 }
 
 static void cmd_reboot(BaseSequentialStream *chp, int argc, char *argv[])

@@ -14,6 +14,7 @@
 #include "src/settings/registers.hpp"
 #include "transmit.hpp"
 #include <stdlib.h>
+#include "board/board.hpp"
 
 static CanardRxSubscription AllocationMessageSubscription;
 static board::LEDOverlay led_ctl;
@@ -137,7 +138,7 @@ static bool send_plug_and_play_request(State &state)
     rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_pnp_allocation++);
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.priority = CanardPrioritySlow;
-    for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
     {
       int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                        const_cast<CanardInstance *>(&state.canard),

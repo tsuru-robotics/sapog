@@ -12,6 +12,7 @@
 #include "src/node/state/state.hpp"
 #include "libcanard/canard.h"
 #include "time.h"
+#include "board/board.hpp"
 
 using namespace node::state;
 
@@ -19,7 +20,7 @@ using namespace node::state;
 int transmit(State &state)
 {
   int count_sent_frames = 0;
-  for (int i = 0; i <= BXCAN_MAX_IFACE_INDEX; ++i)
+  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
   {
     for (const CanardTxQueueItem *txf = NULL;
          (txf = canardTxPeek(&state.queues[i])) != nullptr;)  // Look at the top of the TX queue.

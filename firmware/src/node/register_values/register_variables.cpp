@@ -4,7 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 
-#include "dyn_id_publish_port.hpp"
+#include "register_variables.hpp"
 #include "node/state/state.hpp"
 
 using namespace node::state;
