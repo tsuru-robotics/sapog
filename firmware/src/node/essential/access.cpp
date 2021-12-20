@@ -117,7 +117,7 @@ bool respond_to_access(node::state::State &state, std::basic_string_view<char> r
   printf("Serialized.\n");
   CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
   rtm.transfer_kind = CanardTransferKindResponse;
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                      const_cast<CanardInstance *>(&state.canard),

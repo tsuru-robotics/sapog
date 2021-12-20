@@ -40,7 +40,7 @@ void init_canard()
     RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
     printf("Current minor version is %d\n", board::detect_hardware_version().minor);
 #if BXCAN_MAX_IFACE_INDEX > 0
-    if (board::detect_hardware_version().minor == 1)
+    if (board::get_max_can_interface_index() > 0)
     {
       RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
       RCC->APB1RSTR |= RCC_APB1RSTR_CAN2RST;
@@ -48,7 +48,7 @@ void init_canard()
     }
 #endif
   }
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -72,13 +72,13 @@ void init_canard()
 
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     printf("%d\n", bxCANConfigure(i, timings, false));
   }
 
   state.canard = canardInit(&canardAllocate, &canardFree);
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     state.queues[i] = canardTxInit(100, 8);
   }

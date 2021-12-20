@@ -93,6 +93,8 @@ struct HardwareVersion
 
 HardwareVersion detect_hardware_version();
 
+int get_max_can_interface_index();
+
 float get_current_shunt_resistance();
 
 typedef std::array<std::uint8_t, 128> DeviceSignature;

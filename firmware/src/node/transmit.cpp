@@ -20,7 +20,7 @@ using namespace node::state;
 int transmit(State &state)
 {
   int count_sent_frames = 0;
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     for (const CanardTxQueueItem *txf = NULL;
          (txf = canardTxPeek(&state.queues[i])) != nullptr;)  // Look at the top of the TX queue.

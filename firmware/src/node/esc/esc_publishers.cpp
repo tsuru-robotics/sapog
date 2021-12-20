@@ -50,7 +50,7 @@ void publish_esc_heartbeat(node::state::State &state)
     CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
     rtm.transfer_kind = CanardTransferKindMessage;
     rtm.transfer_id = state.transfer_ids.reg_udral_service_common_Heartbeat_0_1++;
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                           get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
@@ -88,7 +88,7 @@ void publish_esc_feedback(node::state::State &state)
         rtm.port_id = state.publish_ports.esc_feedback;
         rtm.remote_node_id = CANARD_NODE_ID_UNSET;
         rtm.transfer_kind = CanardTransferKindMessage;
-        for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+        for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
         {
 
           (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
@@ -141,7 +141,7 @@ void publish_esc_status(node::state::State &state)
     rtm.port_id = state.publish_ports.esc_status;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_service_actuator_common_Status_0_1++;
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                           get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
@@ -173,7 +173,7 @@ void publish_esc_power(node::state::State &state)
     rtm.port_id = state.publish_ports.esc_power;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_electricity_PowerTs_0_1++;
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                           get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
@@ -208,7 +208,7 @@ void publish_esc_dynamics(node::state::State &state)
     rtm.port_id = state.publish_ports.esc_dynamics;
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.transfer_id = state.transfer_ids.reg_udral_physics_dynamics_rotation_PlanarTs_0_1++;
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                           get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,

@@ -188,6 +188,20 @@ HardwareVersion detect_hardware_version()
   return v;
 }
 
+int get_max_can_interface_index()
+{
+  switch (detect_hardware_version().minor)
+  {
+    case 0:
+      return 0;
+    case 1:
+      return 1;
+    case 2:
+      return 0;
+  }
+  assert(false);
+}
+
 float get_current_shunt_resistance()
 {
   switch (detect_hardware_version().minor)

@@ -52,7 +52,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     rtm.remote_node_id = CANARD_NODE_ID_UNSET;
     rtm.priority = CanardPriorityOptional;
     rtm.transfer_id = (CanardTransferID) (state.transfer_ids.uavcan_node_port_list++);
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
                                                        const_cast<CanardInstance *>(&state.canard),

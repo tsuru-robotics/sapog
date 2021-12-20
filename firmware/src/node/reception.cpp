@@ -14,20 +14,23 @@
 
 void receive_and_queue_for_processing(const uint8_t interface_index)
 {
-  can_interrupt::frame frame{};
-  bool bxCanQueueHadSomething = bxCANPop(interface_index,
-                                         &frame.frame.extended_can_id,
-                                         &frame.frame.payload_size, frame.payload.data());
-  frame.frame.payload = frame.payload.data();
-  if (bxCanQueueHadSomething)
+  if (board::get_max_can_interface_index() >= interface_index)
   {
-    can_interrupt::fifo_queues[interface_index].push(frame);
+    can_interrupt::frame frame{};
+    bool bxCanQueueHadSomething = bxCANPop(interface_index,
+                                           &frame.frame.extended_can_id,
+                                           &frame.frame.payload_size, frame.payload.data());
+    frame.frame.payload = frame.payload.data();
+    if (bxCanQueueHadSomething)
+    {
+      can_interrupt::fifo_queues[interface_index].push(frame);
+    }
   }
 }
 
 void accept_transfers(State &state)
 {
-  for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+  for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
   {
     while (true)
     {
@@ -78,13 +81,13 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
 
   //palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   for (uint16_t j = 0;
-       j < (max_frames_to_process_per_iteration * board::detect_hardware_version().minor); j += (
-    board::detect_hardware_version().minor +
+       j < (max_frames_to_process_per_iteration * (board::get_max_can_interface_index() + 1)); j += (
+    board::get_max_can_interface_index() +
     1))
   {
     bool a_queue_had_something = false;
 
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
 
       bool bxCanQueueHadSomething = bxCANPop(i,
@@ -112,7 +115,7 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
       }
     }
     bool canSleep = true;
-    for (int i = 0; i <= board::detect_hardware_version().minor; ++i)
+    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
     {
       if (a_queue_had_something == true || canardTxPeek(&state.queues[i]) != nullptr)
       {
