@@ -4,7 +4,6 @@
 #include <node/time.h>
 #include <node/units.hpp>
 #include <reg/udral/service/actuator/common/Feedback_0_1.h>
-#include <cstdio>
 #include "reg/udral/service/actuator/common/Status_0_1.h"
 #include "reg/udral/physics/electricity/PowerTs_0_1.h"
 #include "reg/udral/physics/dynamics/rotation/PlanarTs_0_1.h"
@@ -12,8 +11,6 @@
 #include "motor/motor.hpp"
 #include "temperature_sensor.hpp"
 #include "node/transmit.hpp"
-#include "hal.h"
-#include <stm32f105xc.h>
 #include "board/board.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
@@ -124,13 +121,11 @@ void publish_esc_status(node::state::State &state)
 {
   uavcan_l6::DSDL<reg_udral_service_actuator_common_Status_0_1>::Serializer serializer{};
   reg_udral_service_actuator_common_Status_0_1 status{};
-  reg_udral_service_actuator_common_FaultFlags_0_1 faultFlags01{};
-  faultFlags01 = status.fault_flags;
   status.error_count = state.error_count;
-  status.fault_flags = faultFlags01;
+  status.fault_flags = state.fault_flags;
   status.motor_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
+  status.motor_temperature.kelvin = NAN;
   status.controller_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
-  status.motor_temperature.kelvin = 0;
   status.controller_temperature.kelvin = temperature_sensor::get_temperature_K();
   auto size = serializer.serialize(status);
   if (size.has_value())
@@ -190,31 +185,36 @@ void publish_esc_power(node::state::State &state)
 double rpm_to_radians_per_second(unsigned int rpm)
 {
   unsigned int rotations_per_second = rpm * 60;
-  return rotations_per_second * 2 * 3.14159;
+  return rotations_per_second * 2 * 3.14159265359;
 }
 
 void publish_esc_dynamics(node::state::State &state)
 {
   reg_udral_physics_dynamics_rotation_PlanarTs_0_1 rotation{};
-  reg_udral_physics_dynamics_rotation_Planar_0_1 planar01{};
+  rotation.value = reg_udral_physics_dynamics_rotation_Planar_0_1{};
   uavcan_time_SynchronizedTimestamp_1_0 timestamp01{};
-  planar01.kinematics.angular_velocity = uavcan_si_unit_angular_velocity_Scalar_1_0{};
-  planar01.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
-  planar01._torque = uavcan_si_unit_torque_Scalar_1_0{};
-  planar01._torque.newton_meter = 0;
-  planar01.kinematics.angular_velocity.radian_per_second = rpm_to_radians_per_second(motor_get_rpm());
+  rotation.value.kinematics.angular_velocity = uavcan_si_unit_angular_velocity_Scalar_1_0{};
+  rotation.value.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
+  rotation.value.kinematics.angular_position.radian = NAN;
+  rotation.value._torque = uavcan_si_unit_torque_Scalar_1_0{};
+  rotation.value._torque.newton_meter = NAN;
+  rotation.value.kinematics.angular_velocity.radian_per_second = rpm_to_radians_per_second(motor_get_rpm());
+  CanardMicrosecond current_time_stamp = get_monotonic_microseconds();
   if (state.previous_esc_dynamics_message_timestamp > 0)
   {
-    CanardMicrosecond current_time_stamp = get_monotonic_microseconds();
-    planar01.kinematics.angular_acceleration.radian_per_second_per_second =
-      (planar01.kinematics.angular_velocity.radian_per_second - state.previous_esc_dynamics_angular_velocity)
+    rotation.value.kinematics.angular_acceleration.radian_per_second_per_second =
+      (rotation.value.kinematics.angular_velocity.radian_per_second - state.previous_esc_dynamics_angular_velocity)
       / (current_time_stamp - state.previous_esc_dynamics_message_timestamp);
-    state.previous_esc_dynamics_message_timestamp = current_time_stamp;
-    state.previous_esc_dynamics_angular_velocity = planar01.kinematics.angular_velocity.radian_per_second;
+  } else
+  {
+    rotation.value.kinematics.angular_acceleration.radian_per_second_per_second = NAN;
   }
+  state.previous_esc_dynamics_message_timestamp = current_time_stamp;
+  state.previous_esc_dynamics_angular_velocity = rotation.value.kinematics.angular_velocity.radian_per_second;
   timestamp01.microsecond = get_monotonic_microseconds();
 
   rotation.timestamp = timestamp01;
+
   uavcan_l6::DSDL<reg_udral_physics_dynamics_rotation_PlanarTs_0_1>::Serializer serializer{};
   auto size = serializer.serialize(rotation);
   if (size.has_value())
