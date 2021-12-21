@@ -187,6 +187,12 @@ void publish_esc_power(node::state::State &state)
   }
 }
 
+double rpm_to_radians_per_second(unsigned int rpm)
+{
+  unsigned int rotations_per_second = rpm * 60;
+  return rotations_per_second * 2 * 3.14159;
+}
+
 void publish_esc_dynamics(node::state::State &state)
 {
   reg_udral_physics_dynamics_rotation_PlanarTs_0_1 rotation{};
@@ -196,7 +202,18 @@ void publish_esc_dynamics(node::state::State &state)
   planar01.kinematics.angular_position = uavcan_si_unit_angle_Scalar_1_0{};
   planar01._torque = uavcan_si_unit_torque_Scalar_1_0{};
   planar01._torque.newton_meter = 0;
+  planar01.kinematics.angular_velocity.radian_per_second = rpm_to_radians_per_second(motor_get_rpm());
+  if (state.previous_esc_dynamics_message_timestamp > 0)
+  {
+    CanardMicrosecond current_time_stamp = get_monotonic_microseconds();
+    planar01.kinematics.angular_acceleration.radian_per_second_per_second =
+      (planar01.kinematics.angular_velocity.radian_per_second - state.previous_esc_dynamics_angular_velocity)
+      / (current_time_stamp - state.previous_esc_dynamics_message_timestamp);
+    state.previous_esc_dynamics_message_timestamp = current_time_stamp;
+    state.previous_esc_dynamics_angular_velocity = planar01.kinematics.angular_velocity.radian_per_second;
+  }
   timestamp01.microsecond = get_monotonic_microseconds();
+
   rotation.timestamp = timestamp01;
   uavcan_l6::DSDL<reg_udral_physics_dynamics_rotation_PlanarTs_0_1>::Serializer serializer{};
   auto size = serializer.serialize(rotation);

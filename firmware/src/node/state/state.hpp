@@ -89,6 +89,8 @@ struct State
   uint32_t error_count;
   reg_udral_service_actuator_common_FaultFlags_0_1 fault_flags;
   CanardMicrosecond next_send_power_dynamics_time;
+  CanardMicrosecond previous_esc_dynamics_message_timestamp;
+  double previous_esc_dynamics_angular_velocity;
 };
 extern State state;
 }
