@@ -51,16 +51,16 @@ def is_device_with_node_id_running(node_id):
         return True
 
 
-def restart_all_interfaces():
-    interfaces = get_available_slcan_interfaces()
-    for index, interface in enumerate(interfaces):
-        registry = make_registry(index, interfaces=[interface])
-        node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-        service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_RESTART
-        response = wrap_await(service_client.call(msg))
-        assert response is not None
+# def restart_all_interfaces():
+#     interfaces = get_available_slcan_interfaces()
+#     for index, interface in enumerate(interfaces):
+#         registry = make_registry(index, interfaces=[interface])
+#         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+#         service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
+#         msg = uavcan.node.ExecuteCommand_1_1.Request()
+#         msg.command = msg.COMMAND_RESTART
+#         response = wrap_await(service_client.call(msg))
+#         assert response is not None
 
 
 def get_available_slcan_interfaces():
@@ -85,7 +85,6 @@ def prepared_double_redundant_node():
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
 
 
-@pytest.fixture(scope="class")
 def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True) -> typing.Dict[
     int, typing.List[str]]:
     """
@@ -103,26 +102,54 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
 
         def add_to_dictionary_list(key, value):
             """Used twice below"""
-            if received.unique_id_hash in interfaces_by_hw_id.keys():
+            if key in interfaces_by_hw_id.keys():
                 interfaces_by_hw_id[key].append(value)
             else:
                 interfaces_by_hw_id[key] = [value]
 
         if do_get_unallocated_nodes:
+            # Key is going to be a string
             sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
-            received: uavcan.pnp.NodeIDAllocationData_1_0 = wrap_await(sub.receive_for(1.3))
-            add_to_dictionary_list(received.unique_id_hash, interface)
+            received_tuple: uavcan.pnp.NodeIDAllocationData_1_0 = wrap_await(sub.receive_for(1.3))
+            if not received_tuple:
+                print(f"Interface {interface} did not receive the allocation request.")
+                continue
+            allocation_request, transfer_from = received_tuple
+            add_to_dictionary_list(str(allocation_request.unique_id_hash), interface)
         if not done and do_get_allocated_nodes:
+            # Key is going to be an int
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
             received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = wrap_await(
                 sub.receive_for(1.3))
+            if not received_tuple:
+                print(f"Interface {interface} did not receive a heartbeat.")
+                continue
             heartbeat, transfer_from = received_tuple
             add_to_dictionary_list(transfer_from.source_node_id, interface)
     return interfaces_by_hw_id
 
 
+def test_interfaces_by_hardware_id():
+    print(get_interfaces_by_hw_id())
+    assert True
+
+
 def prepared_all_devices():
     interfaces_by_hw_id: typing.Dict[int, typing.List[str]] = get_interfaces_by_hw_id()
+    for key, interfaces_list in interfaces_by_hw_id.items():
+        is_key_node_id = type(key) is int
+        is_key_hw_id = type(key) is str
+        if is_key_hw_id:
+            pass
+        elif is_key_node_id:
+            registry = make_registry(0, interfaces=interfaces_list)
+            node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+            service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, key)
+            msg = uavcan.node.ExecuteCommand_1_1.Request()
+            msg.command = msg.COMMAND_RESTART
+            response = wrap_await(service_client.call(msg))
+            node.close()
+            assert response is not None
 
 
 @pytest.fixture(scope="class")
