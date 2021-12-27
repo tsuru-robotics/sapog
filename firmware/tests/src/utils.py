@@ -1,6 +1,5 @@
 import asyncio
 import os
-import re
 import subprocess
 import time
 import typing
@@ -49,18 +48,6 @@ def is_device_with_node_id_running(node_id):
         except exceptions.TimeoutError as e:
             return False
         return True
-
-
-# def restart_all_interfaces():
-#     interfaces = get_available_slcan_interfaces()
-#     for index, interface in enumerate(interfaces):
-#         registry = make_registry(index, interfaces=[interface])
-#         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-#         service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-#         msg = uavcan.node.ExecuteCommand_1_1.Request()
-#         msg.command = msg.COMMAND_RESTART
-#         response = wrap_await(service_client.call(msg))
-#         assert response is not None
 
 
 def get_available_slcan_interfaces():
@@ -134,14 +121,16 @@ def test_interfaces_by_hardware_id():
     assert True
 
 
-def prepared_all_devices():
-    interfaces_by_hw_id: typing.Dict[int, typing.List[str]] = get_interfaces_by_hw_id()
+def prepared_all_devices(should_be_allocated: bool = False):
+    interfaces_by_hw_id: typing.Dict[str, typing.List[str]] = get_interfaces_by_hw_id()
+    if should_be_allocated:
+        allocated_nodes = make_simple_node_allocator()(len(interfaces_by_hw_id.keys()))
     for key, interfaces_list in interfaces_by_hw_id.items():
         is_key_node_id = type(key) is int
         is_key_hw_id = type(key) is str
         if is_key_hw_id:
             pass
-        elif is_key_node_id:
+        elif is_key_node_id and should_be_allocated:
             registry = make_registry(0, interfaces=interfaces_list)
             node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
             service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, key)
@@ -150,6 +139,13 @@ def prepared_all_devices():
             response = wrap_await(service_client.call(msg))
             node.close()
             assert response is not None
+    # Replace every hw_id with node_id if it is allocated because a node_id is more useful
+    for hw_id in interfaces_by_hw_id.keys():
+        for key, value in list(allocated_nodes.items()):
+            if value == hw_id:
+                interfaces_by_hw_id[key] = interfaces_by_hw_id[hw_id]
+                interfaces_by_hw_id.pop(hw_id)
+    return interfaces_by_hw_id
 
 
 @pytest.fixture(scope="class")
