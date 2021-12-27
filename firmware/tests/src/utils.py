@@ -74,6 +74,32 @@ def prepared_double_redundant_node():
 
 
 @pytest.fixture(scope="class")
+def get_interfaces_by_hw_id() -> typing.Dict[int, typing.List[str]]:
+    """
+    Makes a dictionary where every hw_id is a key and the value is a list of interfaces it communicates on.
+
+    This helps to automatically find out which devices are using which interfaces and then communicate to every device
+    in a for loop to test these.
+    """
+    available_interfaces = get_available_slcan_interfaces()
+    interfaces_by_hw_id: typing.Dict[int, typing.List[str]] = {}
+    for index, interface in enumerate(available_interfaces):
+        registry = make_registry(index, interfaces=[interface])
+        node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+        sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
+        received: uavcan.pnp.NodeIDAllocationData_1_0 = wrap_await(sub.receive_for(1.3))
+        if received.unique_id_hash in interfaces_by_hw_id.keys():
+            interfaces_by_hw_id[received.unique_id_hash].append(interface)
+        else:
+            interfaces_by_hw_id[received.unique_id_hash] = [interface]
+    return interfaces_by_hw_id
+
+
+def prepared_all_devices():
+    interfaces_by_hw_id: typing.Dict[int, typing.List[str]] = get_interfaces_by_hw_id()
+
+
+@pytest.fixture(scope="class")
 def prepared_sapogs():
     if is_running_on_my_laptop and is_device_with_node_id_running(21):
         print("Device with node id 21 is already running so I will use that.")
@@ -89,9 +115,12 @@ def restarted_sapogs():
     return allocate_nr_of_nodes(1)
 
 
-def make_registry(node_id: int):
+def make_registry(node_id: int, interfaces: typing.List[str], use_all_interfaces: bool = False):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
+    if use_all_interfaces:
+        registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
+    else:
+        registry01["uavcan.can.iface"] = " ".join(interfaces)
     print("Using these interfaces: " + str(registry01["uavcan.can.iface"]))
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id

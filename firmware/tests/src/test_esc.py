@@ -70,7 +70,7 @@ class TestESC:
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = prepared_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         wrap_await(readiness_pub.publish(readiness_message))
-        rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(3000))
+        rpm_message = reg.udral.service.actuator.common.sp.Scalar_0_1(value=rpm_to_radians_per_second(200))
         pub = prepared_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
         feedback_subscription = prepared_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                               "feedback")
@@ -78,10 +78,10 @@ class TestESC:
             for i in range(40000):
                 wrap_await(pub.publish(rpm_message))
                 wrap_await(readiness_pub.publish(readiness_message))
-                # feedback_result = wrap_await(feedback_subscription.receive_for(0.3))
-                # if feedback_result is None:
-                #     assert False
-                #     return
+                feedback_result = wrap_await(feedback_subscription.receive_for(0.3))
+                if feedback_result is None:
+                    assert False
+                    return
                 time.sleep(0.06)
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
