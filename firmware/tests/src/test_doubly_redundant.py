@@ -3,7 +3,6 @@ import time
 import typing
 
 from _await_wrap import wrap_await
-from my_simple_test_allocator import allocate_nr_of_nodes
 from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, prepared_node, \
     prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save
 from imports import add_deps

@@ -2,7 +2,7 @@ import time
 import typing
 
 from _await_wrap import wrap_await
-from my_simple_test_allocator import allocate_nr_of_nodes
+from my_simple_test_allocator import make_simple_node_allocator
 from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, prepared_node, \
     prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save, prepared_double_redundant_node
 from imports import add_deps
@@ -31,7 +31,7 @@ class TestESC:
             else:
                 assert False
                 return
-        allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+        make_simple_node_allocator()(len(prepared_sapogs.keys()))
         # radian per second
         registers_array: typing.List[RegisterPair] = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
@@ -65,7 +65,7 @@ class TestESC:
                 assert False
                 return
         time.sleep(4)
-        allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+        make_simple_node_allocator()(len(prepared_sapogs.keys()))
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = prepared_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")

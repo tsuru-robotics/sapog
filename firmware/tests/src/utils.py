@@ -10,7 +10,7 @@ from asyncio import exceptions
 import pytest
 
 from allocator import OneTimeAllocator
-from my_simple_test_allocator import allocate_nr_of_nodes
+from my_simple_test_allocator import make_simple_node_allocator
 from register_pair_class import RegisterPair
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
@@ -159,13 +159,13 @@ def prepared_sapogs():
         return {21: "idk"}
     else:
         print("Allocating one node")
-        return allocate_nr_of_nodes(1)  # This will allocate id 21 too
+        return make_simple_node_allocator()(1)  # This will allocate id 21 too
 
 
 @pytest.fixture()
 def restarted_sapogs():
     global is_running_on_my_laptop
-    return allocate_nr_of_nodes(1)
+    return make_simple_node_allocator()(1)
 
 
 def make_registry(node_id: int, interfaces: typing.List[str], use_all_interfaces: bool = False):
@@ -269,7 +269,7 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         else:
             assert False
             return
-    result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+    result = make_simple_node_allocator()(len(prepared_sapogs.keys()))
     time.sleep(1)
     assert len(result.keys()) == len(prepared_sapogs.keys())
     prepared_node.registry[f"uavcan.pub.{name}.id"] = subject_id
@@ -282,7 +282,7 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         command_save(prepared_node, node_id)
         if restart_node(prepared_node, node_id):
             time.sleep(3)
-            result = allocate_nr_of_nodes(len(prepared_sapogs.keys()))
+            result = make_simple_node_allocator()(len(prepared_sapogs.keys()))
         else:
             assert False
             return

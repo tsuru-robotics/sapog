@@ -4,7 +4,7 @@ import typing
 
 import time
 
-from my_simple_test_allocator import allocate_nr_of_nodes
+from my_simple_test_allocator import make_simple_node_allocator
 from utils import is_device_with_node_id_running, restart_node, make_registry
 from utils import prepared_sapogs, prepared_node, prepared_double_redundant_node
 
@@ -33,7 +33,7 @@ class TestEssential:
             time.sleep(2)
         try:
             required_amount = 1
-            result = allocate_nr_of_nodes(required_amount)
+            result = make_simple_node_allocator()(required_amount)
             assert len(result.keys()) == required_amount
         except TimeoutError:
             assert False
