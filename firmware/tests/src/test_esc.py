@@ -5,6 +5,7 @@ import typing
 
 from pyuavcan.application import make_node, NodeInfo
 
+import Nodes
 from _await_wrap import wrap_await
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import rpm_to_radians_per_second, restart_node, configure_registers, \
@@ -35,12 +36,14 @@ def _allocate_node(interfaces) -> int:
 
 
 def _make_esc_test_preparator():
+    """What should this do? Should it loop over all the available devices and create a tester node for each?"""
+
     def _prepare_esc_test():
         prepared_node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
 
 
-def _run_esc_test_on_board(hw_id, interfaces, tester_node):
-    registry = make_registry(0, interfaces=interfaces)
+def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node, ):
+    registry = make_registry(0, interfaces=node_info.interfaces)
 
     # radian per second
     registers_array: typing.List[RegisterPair] = [
@@ -68,14 +71,13 @@ def _run_esc_test_on_board(hw_id, interfaces, tester_node):
                      uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(142)))
     ]
     time.sleep(2)
-    configure_registers(registers_array, tester_node, prepared_sapogs)
-    for node_id in prepared_sapogs.keys():
-        command_save(tester_node, node_id)
-        if restart_node(tester_node, node_id) is None:
-            assert False
-            return
+    configure_registers(registers_array, tester_node, node_info.node_id)
+    command_save(tester_node, node_info.node_id)
+    if restart_node(tester_node, node_info.node_id) is None:
+        assert False
+        return
     time.sleep(4)
-    _allocate_node(interfaces)
+    _allocate_node(node_info.interfaces)
     readiness_message = reg.udral.service.common.Readiness_0_1(3)
     readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
     readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")

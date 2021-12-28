@@ -7,6 +7,7 @@ import pyuavcan
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
+from NodeIdentifier import NodeIdentifier
 from _await_wrap import wrap_await
 from utils import get_interfaces_by_hw_id, get_available_slcan_interfaces
 
@@ -29,15 +30,15 @@ def make_simple_node_allocator(interfaces: Optional[List[str]] = []):
     node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01)
 
     def allocate_nr_of_nodes(nr: int, continuous: bool = False):
-        allocated_nodes = {}
-        allocated_hw_ids = []
+        allocated_nodes: List[NodeIdentifier] = []
         allocation_counter = 0
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
 
         def allocate_one_node(msg, _):
             nonlocal allocation_counter
-            if msg.unique_id_hash in allocated_hw_ids:
+            hw_id_already_allocated = any(node.hw_id == str(msg.unique_id_hash) for node in allocated_nodes)
+            if hw_id_already_allocated:
                 return None
             assert isinstance(msg, uavcan.pnp.NodeIDAllocationData_1_0)
             their_unique_id = msg.unique_id_hash
@@ -48,8 +49,7 @@ def make_simple_node_allocator(interfaces: Optional[List[str]] = []):
             assigned_node_id = 21 + allocation_counter
             new_id = uavcan.node.ID_1_0(assigned_node_id)
             response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
-            allocated_nodes[assigned_node_id] = str(msg.unique_id_hash)
-            allocated_hw_ids.append(str(msg.unique_id_hash))
+            allocated_nodes.append(NodeIdentifier(node_id=new_id, hw_id=str(msg.unique_id_hash), interfaces=interfaces))
             allocation_counter += 1
             wrap_await(allocate_responder.publish(response))
 

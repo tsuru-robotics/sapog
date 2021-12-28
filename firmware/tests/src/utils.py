@@ -8,7 +8,7 @@ from asyncio import exceptions
 
 import pytest
 
-from NodeIdentifier import NodeIdentifier
+import Nodes
 from allocator import OneTimeAllocator
 from my_simple_test_allocator import make_simple_node_allocator
 
@@ -76,23 +76,25 @@ def prepared_double_redundant_node():
 
 def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True,
                             do_allocate: bool = False) -> \
-        typing.List[NodeIdentifier]:
+        typing.List[Nodes.NodeInfo]:
     """
-    Makes a dictionary where every hw_id or node_id is a key and the value is a list of interfaces it communicates on.
+    Makes a list of .
 
     This helps to automatically find out which devices are using which interfaces and then communicate to every device
     in a for loop to test these.
     """
     available_interfaces = get_available_slcan_interfaces()
-    node_identifier_list: typing.List[NodeIdentifier] = []
+    node_identifier_list: typing.List[Nodes.NodeInfo] = []
 
     def add_to_dictionary_list(hw_id, interface, node_id: typing.Optional[int]):
         """Used twice below, tested in duplicated code below"""
         filtered_list = filter(lambda node_identifier: node_identifier.hw_id == hw_id, node_identifier_list)
         if (next_item := next(filtered_list, None)) is not None:
+            next_item.node_id = node_id
             next_item.interfaces.append(interface)
         else:
-            node_identifier_list.append(NodeIdentifier(hw_id=hw_id, interfaces=[interface]))
+            next_item.node_id = node_id
+            node_identifier_list.append(Nodes.NodeInfo(hw_id=hw_id, interfaces=[interface]))
 
     for index, interface in enumerate(available_interfaces):
         registry = make_registry(index, interfaces=[interface])
@@ -123,8 +125,8 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
 
 
 def test_add_to_dictionary_list():
-    interfaces_list = [NodeIdentifier('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
-                       NodeIdentifier('205537128692115', ['socketcan:slcan2'])]
+    interfaces_list = [Nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
+                       Nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
 
     def add_to_dictionary_list(key, value):
         """Used twice below"""
@@ -135,8 +137,8 @@ def test_add_to_dictionary_list():
             assert False
 
     add_to_dictionary_list('75720222859564', "socks")
-    assert interfaces_list == [NodeIdentifier('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
-                               NodeIdentifier('205537128692115', ['socketcan:slcan2'])]
+    assert interfaces_list == [Nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
+                               Nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
 
 
 def test_get_interfaces_by_hw_id():
@@ -216,8 +218,11 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
-    service_client = prepared_node.make_client(uavcan.register.Access_1_0, target_node_id)
+def make_access_request(reg_name, reg_value, node_identifier: Nodes.NodeInfo, prepared_node):
+    if node_identifier.node_id == 0xFFFF:
+        print(f"Device {node_identifier.hw_id} cannot be configured, it is missing a node_id, please allocate it first")
+        assert False
+    service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_identifier.node_id)
     service_client.response_timeout = 1
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name
@@ -225,15 +230,14 @@ def make_access_request(reg_name, reg_value, target_node_id, prepared_node):
     return wrap_await(service_client.call(msg))
 
 
-def configure_registers(regs: typing.List[RegisterPair], prepared_node, prepared_sapogs):
+def configure_registers(regs: typing.List[RegisterPair], prepared_node, node_id):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
             prepared_node.registry[pair.tester_reg_name] = pair.value
         if pair.embedded_device_reg_name:
-            for node_id in prepared_sapogs:
-                make_access_request(pair.embedded_device_reg_name, pair.value,
-                                    node_id, prepared_node)
+            make_access_request(pair.embedded_device_reg_name, pair.value,
+                                node_id, prepared_node)
 
 
 def allocate_one_node_id(node_name):
