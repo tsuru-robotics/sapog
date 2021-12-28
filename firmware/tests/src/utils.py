@@ -8,8 +8,10 @@ from asyncio import exceptions
 
 import pytest
 
+from NodeIdentifier import NodeIdentifier
 from allocator import OneTimeAllocator
 from my_simple_test_allocator import make_simple_node_allocator
+
 from register_pair_class import RegisterPair
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
@@ -72,8 +74,9 @@ def prepared_double_redundant_node():
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
 
 
-def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True) -> typing.Dict[
-    int, typing.List[str]]:
+def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True,
+                            do_allocate: bool = False) -> \
+        typing.List[NodeIdentifier]:
     """
     Makes a dictionary where every hw_id or node_id is a key and the value is a list of interfaces it communicates on.
 
@@ -81,19 +84,22 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
     in a for loop to test these.
     """
     available_interfaces = get_available_slcan_interfaces()
-    interfaces_by_hw_id: typing.Dict[int, typing.List[typing.Union[str, int]]] = {}
+    node_identifier_list: typing.List[NodeIdentifier] = []
+
+    def add_to_dictionary_list(hw_id, interface, node_id: typing.Optional[int]):
+        """Used twice below, tested in duplicated code below"""
+        filtered_list = filter(lambda node_identifier: node_identifier.hw_id == hw_id, node_identifier_list)
+        if (next_item := next(filtered_list, None)) is not None:
+            next_item.interfaces.append(interface)
+        else:
+            node_identifier_list.append(NodeIdentifier(hw_id=hw_id, interfaces=[interface]))
+
     for index, interface in enumerate(available_interfaces):
         registry = make_registry(index, interfaces=[interface])
         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
         done = False
-
-        def add_to_dictionary_list(key, value):
-            """Used twice below"""
-            if key in interfaces_by_hw_id.keys():
-                interfaces_by_hw_id[key].append(value)
-            else:
-                interfaces_by_hw_id[key] = [value]
-
+        if do_allocate:
+            make_simple_node_allocator(interface)(1)
         if do_get_unallocated_nodes:
             # Key is going to be a string
             sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
@@ -102,7 +108,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
                 print(f"Interface {interface} did not receive the allocation request.")
                 continue
             allocation_request, transfer_from = received_tuple
-            add_to_dictionary_list(str(allocation_request.unique_id_hash), interface)
+            add_to_dictionary_list(str(allocation_request.unique_id_hash), interface, transfer_from.source_node_id)
         if not done and do_get_allocated_nodes:
             # Key is going to be an int
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
@@ -112,16 +118,34 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
                 print(f"Interface {interface} did not receive a heartbeat.")
                 continue
             heartbeat, transfer_from = received_tuple
-            add_to_dictionary_list(transfer_from.source_node_id, interface)
-    return interfaces_by_hw_id
+            add_to_dictionary_list(transfer_from.source_node_id, interface, transfer_from.source_node_id)
+    return node_identifier_list
 
 
-def test_interfaces_by_hardware_id():
+def test_add_to_dictionary_list():
+    interfaces_list = [NodeIdentifier('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
+                       NodeIdentifier('205537128692115', ['socketcan:slcan2'])]
+
+    def add_to_dictionary_list(key, value):
+        """Used twice below"""
+        filtered_list = filter(lambda node_identifier: node_identifier.hw_id == key, interfaces_list)
+        if (next_item := next(filtered_list)) is not None:
+            next_item.interfaces.append(value)
+        else:
+            assert False
+
+    add_to_dictionary_list('75720222859564', "socks")
+    assert interfaces_list == [NodeIdentifier('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
+                               NodeIdentifier('205537128692115', ['socketcan:slcan2'])]
+
+
+def test_get_interfaces_by_hw_id():
     print(get_interfaces_by_hw_id())
     assert True
 
 
 def prepared_all_devices(should_be_allocated: bool = False):
+    from my_simple_test_allocator import make_simple_node_allocator
     interfaces_by_hw_id: typing.Dict[str, typing.List[str]] = get_interfaces_by_hw_id()
     if should_be_allocated:
         allocated_nodes = make_simple_node_allocator()(len(interfaces_by_hw_id.keys()))
@@ -150,6 +174,7 @@ def prepared_all_devices(should_be_allocated: bool = False):
 
 @pytest.fixture(scope="class")
 def prepared_sapogs():
+    from my_simple_test_allocator import make_simple_node_allocator
     if is_running_on_my_laptop and is_device_with_node_id_running(21):
         print("Device with node id 21 is already running so I will use that.")
         return {21: "idk"}
@@ -160,6 +185,7 @@ def prepared_sapogs():
 
 @pytest.fixture()
 def restarted_sapogs():
+    from my_simple_test_allocator import make_simple_node_allocator
     global is_running_on_my_laptop
     return make_simple_node_allocator()(1)
 
@@ -259,6 +285,7 @@ def command_save(prepared_node, node_id):
 
 
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
+    from my_simple_test_allocator import make_simple_node_allocator
     for node_id in prepared_sapogs.keys():
         if restart_node(prepared_node, node_id):
             time.sleep(4)
@@ -282,3 +309,8 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         else:
             assert False
             return
+
+
+def test_interfaces_by_hardware_id():
+    print(get_interfaces_by_hw_id())
+    assert True

@@ -184,7 +184,7 @@ void publish_esc_power(node::state::State &state)
 
 double rpm_to_radians_per_second(unsigned int rpm)
 {
-  unsigned int rotations_per_second = rpm * 60;
+  unsigned int rotations_per_second = rpm / 60;
   return rotations_per_second * 2 * 3.14159265359;
 }
 
