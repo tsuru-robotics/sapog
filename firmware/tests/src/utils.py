@@ -101,7 +101,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
         done = False
         if do_allocate:
-            make_simple_node_allocator(interface)(1)
+            make_simple_node_allocator(interface, node_to_use=node)(1)
         if do_get_unallocated_nodes:
             # Key is going to be a string
             sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)

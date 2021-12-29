@@ -5,9 +5,9 @@ import sys
 
 import pyuavcan
 
+import Nodes
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
-from NodeIdentifier import NodeIdentifier
 from _await_wrap import wrap_await
 from utils import get_interfaces_by_hw_id, get_available_slcan_interfaces
 
@@ -19,18 +19,23 @@ sys.path.insert(0, namespace_path)
 from pyuavcan.application import make_node, NodeInfo, register
 
 
-def make_simple_node_allocator(interfaces: Optional[List[str]] = []):
+def make_simple_node_allocator(interfaces: Optional[List[str]] = [], node_id_to_use: int = 6,
+                               node_to_use: Optional[pyuavcan.application.Node] = None):
     internal_table = {}
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    if len(interfaces) == 0:
-        interfaces = get_available_slcan_interfaces()
-    registry01["uavcan.can.iface"] = " ".join(interfaces)
-    registry01["uavcan.can.mtu"] = 8
-    registry01["uavcan.node.id"] = 6
-    node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01)
+    if not node_to_use:
+        registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+        if len(interfaces) == 0:
+            interfaces = get_available_slcan_interfaces()
+
+        registry01["uavcan.can.iface"] = " ".join(interfaces)
+        registry01["uavcan.can.mtu"] = 8
+        registry01["uavcan.node.id"] = node_id_to_use
+        node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01)
+    else:
+        node = node_to_use
 
     def allocate_nr_of_nodes(nr: int, continuous: bool = False):
-        allocated_nodes: List[NodeIdentifier] = []
+        allocated_nodes: List[Nodes.NodeInfo] = []
         allocation_counter = 0
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
@@ -49,7 +54,7 @@ def make_simple_node_allocator(interfaces: Optional[List[str]] = []):
             assigned_node_id = 21 + allocation_counter
             new_id = uavcan.node.ID_1_0(assigned_node_id)
             response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
-            allocated_nodes.append(NodeIdentifier(node_id=new_id, hw_id=str(msg.unique_id_hash), interfaces=interfaces))
+            allocated_nodes.append(Nodes.NodeInfo(node_id=new_id, hw_id=str(msg.unique_id_hash), interfaces=interfaces))
             allocation_counter += 1
             wrap_await(allocate_responder.publish(response))
 
