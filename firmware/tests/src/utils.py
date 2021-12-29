@@ -61,6 +61,7 @@ def get_available_slcan_interfaces():
     for interface_name in list_of_interfaces:
         if "slcan" in interface_name:
             result_interfaces.append("socketcan:" + interface_name)
+    print(f"Available interfaces {result_interfaces}")
     return result_interfaces
 
 
@@ -90,6 +91,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
 
     def add_to_dictionary_list(hw_id, interface, node_id: typing.Optional[int]):
         """Used twice below, tested in duplicated code below"""
+        print(f"adding to dictionary, hw_id: {hw_id}")
         filtered_list = filter(lambda node_identifier: node_identifier.hw_id == hw_id, node_identifier_list)
         if (next_item := next(filtered_list, None)) is not None:
             # Appending to a list in an existing item
@@ -98,17 +100,25 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
         else:
             # Creating a new item with a list and an item in it
             node_identifier_list.append(my_nodes.NodeInfo(hw_id=hw_id, interfaces=[interface], node_id=node_id))
+    # We start by mapping each interface to a hw_id, later this will be useful to allocate only one
+    for index, interface in enumerate(available_interfaces):
 
     for index, interface in enumerate(available_interfaces):
         registry = make_registry(index, interfaces=[interface])
         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+        current_node_info: my_nodes.NodeInfo = None
         if do_allocate:
+            # Check the node_identifier_list to see if the device on this interface is equal to a one allocated already
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
             received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = \
                 wrap_await(sub.receive_for(1.3))
             if received_tuple is None:
                 print(f"Allocating {interface}")
-                make_simple_node_allocator(node_to_use=node)(1)
+                node_infos = make_simple_node_allocator()(1, node_to_use=node)
+                if len(node_infos) == 1:
+                    current_node_info = node_infos[0]
+                else:
+                    print()
             else:
                 print(f"Node is actually already allocated on interface {interface}")
         if do_get_unallocated_nodes and not do_allocate:
@@ -120,7 +130,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
                 continue
             allocation_request, transfer_from = received_tuple
             add_to_dictionary_list(str(allocation_request.unique_id_hash), interface, transfer_from.source_node_id)
-        if do_allocate or do_get_allocated_nodes:
+        if (do_allocate or do_get_allocated_nodes) and current_node_info:
             # Key is going to be an int
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
             received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = wrap_await(
@@ -129,7 +139,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
                 print(f"Interface {interface} did not receive a heartbeat.")
                 continue
             heartbeat, transfer_from = received_tuple
-            add_to_dictionary_list(transfer_from.source_node_id, interface, transfer_from.source_node_id)
+            add_to_dictionary_list(str(current_node_info.hw_id), interface, transfer_from.source_node_id)
     return node_identifier_list
 
 

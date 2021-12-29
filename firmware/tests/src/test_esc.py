@@ -103,7 +103,7 @@ def _run_esc_test_on_board(node_info: my_nodes.NodeInfo, tester_node: pyuavcan.a
     pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
     feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                         "feedback")
-    # start_motor_barrier.wait()
+    start_motor_barrier.wait()
     try:
         for i in range(40000):
             wrap_await(pub.publish(rpm_message))
@@ -134,4 +134,5 @@ class TestESC:
         # make_simple_node_allocator()(len(prepared_sapogs.keys()))
         nodes_info_list = get_interfaces_by_hw_id(do_get_unallocated_nodes=False, do_get_allocated_nodes=True,
                                                   do_allocate=True)
+        print(f"nodes_info_list: {nodes_info_list}")
         _motor_test_esc_controllers(nodes_info_list)
