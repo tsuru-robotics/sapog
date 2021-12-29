@@ -1,6 +1,8 @@
 import asyncio
 import os
 import subprocess
+import traceback
+
 import time
 import typing
 
@@ -100,13 +102,15 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
     for index, interface in enumerate(available_interfaces):
         registry = make_registry(index, interfaces=[interface])
         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-        done = False
         if do_allocate:
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
             received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = \
                 wrap_await(sub.receive_for(1.3))
-            if not received_tuple:
-                make_simple_node_allocator(interface, node_to_use=node)(1)
+            if received_tuple is None:
+                print(f"Allocating {interface}")
+                make_simple_node_allocator(node_to_use=node)(1)
+            else:
+                print(f"Node is actually already allocated on interface {interface}")
         if do_get_unallocated_nodes and not do_allocate:
             # Key is going to be a string
             sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
@@ -204,13 +208,14 @@ def make_registry(node_id: int, interfaces: typing.List[str], use_all_interfaces
     else:
         registry01["uavcan.can.iface"] = " ".join(interfaces)
     print("Using these interfaces: " + str(registry01["uavcan.can.iface"]))
+    traceback.print_stack(limit=3)
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01
 
 
-def restart_node(prepared_node, node_id_to_restart):
-    service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
+def restart_node(node, node_id_to_restart):
+    service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
     response = wrap_await(service_client.call(msg))
@@ -223,11 +228,11 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-def make_access_request(reg_name, reg_value, node_identifier: my_nodes.NodeInfo, prepared_node):
-    if node_identifier.node_id == 0xFFFF:
-        print(f"Device {node_identifier.hw_id} cannot be configured, it is missing a node_id, please allocate it first")
+def make_access_request(reg_name, reg_value, node_id: my_nodes.NodeInfo, node: pyuavcan.application.Node):
+    if not node_id or node_id == 0xFFFF:
+        print(f"Device cannot be configured, it is missing a node_id, please allocate it first")
         assert False
-    service_client = prepared_node.make_client(uavcan.register.Access_1_0, node_identifier.node_id)
+    service_client = node.make_client(uavcan.register.Access_1_0, node_id)
     service_client.response_timeout = 1
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name
@@ -235,14 +240,15 @@ def make_access_request(reg_name, reg_value, node_identifier: my_nodes.NodeInfo,
     return wrap_await(service_client.call(msg))
 
 
-def configure_registers(regs: typing.List[RegisterPair], prepared_node, node_id):
+def configure_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+                        target_node_info: my_nodes.NodeInfo):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
-            prepared_node.registry[pair.tester_reg_name] = pair.value
+            node.registry[pair.tester_reg_name] = pair.value
         if pair.embedded_device_reg_name:
             make_access_request(pair.embedded_device_reg_name, pair.value,
-                                node_id, prepared_node)
+                                target_node_info.node_id, node)
 
 
 def allocate_one_node_id(node_name):

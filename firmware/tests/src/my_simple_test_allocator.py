@@ -18,23 +18,25 @@ sys.path.insert(0, namespace_path)
 from pyuavcan.application import make_node, NodeInfo, register
 
 
-def make_simple_node_allocator(interfaces: Optional[List[str]] = [], node_id_to_use: int = 6,
-                               node_to_use: Optional[pyuavcan.application.Node] = None):
+def make_simple_node_allocator():
     from utils import get_available_slcan_interfaces
     internal_table = {}
-    if not node_to_use:
-        registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-        if len(interfaces) == 0:
-            interfaces = get_available_slcan_interfaces()
 
-        registry01["uavcan.can.iface"] = " ".join(interfaces)
-        registry01["uavcan.can.mtu"] = 8
-        registry01["uavcan.node.id"] = node_id_to_use
-        node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01)
-    else:
-        node = node_to_use
+    def allocate_nr_of_nodes(nr: int, continuous: bool = False,
+                             node_to_use: Optional[pyuavcan.application.Node] = None,
+                             interfaces: Optional[List[str]] = [],
+                             node_id_to_use: Optional[int] = 6) -> List[my_nodes.NodeInfo]:
+        if not node_to_use:
+            registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+            if len(interfaces) == 0:
+                interfaces = get_available_slcan_interfaces()
 
-    def allocate_nr_of_nodes(nr: int, continuous: bool = False) -> List[my_nodes.NodeInfo]:
+            registry01["uavcan.can.iface"] = " ".join(interfaces)
+            registry01["uavcan.can.mtu"] = 8
+            registry01["uavcan.node.id"] = node_id_to_use
+            node = make_node(NodeInfo(name="com.zubax.sapog.tests.allocator"), registry01)
+        else:
+            node = node_to_use
         allocated_nodes: List[my_nodes.NodeInfo] = []
         allocation_counter = 0
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
