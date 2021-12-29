@@ -1,5 +1,6 @@
 import asyncio
 
+import pyuavcan
 import time
 import typing
 
@@ -23,6 +24,8 @@ import reg.udral.physics.dynamics.rotation.PlanarTs_0_1
 import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
+import threading
+
 from register_pair_class import RegisterPair, EmbeddedDeviceRegPair
 
 
@@ -35,14 +38,16 @@ def _allocate_node(interfaces) -> int:
     pass
 
 
-def _make_esc_test_preparator():
+def _motor_test_esc_controllers(nodes: typing.List[Nodes.NodeInfo]):
     """What should this do? Should it loop over all the available devices and create a tester node for each?"""
+    coroutines = []
+    for node_info in enumerate(nodes):
+        registry = make_registry(0, interfaces=node_info.interfaces)
+        tester_node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+        threading.Thread(target=lambda: _run_esc_test_on_board(node_info, tester_node)).start()
 
-    def _prepare_esc_test():
-        prepared_node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
 
-
-def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node, ):
+def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node: pyuavcan.application.Node) -> None:
     registry = make_registry(0, interfaces=node_info.interfaces)
 
     # radian per second
@@ -113,5 +118,5 @@ class TestESC:
         #         assert False
         #         return
         # make_simple_node_allocator()(len(prepared_sapogs.keys()))
-        for hw_id, interfaces in get_interfaces_by_hw_id():
-            asyncio.Task()
+        nodes_info_list = get_interfaces_by_hw_id(do_get_allocated_nodes=True, do_allocate=True)
+        _motor_test_esc_controllers(nodes_info_list)
