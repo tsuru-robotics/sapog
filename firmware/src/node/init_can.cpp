@@ -26,6 +26,7 @@ static void canardFree(CanardInstance *const ins, void *const pointer)
   board::deallocate(pointer);
 }
 
+#define FORGET_NODE_ID
 
 void init_canard()
 {

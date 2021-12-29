@@ -5,11 +5,10 @@ import sys
 
 import pyuavcan
 
-import Nodes
+import my_nodes
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 from _await_wrap import wrap_await
-from utils import get_interfaces_by_hw_id, get_available_slcan_interfaces
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -21,6 +20,7 @@ from pyuavcan.application import make_node, NodeInfo, register
 
 def make_simple_node_allocator(interfaces: Optional[List[str]] = [], node_id_to_use: int = 6,
                                node_to_use: Optional[pyuavcan.application.Node] = None):
+    from utils import get_available_slcan_interfaces
     internal_table = {}
     if not node_to_use:
         registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
@@ -34,8 +34,8 @@ def make_simple_node_allocator(interfaces: Optional[List[str]] = [], node_id_to_
     else:
         node = node_to_use
 
-    def allocate_nr_of_nodes(nr: int, continuous: bool = False):
-        allocated_nodes: List[Nodes.NodeInfo] = []
+    def allocate_nr_of_nodes(nr: int, continuous: bool = False) -> List[my_nodes.NodeInfo]:
+        allocated_nodes: List[my_nodes.NodeInfo] = []
         allocation_counter = 0
         allocate_responder = node.make_publisher(uavcan.pnp.NodeIDAllocationData_1_0)
         allocate_subscription = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
@@ -54,7 +54,8 @@ def make_simple_node_allocator(interfaces: Optional[List[str]] = [], node_id_to_
             assigned_node_id = 21 + allocation_counter
             new_id = uavcan.node.ID_1_0(assigned_node_id)
             response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
-            allocated_nodes.append(Nodes.NodeInfo(node_id=new_id, hw_id=str(msg.unique_id_hash), interfaces=interfaces))
+            allocated_nodes.append(
+                my_nodes.NodeInfo(str(msg.unique_id_hash), interfaces, node_id=new_id))
             allocation_counter += 1
             wrap_await(allocate_responder.publish(response))
 

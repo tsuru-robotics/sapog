@@ -5,7 +5,7 @@ import typing
 import time
 
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import is_device_with_node_id_running, restart_node, make_registry
+from utils import is_device_with_node_id_running, restart_node, make_registry, get_interfaces_by_hw_id
 from utils import prepared_sapogs, prepared_node, prepared_double_redundant_node
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
@@ -28,15 +28,22 @@ from _await_wrap import wrap_await
 
 class TestEssential:
     @staticmethod
-    def test_allows_allocation_of_node_id(prepared_double_redundant_node):
-        if restart_node(prepared_double_redundant_node, 21):
-            time.sleep(2)
-        try:
-            required_amount = 1
-            result = make_simple_node_allocator()(required_amount)
-            assert len(result.keys()) == required_amount
-        except TimeoutError:
-            assert False
+    def test_allows_allocation_of_node_id():
+        nodes_info_list = get_interfaces_by_hw_id(do_get_unallocated_nodes=False, do_get_allocated_nodes=True,
+                                                  do_allocate=True)
+        for index, node_info in enumerate(nodes_info_list):
+            registry = make_registry(index, interfaces=node_info.interfaces)
+            tester = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
+            if restart_node(tester, 21):
+                time.sleep(2)
+            try:
+                required_amount = 1
+                result = make_simple_node_allocator(node_to_use=tester)(required_amount)
+                assert len(result) == required_amount
+            except TimeoutError:
+                assert False
+            finally:
+                tester.close()
 
     @staticmethod
     def test_has_heartbeat(prepared_sapogs):

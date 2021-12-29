@@ -8,7 +8,7 @@ from asyncio import exceptions
 
 import pytest
 
-import Nodes
+import my_nodes
 from allocator import OneTimeAllocator
 from my_simple_test_allocator import make_simple_node_allocator
 
@@ -76,33 +76,38 @@ def prepared_double_redundant_node():
 
 def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True,
                             do_allocate: bool = False) -> \
-        typing.List[Nodes.NodeInfo]:
+        typing.List[my_nodes.NodeInfo]:
     """
-    Makes a list of .
+    Makes a list of NodeInfo.
 
     This helps to automatically find out which devices are using which interfaces and then communicate to every device
     in a for loop to test these.
     """
     available_interfaces = get_available_slcan_interfaces()
-    node_identifier_list: typing.List[Nodes.NodeInfo] = []
+    node_identifier_list: typing.List[my_nodes.NodeInfo] = []
 
     def add_to_dictionary_list(hw_id, interface, node_id: typing.Optional[int]):
         """Used twice below, tested in duplicated code below"""
         filtered_list = filter(lambda node_identifier: node_identifier.hw_id == hw_id, node_identifier_list)
         if (next_item := next(filtered_list, None)) is not None:
-            next_item.node_id = node_id
+            # Appending to a list in an existing item
+            next_item.node_id = node_id or 0xFFFF
             next_item.interfaces.append(interface)
         else:
-            next_item.node_id = node_id
-            node_identifier_list.append(Nodes.NodeInfo(hw_id=hw_id, interfaces=[interface]))
+            # Creating a new item with a list and an item in it
+            node_identifier_list.append(my_nodes.NodeInfo(hw_id=hw_id, interfaces=[interface], node_id=node_id))
 
     for index, interface in enumerate(available_interfaces):
         registry = make_registry(index, interfaces=[interface])
         node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
         done = False
         if do_allocate:
-            make_simple_node_allocator(interface, node_to_use=node)(1)
-        if do_get_unallocated_nodes:
+            sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+            received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = \
+                wrap_await(sub.receive_for(1.3))
+            if not received_tuple:
+                make_simple_node_allocator(interface, node_to_use=node)(1)
+        if do_get_unallocated_nodes and not do_allocate:
             # Key is going to be a string
             sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
             received_tuple: uavcan.pnp.NodeIDAllocationData_1_0 = wrap_await(sub.receive_for(1.3))
@@ -111,7 +116,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
                 continue
             allocation_request, transfer_from = received_tuple
             add_to_dictionary_list(str(allocation_request.unique_id_hash), interface, transfer_from.source_node_id)
-        if not done and do_get_allocated_nodes:
+        if do_allocate or do_get_allocated_nodes:
             # Key is going to be an int
             sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
             received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = wrap_await(
@@ -125,8 +130,8 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
 
 
 def test_add_to_dictionary_list():
-    interfaces_list = [Nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
-                       Nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
+    interfaces_list = [my_nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
+                       my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
 
     def add_to_dictionary_list(key, value):
         """Used twice below"""
@@ -137,8 +142,8 @@ def test_add_to_dictionary_list():
             assert False
 
     add_to_dictionary_list('75720222859564', "socks")
-    assert interfaces_list == [Nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
-                               Nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
+    assert interfaces_list == [my_nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
+                               my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
 
 
 def test_get_interfaces_by_hw_id():
@@ -218,7 +223,7 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-def make_access_request(reg_name, reg_value, node_identifier: Nodes.NodeInfo, prepared_node):
+def make_access_request(reg_name, reg_value, node_identifier: my_nodes.NodeInfo, prepared_node):
     if node_identifier.node_id == 0xFFFF:
         print(f"Device {node_identifier.hw_id} cannot be configured, it is missing a node_id, please allocate it first")
         assert False

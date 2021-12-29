@@ -6,7 +6,7 @@ import typing
 
 from pyuavcan.application import make_node, NodeInfo
 
-import Nodes
+import my_nodes
 from _await_wrap import wrap_await
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import rpm_to_radians_per_second, restart_node, configure_registers, \
@@ -25,6 +25,7 @@ import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
 import threading
+import time
 
 from register_pair_class import RegisterPair, EmbeddedDeviceRegPair
 
@@ -38,18 +39,22 @@ def _allocate_node(interfaces) -> int:
     pass
 
 
-def _motor_test_esc_controllers(nodes: typing.List[Nodes.NodeInfo]):
+def _motor_test_esc_controllers(nodes: typing.List[my_nodes.NodeInfo]):
     """What should this do? Should it loop over all the available devices and create a tester node for each?"""
-    coroutines = []
+    start_motor_barrier = threading.Barrier(len(nodes), timeout=5)
+    threads_list = []
     for node_info in enumerate(nodes):
         registry = make_registry(0, interfaces=node_info.interfaces)
         tester_node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-        threading.Thread(target=lambda: _run_esc_test_on_board(node_info, tester_node)).start()
+        current_thread = threading.Thread(target=
+                                          lambda: _run_esc_test_on_board(node_info, tester_node, start_motor_barrier))
+        threads_list.append(current_thread)
+        current_thread.start()
+    for thread in threads_list:
+        thread.join()
 
 
-def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node: pyuavcan.application.Node) -> None:
-    registry = make_registry(0, interfaces=node_info.interfaces)
-
+def _run_esc_test_on_board(node_info: my_nodes.NodeInfo, tester_node: pyuavcan.application.Node, start_motor_barrier):
     # radian per second
     registers_array: typing.List[RegisterPair] = [
         RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
@@ -91,6 +96,7 @@ def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node: pyuavcan.appl
     pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Scalar_0_1, "setpoint")
     feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                         "feedback")
+    start_motor_barrier.wait()
     try:
         for i in range(40000):
             wrap_await(pub.publish(rpm_message))
@@ -108,8 +114,9 @@ def _run_esc_test_on_board(node_info: Nodes.NodeInfo, tester_node: pyuavcan.appl
 
 
 class TestESC:
+    # @pytest.mark.asyncio
     @staticmethod
-    def test_rpm_run_2_sec(prepared_double_redundant_node, prepared_sapogs):
+    async def test_rpm_run_2_sec():
         # prepared_node = prepared_double_redundant_node
         # for node_id in prepared_sapogs.keys():
         #     if restart_node(prepared_node, node_id):
@@ -118,5 +125,6 @@ class TestESC:
         #         assert False
         #         return
         # make_simple_node_allocator()(len(prepared_sapogs.keys()))
-        nodes_info_list = get_interfaces_by_hw_id(do_get_allocated_nodes=True, do_allocate=True)
+        nodes_info_list = get_interfaces_by_hw_id(do_get_unallocated_nodes=False, do_get_allocated_nodes=True,
+                                                  do_allocate=True)
         _motor_test_esc_controllers(nodes_info_list)

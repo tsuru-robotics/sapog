@@ -9,7 +9,7 @@ class NodeInfo:
     hw_id: str
     interfaces: List[str]
 
-    def __init__(self, hw_id, interfaces):
+    def __init__(self, hw_id, interfaces, node_id=0xFFFF):
         self.hw_id = hw_id
         self.interfaces = interfaces
-        self.node_id = 0xFFFF
+        self.node_id = node_id
