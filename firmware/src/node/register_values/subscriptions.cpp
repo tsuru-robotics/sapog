@@ -34,7 +34,7 @@ AnySubscription registered_ports[] =
                                          0, 1,
                                          &reg_udral_physics_acoustics_Note_0_1_handler,
                                          CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC),
-    CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(setpoint, reg_udral_service_actuator_common_sp_Vector8,
+    CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(setpoint, reg_udral_service_actuator_common_sp_Vector31,
                                          0, 1,
                                          &setpoint_handler, 90000),
     CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION(readiness, reg_udral_service_common_Readiness,

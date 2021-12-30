@@ -90,7 +90,7 @@ def get_port():
                 return follow_link(path_from_arguments)
             else:
                 return path_from_arguments
-        pattern = re.compile(r".*Black.*Magic.*Probe.*$")
+        pattern = re.compile(r".*Black.*Magic.*Probe.*00$")
         chosenPath = r"/dev/serial/by-id/"
         files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
         my_filter = lambda x: pattern.search(str(x))

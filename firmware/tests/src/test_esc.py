@@ -100,7 +100,7 @@ class TestESC:
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         await readiness_pub.publish(readiness_message)
-        pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector8_0, "setpoint")
+        pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
         feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                             "feedback")
         dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
@@ -125,7 +125,7 @@ class TestESC:
                     for i, s in enumerate(current_speeds):
                         speed_difference = abs(input_array[i] - s)
                         assert speed_difference < 100, "There is a problem with reporting RPM."
-                rpm_message = reg.udral.service.actuator.common.sp.Vector8_0(value=input_array)
+                rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
                 start_time2 = time.time()
