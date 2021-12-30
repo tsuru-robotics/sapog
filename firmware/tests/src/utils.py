@@ -66,59 +66,6 @@ def get_available_slcan_interfaces():
     return result_interfaces
 
 
-def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True,
-                            do_allocate: bool = False) -> \
-        typing.List[my_nodes.NodeInfo]:
-    """
-    Makes a list of NodeInfo.
-
-    This helps to automatically find out which devices are using which interfaces and then communicate to every device
-    in a for loop to test these.
-    """
-    from my_simple_test_allocator import make_simple_node_allocator
-    available_interfaces = get_available_slcan_interfaces()
-    node_identifier_list: typing.List[my_nodes.NodeInfo] = []
-
-    def add_to_dictionary_list(hw_id, interface, node_id: typing.Optional[int]):
-        """Used twice below, tested in duplicated code below"""
-        print(f"adding to dictionary, hw_id: {hw_id}")
-        filtered_list = filter(lambda node_identifier: node_identifier.hw_id == hw_id, node_identifier_list)
-        if (next_item := next(filtered_list, None)) is not None:
-            # Appending to a list in an existing item
-            next_item.node_id = node_id or 0xFFFF
-            next_item.interfaces.append(interface)
-        else:
-            # Creating a new item with a list and an item in it
-            node_identifier_list.append(my_nodes.NodeInfo(hw_id=hw_id, interfaces=[interface], node_id=node_id))
-
-    # We start by mapping each interface to a hw_id, later this will be useful
-    if do_allocate:
-        node_identifier_list = make_simple_node_allocator()(None, interfaces=available_interfaces, continuous=True,
-                                                            time_budget_seconds=2)
-    if do_get_unallocated_nodes and not do_allocate:
-        for index, interface in enumerate(available_interfaces):
-            registry = make_registry(index, interfaces=[interface])
-            node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-            current_node_info: my_nodes.NodeInfo = None
-            sub = node.make_subscriber(uavcan.pnp.NodeIDAllocationData_1_0)
-            received_tuple: uavcan.pnp.NodeIDAllocationData_1_0 = wrap_await(sub.receive_for(1.3))
-            if not received_tuple:
-                print(f"Interface {interface} did not receive the allocation request.")
-                continue
-            allocation_request, transfer_from = received_tuple
-            add_to_dictionary_list(str(allocation_request.unique_id_hash), interface, transfer_from.source_node_id)
-    elif do_allocate or do_get_allocated_nodes:
-        for index, node_info in enumerate(available_interfaces):
-            registry = make_registry(index, interfaces=node_info.interfaces)
-            node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-            sub = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-            received_tuple: typing.Tuple[uavcan.node.Heartbeat_1_0, pyuavcan.transport.TransferFrom] = wrap_await(
-                sub.receive_for(1.3))
-            heartbeat, transfer_from = received_tuple
-            add_to_dictionary_list(str(current_node_info.hw_id), interface, transfer_from.source_node_id)
-    return node_identifier_list
-
-
 def test_add_to_dictionary_list():
     interfaces_list = [my_nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
                        my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
@@ -134,39 +81,6 @@ def test_add_to_dictionary_list():
     add_to_dictionary_list('75720222859564', "socks")
     assert interfaces_list == [my_nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1', "socks"]),
                                my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
-
-
-def test_get_interfaces_by_hw_id():
-    print(get_interfaces_by_hw_id())
-    assert True
-
-
-def prepared_all_devices(should_be_allocated: bool = False):
-    from my_simple_test_allocator import make_simple_node_allocator
-    interfaces_by_hw_id: typing.Dict[str, typing.List[str]] = get_interfaces_by_hw_id()
-    if should_be_allocated:
-        allocated_nodes = make_simple_node_allocator()(len(interfaces_by_hw_id.keys()))
-    for key, interfaces_list in interfaces_by_hw_id.items():
-        is_key_node_id = type(key) is int
-        is_key_hw_id = type(key) is str
-        if is_key_hw_id:
-            pass
-        elif is_key_node_id and should_be_allocated:
-            registry = make_registry(0, interfaces=interfaces_list)
-            node = make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry)
-            service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, key)
-            msg = uavcan.node.ExecuteCommand_1_1.Request()
-            msg.command = msg.COMMAND_RESTART
-            response = wrap_await(service_client.call(msg))
-            node.close()
-            assert response is not None
-    # Replace every hw_id with node_id if it is allocated because a node_id is more useful
-    for hw_id in interfaces_by_hw_id.keys():
-        for key, value in list(allocated_nodes.items()):
-            if value == hw_id:
-                interfaces_by_hw_id[key] = interfaces_by_hw_id[hw_id]
-                interfaces_by_hw_id.pop(hw_id)
-    return interfaces_by_hw_id
 
 
 @pytest.fixture(scope="class")
@@ -302,8 +216,3 @@ def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):
         else:
             assert False
             return
-
-
-def test_interfaces_by_hardware_id():
-    print(get_interfaces_by_hw_id())
-    assert True
