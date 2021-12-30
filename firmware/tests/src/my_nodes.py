@@ -9,6 +9,7 @@ class NodeInfo:
     hw_id: str
     interfaces: List[str]
     motor_index: Optional[int]
+    target_rpm: float = 200
 
     def __init__(self, hw_id, interfaces, node_id=0xFFFF):
         self.hw_id = hw_id

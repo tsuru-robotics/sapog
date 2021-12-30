@@ -5,8 +5,10 @@
 #
 import typing
 
+import math
 import pytest
 import time
+from pyuavcan.transport import TransferFrom
 
 import reg.udral.physics.dynamics.rotation.PlanarTs_0_1
 import reg.udral.physics.electricity.PowerTs_0_1
@@ -23,6 +25,16 @@ from utils import rpm_to_radians_per_second, restart_node, \
     command_save, configure_embedded_registers, configure_tester_side_registers
 
 from node_fixtures.drnf import prepared_double_redundant_node
+
+
+def radian_s_to_rpm(radian_s: float):
+    return radian_s * 60 / (math.pi * 2)
+
+
+def test_radian_s_to_rpm():
+    from decimal import Decimal
+    assert (Decimal(radian_s_to_rpm(3)) - Decimal(28.65)) < 0.01
+    assert (Decimal(radian_s_to_rpm(4)) - Decimal(38.2)) < 0.01
 
 
 class TestESC:
@@ -67,7 +79,7 @@ class TestESC:
                 assert False
                 return
         time.sleep(4)
-        our_allocator(2, node_to_use=tester_node)
+        node_info_list = our_allocator(2, node_to_use=tester_node)
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
@@ -75,10 +87,25 @@ class TestESC:
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector8_0, "setpoint")
         feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                             "feedback")
+        dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         try:
+            current_speeds = []
+
+            def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1, tf: TransferFrom):
+                if (node := next(filter(lambda n: n.node_id == tf.source_node_id, node_info_list), None)) is not None:
+                    current_speeds[node.motor_index] = \
+                        rpm_to_radians_per_second(msg.value.kinematics.angular_velocity.radian_per_second)
+
+            dynamics_sub.receive_in_background(receive_dynamics)
             for i in range(40000):
                 input_array = [rpm_to_radians_per_second(200), rpm_to_radians_per_second(200)]
                 input_array.extend([0 for i in range(6)])
+                for i, s in enumerate(current_speeds):
+                    speed_difference = abs(input_array[i] - s)
+                    print(speed_difference)
+                    if speed_difference > 50:
+                        assert False
+                        print("There is a problem with reporting RPM.")
                 rpm_message = reg.udral.service.actuator.common.sp.Vector8_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
