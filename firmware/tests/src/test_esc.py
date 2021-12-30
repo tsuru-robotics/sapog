@@ -7,8 +7,8 @@ import typing
 
 import math
 import pytest
+import pyuavcan
 import time
-from pyuavcan.transport import TransferFrom
 
 import reg.udral.physics.dynamics.rotation.PlanarTs_0_1
 import reg.udral.physics.electricity.PowerTs_0_1
@@ -75,11 +75,13 @@ class TestESC:
                                                            natural16=uavcan.primitive.array.Natural16_1_0(index))))
             configure_embedded_registers(registry, tester_node, node_info)
             command_save(tester_node, node_info.node_id)
-            if restart_node(tester_node, node_info.node_id) is None:
+            if await restart_node(tester_node, node_info.node_id) is None:
                 assert False
                 return
         time.sleep(4)
-        node_info_list = our_allocator(2, node_to_use=tester_node)
+        node_info_list = await our_allocator(2, node_to_use=tester_node)
+        for index, node_info in enumerate(node_info_list):
+            node_info.motor_index = index
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
         readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
@@ -88,32 +90,36 @@ class TestESC:
         feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
                                                             "feedback")
         dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
+        current_speeds = [0, 0]
+        if len(node_info_list) < 2:
+            raise Exception("Please restart"
+                            " the nodes before continuing. This test was supposed to allocate nodes and then keep the info about them. ")
+
+        def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
+                             tf: pyuavcan.transport._transfer.TransferFrom):
+            new_filter = filter(lambda n: n.node_id == tf.source_node_id, node_info_list)
+            if (node := next(new_filter, None)) is not None:
+                current_speeds[node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
+
+        dynamics_sub.receive_in_background(receive_dynamics)
+        starting_time = time.time()
         try:
-            current_speeds = []
-
-            def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1, tf: TransferFrom):
-                if (node := next(filter(lambda n: n.node_id == tf.source_node_id, node_info_list), None)) is not None:
-                    current_speeds[node.motor_index] = \
-                        rpm_to_radians_per_second(msg.value.kinematics.angular_velocity.radian_per_second)
-
-            dynamics_sub.receive_in_background(receive_dynamics)
             for i in range(40000):
                 input_array = [rpm_to_radians_per_second(200), rpm_to_radians_per_second(200)]
                 input_array.extend([0 for i in range(6)])
-                for i, s in enumerate(current_speeds):
-                    speed_difference = abs(input_array[i] - s)
-                    print(speed_difference)
-                    if speed_difference > 50:
-                        assert False
-                        print("There is a problem with reporting RPM.")
+                if time.time() - starting_time > 4:
+                    for i, s in enumerate(current_speeds):
+                        speed_difference = abs(input_array[i] - s)
+                        print(speed_difference)
+                        assert speed_difference < 100, "There is a problem with reporting RPM."
                 rpm_message = reg.udral.service.actuator.common.sp.Vector8_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
-                feedback_result = await feedback_subscription.receive_for(0.3)
+                feedback_result = await feedback_subscription.receive_for(0.5)
                 if feedback_result is None:
                     assert False
                     return
-                time.sleep(0.06)
+                time.sleep(0.04)
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
             # communications are still available

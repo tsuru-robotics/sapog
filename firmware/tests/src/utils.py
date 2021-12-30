@@ -186,11 +186,11 @@ def restarted_sapogs():
     return make_simple_node_allocator()(1)
 
 
-def restart_node(node, node_id_to_restart):
+async def restart_node(node, node_id_to_restart):
     service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_RESTART
-    response = wrap_await(service_client.call(msg))
+    response = await service_client.call(msg)
     return response
 
 
@@ -200,16 +200,17 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-def make_access_request(reg_name, reg_value, node_info: my_nodes.NodeInfo, node: pyuavcan.application.Node):
+async def make_access_request(reg_name, reg_value, node_info: my_nodes.NodeInfo, node: pyuavcan.application.Node):
     if not node_info.node_id or node_info.node_id == 0xFFFF:
         print(f"Device cannot be configured, it is missing a node_id, please allocate it first")
         assert False
+        raise Exception("This should have a node_id.")
     service_client = node.make_client(uavcan.register.Access_1_0, node_info.node_id)
     service_client.response_timeout = 1
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name
     msg.value = reg_value
-    return wrap_await(service_client.call(msg))
+    return await service_client.call(msg)
 
 
 def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node):
@@ -219,13 +220,12 @@ def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuav
             node.registry[pair.tester_reg_name] = pair.value
 
 
-def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
-                                 target_node_info: my_nodes.NodeInfo):
+async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+                                       target_node_info: my_nodes.NodeInfo):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.embedded_device_reg_name:
-            make_access_request(pair.embedded_device_reg_name, pair.value,
-                                target_node_info, node)
+            make_access_request(pair.embedded_device_reg_name, pair.value, target_node_info, node)
 
 
 def allocate_one_node_id(node_name):
@@ -268,12 +268,12 @@ def plug_in_power():
         plug_in_power_automatic()
 
 
-def command_save(prepared_node, node_id):
+async def command_save(prepared_node, node_id):
     command_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
     command_client.response_timeout = 1
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
-    wrap_await(command_client.call(msg))
+    await command_client.call(msg)
 
 
 def configure_a_port_on_sapog(name, subject_id, prepared_sapogs, prepared_node):

@@ -52,7 +52,7 @@ def make_simple_node_allocator():
             assigned_node_id = 21 + allocation_counter
             new_id = uavcan.node.ID_1_0(assigned_node_id)
             response = uavcan.pnp.NodeIDAllocationData_1_0(msg.unique_id_hash, [new_id])
-            new_node_info = my_nodes.NodeInfo(str(msg.unique_id_hash), interfaces, node_id=new_id)
+            new_node_info = my_nodes.NodeInfo(str(msg.unique_id_hash), interfaces, node_id=new_id.value)
             allocated_nodes.append(new_node_info)
             allocation_counter += 1
             await allocate_responder.publish(response)
