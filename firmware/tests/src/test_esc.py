@@ -45,27 +45,39 @@ class TestESC:
         our_allocator = make_simple_node_allocator()
         tester_node = prepared_double_redundant_node
         node_info_list = await our_allocator(2, node_to_use=tester_node)
+
+        def get_subject_id_generator():
+            counter = 135
+
+            def get_next_free_subject_id():
+                nonlocal counter
+                counter += 1
+                return counter
+
+            return get_next_free_subject_id
+
+        sid_gen = get_subject_id_generator()
         registry: typing.List[RegisterPair] = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
             #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
             RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(137))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             OnlyEmbeddedDeviceRegister("control_mode_rpm",
                                        uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
             OnlyEmbeddedDeviceRegister("ttl_milliseconds",
                                        uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(300))),
             RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(138))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(139))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(140))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(141))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
             RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(142)))
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen())))
         ]
         time.sleep(2)
         configure_tester_side_registers(registry, tester_node)
