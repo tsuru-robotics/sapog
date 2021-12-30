@@ -1,15 +1,20 @@
 import pathlib
+import typing
 from typing import Optional, List
 
 import sys
 
 import pyuavcan
+from pyuavcan.application._node import MessageClass
+from pyuavcan.transport.redundant._session import RedundantTransferFrom
 
 import my_nodes
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 from _await_wrap import wrap_await
 import time
+
+from utils import make_registry
 
 source_path = pathlib.Path(__file__).parent
 dependency_path = source_path.parent / "deps"
@@ -65,6 +70,25 @@ def make_simple_node_allocator():
             return new_node_info
 
         if continuous:
+            # Need to set up a listener on every interface because that's the only way to know which interface the
+            # allocation request originates from
+
+            def allocation_request_reception(message_class: uavcan.pnp.NodeIDAllocationData_1_0,
+                                             transfer_from: pyuavcan.transport.TransferFrom):
+                def hw_id_matcher(node_info):
+                    node_info.hw_id == message_class.unique_id_hash
+
+                if isinstance(transfer_from, RedundantTransferFrom):
+                    tr_ses = allocate_subscription.transport_session
+                    assert isinstance(tr_ses, pyuavcan.transport.redundant.RedundantSession)
+                    iface_index = tr_ses.inferiors.index(transfer_from.inferior_session)
+                    if (existing_entry := next(filter(hw_id_matcher, allocated_nodes), None)) is not None:
+                        existing_entry.append()
+                else:
+                    assert False
+                    print("You only have one interface, why did you call this function?")
+
+            allocate_subscription.receive_in_background()
             if time_budget_seconds is not None:
                 started_time = time.time()
             while True:

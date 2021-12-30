@@ -31,6 +31,7 @@ from _await_wrap import wrap_await
 class TestEssential:
     @staticmethod
     def test_allows_allocation_of_node_id():
+        asyncio.set_event_loop(asyncio.new_event_loop())
         nodes_info_list = get_interfaces_by_hw_id(do_get_unallocated_nodes=True, do_get_allocated_nodes=True,
                                                   do_allocate=False)
         our_allocator = make_simple_node_allocator()

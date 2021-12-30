@@ -2,6 +2,7 @@ import pathlib
 import sys
 
 
+@pytest.fixture(scope="session")
 def add_deps():
     source_path = pathlib.Path(__file__).parent.absolute()
     dependency_path = source_path.parent / "deps"
