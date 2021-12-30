@@ -17,6 +17,7 @@ import pytest
 
 import my_nodes
 from allocator import OneTimeAllocator
+from make_registry import make_registry
 
 from register_pair_class import RegisterPair
 

@@ -26,7 +26,7 @@ class TestRegisters:
             service_client = prepared_node.make_client(uavcan.register.List_1_0, node_id)
             service_client.response_timeout = 1
             msg = uavcan.register.List_1_0.Request(20)
-            result = wrap_await(service_client.call(msg))
+            result = await service_client.call(msg)
             print(result)
             assert result is not None
 
@@ -38,10 +38,10 @@ class TestRegisters:
         time.sleep(0.2)
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():
-            response = make_access_request("uavcan.node.description",
-                                           uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
-                                           node_id,
-                                           prepared_node)
+            response = await make_access_request("uavcan.node.description",
+                                                 uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
+                                                 node_id,
+                                                 prepared_node)
             is_result_good = response is not None and response[0].value.empty is not None
             assert is_result_good
             if not is_result_good:
@@ -53,11 +53,11 @@ class TestRegisters:
         checks if that was saved."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():
-            response = make_access_request("mot_pwm_hz",
-                                           uavcan.register.Value_1_0(
-                                               integer64=uavcan.primitive.array.Integer64_1_0(60001)),
-                                           node_id,
-                                           prepared_node)
+            response = await make_access_request("mot_pwm_hz",
+                                                 uavcan.register.Value_1_0(
+                                                     integer64=uavcan.primitive.array.Integer64_1_0(60001)),
+                                                 node_id,
+                                                 prepared_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -71,11 +71,11 @@ class TestRegisters:
                     print("response[0].value.bit is None")
             else:
                 print("Response is None")
-            response = make_access_request("mot_pwm_hz",
-                                           uavcan.register.Value_1_0(
-                                               integer64=uavcan.primitive.array.Integer64_1_0(60000)),
-                                           node_id,
-                                           prepared_node)
+            response = await make_access_request("mot_pwm_hz",
+                                                 uavcan.register.Value_1_0(
+                                                     integer64=uavcan.primitive.array.Integer64_1_0(60000)),
+                                                 node_id,
+                                                 prepared_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -98,10 +98,10 @@ class TestRegisters:
         checks again to see if it was saved correctly."""
         assert len(prepared_sapogs.keys()) > 0
         for node_id in prepared_sapogs.keys():
-            response = make_access_request("pwm_enable",
-                                           uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1)),
-                                           node_id,
-                                           prepared_node)
+            response = await make_access_request("pwm_enable",
+                                                 uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1)),
+                                                 node_id,
+                                                 prepared_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
