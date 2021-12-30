@@ -17,15 +17,10 @@ import pytest
 
 import my_nodes
 from allocator import OneTimeAllocator
-from my_simple_test_allocator import make_simple_node_allocator
 
 from register_pair_class import RegisterPair
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
-
-from imports import add_deps
-
-add_deps()
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
@@ -70,18 +65,6 @@ def get_available_slcan_interfaces():
     return result_interfaces
 
 
-@pytest.fixture(scope="class")
-def prepared_node():
-    registry01 = make_registry(7)
-    return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
-
-
-@pytest.fixture(scope="class")
-def prepared_double_redundant_node():
-    registry01 = make_registry(7, use_all_interfaces=True)
-    return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
-
-
 def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unallocated_nodes: bool = True,
                             do_allocate: bool = False) -> \
         typing.List[my_nodes.NodeInfo]:
@@ -91,6 +74,7 @@ def get_interfaces_by_hw_id(do_get_allocated_nodes: bool = False, do_get_unalloc
     This helps to automatically find out which devices are using which interfaces and then communicate to every device
     in a for loop to test these.
     """
+    from my_simple_test_allocator import make_simple_node_allocator
     available_interfaces = get_available_slcan_interfaces()
     node_identifier_list: typing.List[my_nodes.NodeInfo] = []
 
@@ -202,19 +186,6 @@ def restarted_sapogs():
     return make_simple_node_allocator()(1)
 
 
-def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_interfaces: bool = False):
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    if use_all_interfaces:
-        registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
-    else:
-        registry01["uavcan.can.iface"] = " ".join(interfaces)
-    print("Using these interfaces: " + str(registry01["uavcan.can.iface"]))
-    traceback.print_stack(limit=3)
-    registry01["uavcan.can.mtu"] = 8
-    registry01["uavcan.node.id"] = node_id
-    return registry01
-
-
 def restart_node(node, node_id_to_restart):
     service_client = node.make_client(uavcan.node.ExecuteCommand_1_1, node_id_to_restart)
     msg = uavcan.node.ExecuteCommand_1_1.Request()
@@ -229,11 +200,11 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-def make_access_request(reg_name, reg_value, node_id: my_nodes.NodeInfo, node: pyuavcan.application.Node):
-    if not node_id or node_id == 0xFFFF:
+def make_access_request(reg_name, reg_value, node_info: my_nodes.NodeInfo, node: pyuavcan.application.Node):
+    if not node_info.node_id or node_info.node_id == 0xFFFF:
         print(f"Device cannot be configured, it is missing a node_id, please allocate it first")
         assert False
-    service_client = node.make_client(uavcan.register.Access_1_0, node_id)
+    service_client = node.make_client(uavcan.register.Access_1_0, node_info.node_id)
     service_client.response_timeout = 1
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name
@@ -241,15 +212,20 @@ def make_access_request(reg_name, reg_value, node_id: my_nodes.NodeInfo, node: p
     return wrap_await(service_client.call(msg))
 
 
-def configure_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
-                        target_node_info: my_nodes.NodeInfo):
+def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
             node.registry[pair.tester_reg_name] = pair.value
+
+
+def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+                                 target_node_info: my_nodes.NodeInfo):
+    for pair in regs:
+        assert isinstance(pair, RegisterPair)
         if pair.embedded_device_reg_name:
             make_access_request(pair.embedded_device_reg_name, pair.value,
-                                target_node_info.node_id, node)
+                                target_node_info, node)
 
 
 def allocate_one_node_id(node_name):

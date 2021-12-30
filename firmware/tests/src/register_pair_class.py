@@ -1,9 +1,6 @@
 from typing import Optional
 
 import uavcan.register
-from imports import add_deps
-
-add_deps()
 
 
 class RegisterPair():
