@@ -3,14 +3,9 @@ import time
 import typing
 
 from _await_wrap import wrap_await
-from utils import make_access_request, configure_a_port_on_sapog, rpm_to_radians_per_second, prepared_node, \
-    prepared_sapogs, restarted_sapogs, restart_node, configure_registers, command_save
-from imports import add_deps
+from utils import prepared_sapogs
 
-add_deps()
 import uavcan.primitive.array.Integer64_1_0
-import reg.udral.service.common.Readiness_0_1
-import reg.udral.service.actuator.common.sp.Scalar_0_1
 import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
@@ -19,7 +14,8 @@ import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
 import subprocess
-from utils import is_running_on_my_laptop, prepared_double_redundant_node
+from utils import is_running_on_my_laptop
+from node_fixtures.drnf import prepared_double_redundant_node, prepared_node
 
 
 def set_interface_online(interface_name: str, online: bool):
@@ -33,7 +29,7 @@ def set_interface_online(interface_name: str, online: bool):
         subprocess.run(["sudo", "ifconfig", interface_name, online_string])
 
 
-def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
+async def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
     assert len(prepared_sapogs.keys()) > 0
     for node_id in prepared_sapogs.keys():
         subscriber = prepared_double_redundant_node.make_subscriber(uavcan.node.Heartbeat_1_0)
@@ -48,7 +44,7 @@ def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
         set_interface_online("slcan1", True)
         try:
             subscriber.receive_in_background(hb_handler)
-            wrap_await(asyncio.wait_for(event.wait(), 1.7))
+            await asyncio.wait_for(event.wait(), 1.7)
         except TimeoutError:
             assert False
             return
@@ -56,7 +52,7 @@ def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
         set_interface_online("slcan1", True)
         try:
             subscriber.receive_in_background(hb_handler)
-            wrap_await(asyncio.wait_for(event.wait(), 1.7))
+            await asyncio.wait_for(event.wait(), 1.7)
         except TimeoutError:
             assert False
             return
@@ -64,7 +60,7 @@ def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
         set_interface_online("slcan1", False)
         try:
             subscriber.receive_in_background(hb_handler)
-            wrap_await(asyncio.wait_for(event.wait(), 1.7))
+            await asyncio.wait_for(event.wait(), 1.7)
         except TimeoutError:
             assert False
             return

@@ -16,4 +16,4 @@ async def test_restart_node(prepared_node, prepared_sapogs):
         msg = uavcan.node.ExecuteCommand_1_1.Request()
         msg.command = msg.COMMAND_RESTART
         response = await service_client.call(msg)
-        assert response is not None
+        assert response is not None, "Node did not acknowledge restarting."

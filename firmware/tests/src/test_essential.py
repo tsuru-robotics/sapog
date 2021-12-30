@@ -2,6 +2,7 @@ import asyncio
 import os
 import typing
 
+import pytest
 import time
 
 import my_simple_test_allocator
@@ -21,7 +22,7 @@ import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
 import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo, register
+from pyuavcan.application import Node, make_node, NodeInfo
 from pyuavcan.presentation._presentation import MessageClass
 
 from _await_wrap import wrap_await
@@ -29,7 +30,8 @@ from _await_wrap import wrap_await
 
 class TestEssential:
     @staticmethod
-    def test_allows_allocation_of_node_id():
+    @pytest.mark.asyncio
+    async def test_allows_allocation_of_node_id():
         asyncio.set_event_loop(asyncio.new_event_loop())
         nodes_info_list = get_interfaces_by_hw_id(do_get_unallocated_nodes=True, do_get_allocated_nodes=True,
                                                   do_allocate=False)
@@ -41,39 +43,39 @@ class TestEssential:
                 time.sleep(2)
             try:
                 required_amount = 1
-                result = our_allocator(required_amount, node_to_use=tester)
+                result = await our_allocator(required_amount, node_to_use=tester)
                 assert len(result) == required_amount
             except TimeoutError:
-                assert False
+                assert False, f"Didn't allocate {required_amount} nodes in the time allotted"
             except Exception:
                 assert False
             finally:
                 tester.close()
 
     @staticmethod
-    def test_has_heartbeat():
+    @pytest.mark.asyncio
+    async def test_has_heartbeat():
         """This heartbeat test implies that node_id allocation works."""
+        list_of_nodes_info = await make_simple_node_allocator()(1, )
+        node_id_received_heartbeat = {}
+        try:
+            registry01 = make_registry(0)
+            with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
+                subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
+                event = asyncio.Event()
 
-        heartbeat_results = {}
-        for index, interface in enumerate(interfaces):
-            make_simple_node_allocator(interfaces=[interface])(1)
-            try:
-                registry01 = make_registry(index, interfaces=[interface])
-                with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
-                    subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
-                    event = asyncio.Event()
-
-                    def hb_handler(message_class: MessageClass,
-                                   transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                def hb_handler(message_class: MessageClass,
+                               transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                    node_id_received_heartbeat[transfer_from.source_node_id] = True
+                    if len(list(filter(node_id_received_heartbeat.values()))) == len(
+                            list_of_nodes_info):
                         event.set()
 
-                    subscriber.receive_in_background(hb_handler)
-                    wrap_await(asyncio.wait_for(event.wait(), 1.7))
-                    heartbeat_results[interface] = True
-            except TimeoutError:
-                heartbeat_results[interface] = False
-                print(f"Interface {interface} had no heartbeat")
-        assert all(heartbeat_results)
+                subscriber.receive_in_background(hb_handler)
+                await asyncio.wait_for(event.wait(), 1.7)
+        except TimeoutError:
+            missing_heartbeats = len(list_of_nodes_info) - len(list(filter(node_id_received_heartbeat.values())))
+            assert False, f"{missing_heartbeats} nodes do not have a heartbeat."
 
     @staticmethod
     def test_responds_to_get_info(prepared_double_redundant_node: pyuavcan.application.Node,
