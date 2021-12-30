@@ -6,15 +6,14 @@ import time
 
 import my_simple_test_allocator
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import is_device_with_node_id_running, restart_node, make_registry, get_interfaces_by_hw_id, \
+from utils import is_device_with_node_id_running, restart_node, get_interfaces_by_hw_id, \
     get_available_slcan_interfaces
-from utils import prepared_sapogs, prepared_node, prepared_double_redundant_node
+from utils import prepared_sapogs
+
+from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
+from make_registry import make_registry
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
-
-from imports import add_deps
-
-add_deps()
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
@@ -54,7 +53,7 @@ class TestEssential:
     @staticmethod
     def test_has_heartbeat():
         """This heartbeat test implies that node_id allocation works."""
-        interfaces = get_available_slcan_interfaces()
+
         heartbeat_results = {}
         for index, interface in enumerate(interfaces):
             make_simple_node_allocator(interfaces=[interface])(1)

@@ -76,7 +76,7 @@ class TestESC:
             configure_embedded_registers(registry, tester_node, node_info)
             command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
-                assert False
+                assert False, f"Node {node_info.node_id} couldn't be restarted"
                 return
         time.sleep(4)
         node_info_list = await our_allocator(2, node_to_use=tester_node)
@@ -91,9 +91,9 @@ class TestESC:
                                                             "feedback")
         dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         current_speeds = [0, 0]
-        if len(node_info_list) < 2:
-            raise Exception("Please restart"
-                            " the nodes before continuing. This test was supposed to allocate nodes and then keep the info about them. ")
+        assert len(node_info_list) < 2, "Please restart" \
+                                        " the nodes before continuing. This test was supposed" \
+                                        "to allocate nodes and then keep the info about them. "
 
         def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
                              tf: pyuavcan.transport._transfer.TransferFrom):
@@ -110,15 +110,12 @@ class TestESC:
                 if time.time() - starting_time > 4:
                     for i, s in enumerate(current_speeds):
                         speed_difference = abs(input_array[i] - s)
-                        print(speed_difference)
                         assert speed_difference < 100, "There is a problem with reporting RPM."
                 rpm_message = reg.udral.service.actuator.common.sp.Vector8_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
                 feedback_result = await feedback_subscription.receive_for(0.5)
-                if feedback_result is None:
-                    assert False
-                    return
+                assert feedback_result, "Feedback was not received."
                 time.sleep(0.04)
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
