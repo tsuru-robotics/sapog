@@ -73,7 +73,7 @@ def prepared_node():
 
 @pytest.fixture(scope="class")
 def prepared_double_redundant_node():
-    registry01 = make_registry(7)
+    registry01 = make_registry(7, use_all_interfaces=True)
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
 
 
@@ -197,7 +197,7 @@ def restarted_sapogs():
     return make_simple_node_allocator()(1)
 
 
-def make_registry(node_id: int, interfaces: typing.List[str], use_all_interfaces: bool = False):
+def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_interfaces: bool = False):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
     if use_all_interfaces:
         registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())

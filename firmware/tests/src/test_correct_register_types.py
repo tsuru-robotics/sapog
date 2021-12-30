@@ -9,7 +9,7 @@ add_deps()
 import uavcan.primitive.array.Integer64_1_0
 import reg.udral.service.common.Readiness_0_1
 
-from register_pair_class import RegisterPair, EmbeddedDeviceRegPair
+from register_pair_class import RegisterPair, OnlyEmbeddedDeviceRegister
 
 
 def test_correct_id_types():
