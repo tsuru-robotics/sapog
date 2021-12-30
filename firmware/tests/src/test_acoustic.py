@@ -4,16 +4,14 @@
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
 import os
+
+import pytest
 import time
 import typing
 
 from utils import configure_a_port_on_sapog, prepared_sapogs, prepared_node, restarted_sapogs
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
-
-from imports import add_deps
-
-add_deps()
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
@@ -44,28 +42,19 @@ def configure_note_register():
 import subprocess
 
 
-def test_restart_node(prepared_node, prepared_sapogs):
-    for node_id in prepared_sapogs.keys():
-        service_client = prepared_node.make_client(uavcan.node.ExecuteCommand_1_1, node_id)
-        msg = uavcan.node.ExecuteCommand_1_1.Request()
-        msg.command = msg.COMMAND_RESTART
-        response = wrap_await(service_client.call(msg))
-        assert response is not None
-
-
-def play_note(frequency, duration, prepared_node):
+async def play_note(frequency, duration, prepared_node):
     note_message = reg.udral.physics.acoustics.Note_0_1(
         frequency=uavcan.si.unit.frequency.Scalar_1_0(frequency),
         acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
         duration=uavcan.si.unit.duration.Scalar_1_0(duration))
     publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
-    wrap_await(publisher.publish(note_message))
-    time.sleep(duration)
+    await publisher.publish(note_message)
 
 
 class TestFun:
     @staticmethod
-    def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
+    @pytest.mark.asyncio
+    async def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
         # During this test, we need to save the configuration
         # But we don't want to save any other configuration
         # that could have been left on the device during tests,
@@ -78,6 +67,7 @@ class TestFun:
             for i in range(1):
                 for frequency, duration in arp:
                     play_note(frequency, duration, prepared_node)
+                    time.sleep(duration)
 
 
 import uavcan.si.unit.angular_velocity.Scalar_1_0

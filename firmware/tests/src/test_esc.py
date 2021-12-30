@@ -19,6 +19,7 @@ import reg.udral.service.common.Readiness_0_1
 import uavcan.primitive.array.Bit_1_0
 import uavcan.primitive.array.Integer64_1_0
 import uavcan.register.Value_1_0
+from numpy import clip
 from my_simple_test_allocator import make_simple_node_allocator
 from register_pair_class import RegisterPair, OnlyEmbeddedDeviceRegister
 from utils import rpm_to_radians_per_second, restart_node, \
@@ -73,8 +74,8 @@ class TestESC:
             registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
                                                        uavcan.register.Value_1_0(
                                                            natural16=uavcan.primitive.array.Natural16_1_0(index))))
-            configure_embedded_registers(registry, tester_node, node_info)
-            command_save(tester_node, node_info.node_id)
+            await configure_embedded_registers(registry, tester_node, node_info)
+            await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
                 assert False, f"Node {node_info.node_id} couldn't be restarted"
                 return
@@ -91,9 +92,9 @@ class TestESC:
                                                             "feedback")
         dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         current_speeds = [0, 0]
-        assert len(node_info_list) < 2, "Please restart" \
-                                        " the nodes before continuing. This test was supposed" \
-                                        "to allocate nodes and then keep the info about them. "
+        assert len(node_info_list) >= 2, "Please restart" \
+                                         " the nodes before continuing. This test was supposed" \
+                                         "to allocate nodes and then keep the info about them. "
 
         def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
                              tf: pyuavcan.transport._transfer.TransferFrom):
@@ -114,9 +115,11 @@ class TestESC:
                 rpm_message = reg.udral.service.actuator.common.sp.Vector8_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
+                start_time2 = time.time()
                 feedback_result = await feedback_subscription.receive_for(0.5)
-                assert feedback_result, "Feedback was not received."
-                time.sleep(0.04)
+                assert feedback_result is not None, "Feedback was not received."
+                # Sleep the time that hasn't been already used of 0.2 seconds
+                time.sleep(clip(.2 - time.time() - start_time2, 0, 0.2))
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
             # communications are still available

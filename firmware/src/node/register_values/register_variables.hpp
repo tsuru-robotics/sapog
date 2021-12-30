@@ -17,3 +17,5 @@ struct IntStateVariableInRegister
 };
 
 extern std::pair<IntStateVariableInRegister *, IntStateVariableInRegister *> get_publish_port_iterators();
+
+extern std::pair<IntStateVariableInRegister *, IntStateVariableInRegister *> get_state_variables_in_registers();

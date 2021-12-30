@@ -122,7 +122,8 @@ void init_canard()
       }
     }
   }
-  for (auto &svir = it_pair.first; svir != it_pair.second; svir++)
+  auto it_pair3 = get_state_variables_in_registers();
+  for (auto &svir = it_pair3.first; svir != it_pair3.second; svir++)
   {
     if (configGetDescr(svir->name.data(), &_) != -ENOENT)
     {

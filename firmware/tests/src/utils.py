@@ -225,7 +225,7 @@ async def configure_embedded_registers(regs: typing.List[RegisterPair], node: py
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.embedded_device_reg_name:
-            make_access_request(pair.embedded_device_reg_name, pair.value, target_node_info, node)
+            await make_access_request(pair.embedded_device_reg_name, pair.value, target_node_info, node)
 
 
 def allocate_one_node_id(node_name):
