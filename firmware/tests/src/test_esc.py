@@ -58,36 +58,46 @@ class TestESC:
             return get_next_free_subject_id
 
         sid_gen = get_subject_id_generator()
-        registry: typing.List[RegisterPair] = [
+        common_registers = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
-            #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
             RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            OnlyEmbeddedDeviceRegister("control_mode_rpm",
-                                       uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
-            OnlyEmbeddedDeviceRegister("ttl_milliseconds",
-                                       uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(300))),
-            RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
-            RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen())))
         ]
+
+        def make_device_specific_registry() -> typing.List[RegisterPair]:
+            return [
+
+                # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
+                #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
+
+                OnlyEmbeddedDeviceRegister("control_mode_rpm",
+                                           uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
+                OnlyEmbeddedDeviceRegister("ttl_milliseconds",
+                                           uavcan.register.Value_1_0(
+                                               natural16=uavcan.primitive.array.Natural16_1_0(300))),
+                RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen())))
+            ]
+
         time.sleep(2)
-        configure_tester_side_registers(registry, tester_node)
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
-            registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
-                                                       uavcan.register.Value_1_0(
-                                                           natural16=uavcan.primitive.array.Natural16_1_0(index))))
-            await configure_embedded_registers(registry, tester_node, node_info)
+            combined_registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
+                                                                uavcan.register.Value_1_0(
+                                                                    natural16=uavcan.primitive.array.Natural16_1_0(
+                                                                        index))))
+            combined_registry = [].extend(make_device_specific_registry().extend(common_registers))
+            await configure_embedded_registers(combined_registry, tester_node, node_info)
+            configure_tester_side_registers(combined_registry, tester_node)
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
                 assert False, f"Node {node_info.node_id} couldn't be restarted"
