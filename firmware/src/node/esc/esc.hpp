@@ -15,7 +15,7 @@
 #include <reg/udral/physics/electricity/PowerTs_0_1.h>
 #include <cstdio>
 #include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
-#include "reg/udral/service/actuator/common/sp/Scalar_0_1.h"
+#include "reg/udral/service/actuator/common/sp/Vector8_0_1.h"
 #include <motor/motor.hpp>
 #include <node/interfaces/IHandler.hpp>
 #include "node/esc/esc_publishers.hpp"
@@ -45,15 +45,15 @@ struct : IHandler
   {
     if (state.readiness == Readiness::ENGAGED)
     {
-      reg_udral_service_actuator_common_sp_Scalar_0_1 setpoint{};
+      reg_udral_service_actuator_common_sp_Vector8_0_1 setpoint{};
       size_t size = transfer->payload_size;
-      if (reg_udral_service_actuator_common_sp_Scalar_0_1_deserialize_(&setpoint,
-                                                                       (const uint8_t *) transfer->payload,
-                                                                       &size) >= 0)
+      if (reg_udral_service_actuator_common_sp_Vector8_0_1_deserialize_(&setpoint,
+                                                                        (const uint8_t *) transfer->payload,
+                                                                        &size) >= 0)
       {
         if (state.control_mode == ControlMode::RPM)
         {
-          float rotations_per_second = setpoint.value / 2.0 / 3.14159265358979f;
+          float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0 / 3.14159265358979f;
           unsigned int rpm = rotations_per_second * 60;
           motor_set_rpm(rpm, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;
@@ -63,7 +63,7 @@ struct : IHandler
           return;
         } else if (state.control_mode == ControlMode::DUTYCYCLE)
         {
-          float dc = setpoint.value;
+          float dc = setpoint.value[state.id_in_esc_group];
           // the range is clipped in here
           motor_set_duty_cycle(dc, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;
