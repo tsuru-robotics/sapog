@@ -34,8 +34,9 @@ def radian_s_to_rpm(radian_s: float):
 
 def test_radian_s_to_rpm():
     from decimal import Decimal
-    assert (Decimal(radian_s_to_rpm(3)) - Decimal(28.65)) < 0.01
-    assert (Decimal(radian_s_to_rpm(4)) - Decimal(38.2)) < 0.01
+    from math import isclose
+    assert isclose(radian_s_to_rpm(3), Decimal(28.65), abs_tol=0.01)
+    assert isclose(Decimal(radian_s_to_rpm(4)), Decimal(38.2), abs_tol=0.01)
 
 
 class TestESC:

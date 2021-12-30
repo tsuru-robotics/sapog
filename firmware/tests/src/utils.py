@@ -55,17 +55,6 @@ def is_device_with_node_id_running(node_id):
         return True
 
 
-def get_available_slcan_interfaces():
-    result = subprocess.run(["netstat -i | tail -n +3 |cut -d\" \" -f1"], shell=True, stdout=subprocess.PIPE)
-    list_of_interfaces = result.stdout.decode("utf-8").strip().split("\n")
-    result_interfaces = []
-    for interface_name in list_of_interfaces:
-        if "slcan" in interface_name:
-            result_interfaces.append("socketcan:" + interface_name)
-    print(f"Available interfaces {result_interfaces}")
-    return result_interfaces
-
-
 def test_add_to_dictionary_list():
     interfaces_list = [my_nodes.NodeInfo('75720222859564', ['socketcan:slcan0', 'socketcan:slcan1']),
                        my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]

@@ -3,7 +3,7 @@ import typing
 import pyuavcan
 
 from uavcan import register
-from utils import get_available_slcan_interfaces
+from util.get_available_interfaces import get_available_slcan_interfaces
 
 
 def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_interfaces: bool = False):
