@@ -78,13 +78,14 @@ class TestEssential:
             assert False, f"{missing_heartbeats} nodes do not have a heartbeat."
 
     @staticmethod
-    def test_responds_to_get_info(prepared_double_redundant_node: pyuavcan.application.Node,
-                                  prepared_sapogs: typing.Dict[int, str]):
+    @pytest.mark.asyncio
+    async def test_responds_to_get_info(prepared_double_redundant_node: pyuavcan.application.Node,
+                                        prepared_sapogs: typing.Dict[int, str]):
         pdrn = prepared_double_redundant_node
         for node_id in prepared_sapogs.keys():
             try:
                 get_info_client = pdrn.make_client(uavcan.node.GetInfo_1_0, node_id)
                 gi_request = uavcan.node.GetInfo_1_0.Request()
-                assert wrap_await(get_info_client.call(gi_request)) is not None
+                assert await get_info_client.call(gi_request) is not None
             except TimeoutError:
                 assert False
