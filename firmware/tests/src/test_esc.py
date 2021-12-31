@@ -58,14 +58,18 @@ class TestESC:
             return get_next_free_subject_id
 
         sid_gen = get_subject_id_generator()
+        sid_gen2 = get_subject_id_generator()
+        # I am trying to keep the
+        sid_gen2()
+        sid_gen2()
         common_registers = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
             RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
         ]
 
-        def make_device_specific_registry() -> typing.List[RegisterPair]:
+        def make_device_specific_registry(device_index: int) -> typing.List[RegisterPair]:
             return [
 
                 # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
@@ -75,33 +79,42 @@ class TestESC:
                                            uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
                 OnlyEmbeddedDeviceRegister("ttl_milliseconds",
                                            uavcan.register.Value_1_0(
-                                               natural16=uavcan.primitive.array.Natural16_1_0(300))),
+                                               natural16=uavcan.primitive.array.Natural16_1_0([300]))),
                 RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
+                             sid_gen2(),
+                             type_communicated=reg.udral.service.common.Heartbeat_0_1),
                 RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
+                             sid_gen2(),
+                             reg.udral.service.actuator.common.Feedback_0_1),
                 RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
+                             sid_gen2(),
+                             reg.udral.physics.electricity.PowerTs_0_1),
                 RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen()))),
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
+                             sid_gen2(),
+                             reg.udral.service.actuator.common.Status_0_1),
                 RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(sid_gen())))
+                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
+                             sid_gen2(),
+                             reg.udral.physics.dynamics.rotation.PlanarTs_0_1)
             ]
 
         time.sleep(2)
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
+            combined_registry = [] + make_device_specific_registry(index) + common_registers
             combined_registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
                                                                 uavcan.register.Value_1_0(
                                                                     natural16=uavcan.primitive.array.Natural16_1_0(
                                                                         index))))
-            combined_registry = [].extend(make_device_specific_registry().extend(common_registers))
             await configure_embedded_registers(combined_registry, tester_node, node_info)
             configure_tester_side_registers(combined_registry, tester_node)
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
                 assert False, f"Node {node_info.node_id} couldn't be restarted"
-                return
         time.sleep(4)
         node_info_list = await our_allocator(2, node_to_use=tester_node)
         for index, node_info in enumerate(node_info_list):
@@ -132,8 +145,8 @@ class TestESC:
                 input_array = [rpm_to_radians_per_second(200), rpm_to_radians_per_second(200)]
                 input_array.extend([0 for i in range(6)])
                 if time.time() - starting_time > 4:
-                    for i, s in enumerate(current_speeds):
-                        speed_difference = abs(input_array[i] - s)
+                    for i2, s in enumerate(current_speeds):
+                        speed_difference = abs(input_array[i2] - s)
                         assert speed_difference < 100, "There is a problem with reporting RPM."
                 rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=input_array)
                 await pub.publish(rpm_message)
