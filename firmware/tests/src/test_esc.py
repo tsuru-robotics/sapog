@@ -122,10 +122,13 @@ class TestESC:
             configure_tester_side_registers(combined_registry, tester_node)
             node_info.registers = combined_registry
             for registry_item in combined_registry:
-                if "sub" in registry_item.tester_reg_name:
+                if ".sub." in registry_item.tester_reg_name:
                     pure_name = registry_item.tester_reg_name[11:].replace(".id", "")
                     assert "." not in pure_name, "There was a problem converting the compound name to a pure name"
-                    tester_node.make_subscriber(registry_item.communication_type, pure_name)
+                    sub = tester_node.make_subscriber(registry_item.communication_type, pure_name)
+                    node_info.store_subscription(sub, registry_item.value.natural16.value,
+                                                 registry_item.tester_reg_name,
+                                                 data_type=registry_item.communication_type)
 
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
@@ -169,8 +172,10 @@ class TestESC:
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
                 start_time2 = time.time()
-                feedback_result = await feedback_subscription.receive_for(0.5)
-                assert feedback_result is not None, "Feedback was not received."
+                for node_info in node_info_list:
+                    feedback_subscription = node_info.get_subscription(reg.udral.service.actuator.common.Feedback_0_1)
+                    feedback_result = await feedback_subscription.receive_for(0.5)
+                    assert feedback_result is not None, "Feedback was not received."
                 # Sleep the time that hasn't been already used of 0.2 seconds
                 time.sleep(clip(.2 - time.time() - start_time2, 0, 0.2))
         except KeyboardInterrupt:
