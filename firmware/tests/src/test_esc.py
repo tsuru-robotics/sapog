@@ -39,6 +39,25 @@ def test_radian_s_to_rpm():
     assert isclose(Decimal(radian_s_to_rpm(4)), Decimal(38.2), abs_tol=0.01)
 
 
+class SubjectIdGenerator:
+    def __init__(self, start_value: int):
+        self.counter = start_value
+
+    def get(self):
+        return self.counter
+
+    def get_next(self):
+        return_value = self.counter  # or can i just: return_value = self.counter
+        self.counter += 1
+        return return_value
+
+    def set(self, value: int):
+        self.counter = value
+
+    def __call__(self, *args, **kwargs):
+        return self.get_next()
+
+
 class TestESC:
     @staticmethod
     @pytest.mark.asyncio
@@ -47,27 +66,15 @@ class TestESC:
         tester_node = prepared_double_redundant_node
         node_info_list = await our_allocator(2, node_to_use=tester_node)
 
-        def get_subject_id_generator():
-            counter = 135
-
-            def get_next_free_subject_id():
-                nonlocal counter
-                counter += 1
-                return counter
-
-            return get_next_free_subject_id
-
-        sid_gen = get_subject_id_generator()
-        sid_gen2 = get_subject_id_generator()
-        # I am trying to keep the
-        sid_gen2()
-        sid_gen2()
+        sid_gen = SubjectIdGenerator(135)
+        sid_gen2 = SubjectIdGenerator(135)
         common_registers = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
             RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
         ]
+        sid_gen2.set(sid_gen.get())
 
         def make_device_specific_registry(device_index: int) -> typing.List[RegisterPair]:
             return [
@@ -103,15 +110,23 @@ class TestESC:
             ]
 
         time.sleep(2)
+
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
-            combined_registry = [] + make_device_specific_registry(index) + common_registers
+            combined_registry = make_device_specific_registry(index) + common_registers
             combined_registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
                                                                 uavcan.register.Value_1_0(
                                                                     natural16=uavcan.primitive.array.Natural16_1_0(
                                                                         index))))
             await configure_embedded_registers(combined_registry, tester_node, node_info)
             configure_tester_side_registers(combined_registry, tester_node)
+            node_info.registers = combined_registry
+            for registry_item in combined_registry:
+                if "sub" in registry_item.tester_reg_name:
+                    pure_name = registry_item.tester_reg_name[11:].replace(".id", "")
+                    assert "." not in pure_name, "There was a problem converting the compound name to a pure name"
+                    tester_node.make_subscriber(registry_item.communication_type, pure_name)
+
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
                 assert False, f"Node {node_info.node_id} couldn't be restarted"
@@ -121,11 +136,13 @@ class TestESC:
             node_info.motor_index = index
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
+        subscription_store = {}
         readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         await readiness_pub.publish(readiness_message)
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
-        feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
-                                                            "feedback")
+        for index, node_info in enumerate(node_info_list):
+            feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
+                                                                "feedback")
         dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         current_speeds = [0, 0]
         assert len(node_info_list) >= 2, "Please restart" \

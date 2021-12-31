@@ -120,6 +120,7 @@ def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuav
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
             node.registry[f"{pair.tester_reg_name} {pair.tester_side_counter_number}"] = pair.value
+            pair.tester_reg_name = f"{pair.tester_reg_name} {pair.tester_side_counter_number}"
 
 
 async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
