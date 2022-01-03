@@ -21,8 +21,10 @@ try:
 except AttributeError:
     print("Your \"importlib\" module does not have the attribute \"util\",")
     print("this only affects colors in this application.")
+
+
     def colored(input_string, _):
-            return input_string
+        return input_string
 verbose = False
 do_dump = False
 dump_path = ""
@@ -193,6 +195,20 @@ def get_needed_elf_file(directory):
         exit(1)
 
 
+def get_available_debug_interfaces():
+    pattern = re.compile(r".*Black.*Magic.*Probe.*00$")
+    chosenPath = r"/dev/serial/by-id/"
+    files = next(walk(Path(chosenPath)), [(None, None, [])])[2]
+    my_filter = lambda x: pattern.search(str(x))
+    return [follow_link(os.path.join(chosenPath, str(file))) for file in list(filter(my_filter, files))]
+
+
+def run_on_all_available_debug_interfaces(elf_file, gdb_name, size_name):
+    all_ports = get_available_debug_interfaces()
+    for port in all_ports:
+        upload_file(port, elf_file, gdb_name, size_name)
+
+
 def no_given_file_scenario(directory):
     return get_needed_elf_file(directory), get_port()
 
@@ -210,7 +226,6 @@ def main():
     say("A utility for Droncode probe.")
     print(platform.uname())
     if "Linux" not in platform.uname().system:
-        # TODO: The reference sh script had support for Darwin too
         raise Exception("Only linux distributions are supported")
     try:
         parser = argparse.ArgumentParser(description='Upload a new binary to the microcontroller through blackmagic.')
@@ -228,6 +243,7 @@ def main():
         parser.add_argument('-pp', '--print-port', default=False, action='store_true')
         parser.add_argument('--dump-path', default=os.path.join(os.path.expanduser('~'), "magicdump.bin"))
         parser.add_argument('-y', '--yes', default=False, action='store_true')
+        parser.add_argument('-ay', '--all-yes', default=False, action='store_true')
         args = parser.parse_args()
         use_command_without_verification = args.yes
         use_compound_named_file = args.use_compound
@@ -244,8 +260,12 @@ def main():
         if args.input_file:
             file, port = file_given_scenario(args.input_file)
         else:
-            file, port = no_given_file_scenario(args.dir)
-            file = os.path.join(args.dir, file)
+            if args.all_yes:
+                run_on_all_available_debug_interfaces(get_needed_elf_file(args.dir), args.gdb_executable, args.size_executable)
+                return
+            else:
+                file, port = no_given_file_scenario(args.dir)
+                file = os.path.join(args.dir, file)
         if not Path(file).exists():
             print("Your specified file doesn't exist.")
             exit(1)
