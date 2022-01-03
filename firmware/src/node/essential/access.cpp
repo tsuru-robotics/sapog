@@ -110,11 +110,14 @@ RegisterCriteria get_response_value(std::string_view request_name, uavcan_regist
   ConfigParam param{};
   auto register_access_status_number = configGetDescr(request_name.data(), &param);
   bool was_register_access_successful = register_access_status_number == 0;
-  if (!was_register_access_successful)
+  if (was_register_access_successful)
+  {
+    return handle_real_register_access(request_name, out_value, param);
+
+  } else
   {
     return handle_possible_imaginary_register_access(request_name, out_value);
   }
-  return handle_real_register_access(request_name, out_value, param);
 }
 
 bool respond_to_access(node::state::State &state, std::basic_string_view<char> request_name,
