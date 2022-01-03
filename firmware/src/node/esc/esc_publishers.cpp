@@ -87,7 +87,6 @@ void publish_esc_feedback(node::state::State &state)
         rtm.transfer_kind = CanardTransferKindMessage;
         for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
         {
-
           (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
                               get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
                               &rtm,

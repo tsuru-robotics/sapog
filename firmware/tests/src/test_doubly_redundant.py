@@ -1,8 +1,11 @@
 import asyncio
+
+import pytest
 import time
 import typing
 
 from _await_wrap import wrap_await
+from my_simple_test_allocator import make_simple_node_allocator
 from utils import prepared_sapogs
 
 import uavcan.primitive.array.Integer64_1_0
@@ -29,15 +32,18 @@ def set_interface_online(interface_name: str, online: bool):
         subprocess.run(["sudo", "ifconfig", interface_name, online_string])
 
 
-async def test_double_redundancy(prepared_double_redundant_node, prepared_sapogs):
-    assert len(prepared_sapogs.keys()) > 0
-    for node_id in prepared_sapogs.keys():
-        subscriber = prepared_double_redundant_node.make_subscriber(uavcan.node.Heartbeat_1_0)
+@pytest.mark.asyncio
+async def test_double_redundancy(prepared_double_redundant_node):
+    node = prepared_double_redundant_node
+    our_allocator = make_simple_node_allocator()
+    node_info_list = await our_allocator(2, node_to_use=node)
+    for node_info in node_info_list:
+        subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
         event = asyncio.Event()
 
         def hb_handler(message_class: MessageClass,
                        transfer_from: pyuavcan.transport._transfer.TransferFrom):
-            if transfer_from.source_node_id == node_id:
+            if transfer_from.source_node_id == node_info.node_id:
                 event.set()
 
         set_interface_online("slcan0", True)
