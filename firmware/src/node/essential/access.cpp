@@ -113,7 +113,6 @@ RegisterCriteria get_response_value(std::string_view request_name, uavcan_regist
   if (was_register_access_successful)
   {
     return handle_real_register_access(request_name, out_value, param);
-
   } else
   {
     return handle_possible_imaginary_register_access(request_name, out_value);

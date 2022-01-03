@@ -205,7 +205,7 @@ class TestESC:
 
         async def run_second_motor():
             await asyncio.sleep(5)
-            speed_controller.change_speed(1, rpm_to_radians_per_second(0))
+            speed_controller.change_speed(1, rpm_to_radians_per_second(200))
 
         asyncio.create_task(run_first_motor())
         asyncio.create_task(run_second_motor())

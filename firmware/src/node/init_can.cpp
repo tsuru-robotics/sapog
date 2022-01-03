@@ -134,7 +134,10 @@ void init_canard()
       printf("no %s\n", svir->name.data());
     }
   }
-
+  if (state.id_in_esc_group != 255)
+  {
+    printf("id_in_esc_group=%d\n", state.id_in_esc_group);
+  }
   state.timing.started_at = get_monotonic_microseconds();
   auto it_pair2 = get_dyn_subscription_iterators();
   for (auto dyn_id_subscription = it_pair2.first; dyn_id_subscription != it_pair2.second; dyn_id_subscription++)
