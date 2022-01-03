@@ -19,7 +19,7 @@ import my_nodes
 from allocator import OneTimeAllocator
 from make_registry import make_registry
 
-from register_pair_class import RegisterPair
+from RegisterPair import RegisterPair
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -119,8 +119,11 @@ def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuav
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
-            node.registry[f"{pair.tester_reg_name} {pair.tester_side_counter_number}"] = pair.value
-            pair.tester_reg_name = f"{pair.tester_reg_name} {pair.tester_side_counter_number}"
+            if ".id" not in pair.tester_reg_name:
+                node.registry[f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"] = pair.value
+                pair.tester_reg_name = f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"
+            else:
+                node.registry[pair.tester_reg_name] = pair.value
 
 
 async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,

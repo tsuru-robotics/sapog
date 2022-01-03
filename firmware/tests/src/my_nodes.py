@@ -6,7 +6,7 @@ from pyuavcan.application._node import MessageClass
 from pyuavcan.dsdl import CompositeObject
 from pyuavcan.presentation import Subscriber
 
-from register_pair_class import RegisterPair
+from RegisterPair import RegisterPair
 
 
 @dataclass
@@ -25,6 +25,7 @@ class NodeInfo:
         self.interfaces = interfaces
         self.node_id = node_id
         self.motor_index = None
+        self.registers = []
 
     def store_subscription(self, sub: Subscriber[MessageClass], subject_id: int, name: str,
                            data_type: typing.Type[CompositeObject]):

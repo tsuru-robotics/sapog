@@ -9,7 +9,7 @@ import uavcan.primitive.array.Integer64_1_0
 import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
-from register_pair_class import RegisterPair, OnlyEmbeddedDeviceRegister
+from RegisterPair import RegisterPair, OnlyEmbeddedDeviceRegister
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass

@@ -21,7 +21,7 @@ import uavcan.primitive.array.Integer64_1_0
 import uavcan.register.Value_1_0
 from numpy import clip
 from my_simple_test_allocator import make_simple_node_allocator
-from register_pair_class import RegisterPair, OnlyEmbeddedDeviceRegister
+from RegisterPair import RegisterPair, OnlyEmbeddedDeviceRegister
 from utils import rpm_to_radians_per_second, restart_node, \
     command_save, configure_embedded_registers, configure_tester_side_registers
 
@@ -58,6 +58,10 @@ class SubjectIdGenerator:
         return self.get_next()
 
 
+def modify_tester_registry_name_with_number(registry_item: RegisterPair, number: int):
+    registry_item.tester_reg_name = f"{registry_item.tester_reg_name}_{number}"
+
+
 class TestESC:
     @staticmethod
     @pytest.mark.asyncio
@@ -70,9 +74,12 @@ class TestESC:
         sid_gen2 = SubjectIdGenerator(135)
         common_registers = [
             RegisterPair("uavcan.pub.setpoint.id", "uavcan.sub.setpoint.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])), None,
+                         None),
+            # not planning to use this either
             RegisterPair("uavcan.pub.readiness.id", "uavcan.sub.readiness.id",
-                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()]))),
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])), None,
+                         None),
         ]
         sid_gen2.set(sid_gen.get())
 
@@ -87,26 +94,31 @@ class TestESC:
                 OnlyEmbeddedDeviceRegister("ttl_milliseconds",
                                            uavcan.register.Value_1_0(
                                                natural16=uavcan.primitive.array.Natural16_1_0([300]))),
-                RegisterPair("uavcan.sub.esc_heartbeat.id", "uavcan.pub.esc_heartbeat.id",
+                RegisterPair("esc_heartbeat", "uavcan.pub.esc_heartbeat.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
-                             type_communicated=reg.udral.service.common.Heartbeat_0_1),
-                RegisterPair("uavcan.sub.feedback.id", "uavcan.pub.feedback.id",
+                             type_communicated=reg.udral.service.common.Heartbeat_0_1,
+                             is_subscription=True),
+                RegisterPair("feedback", "uavcan.pub.feedback.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
-                             reg.udral.service.actuator.common.Feedback_0_1),
-                RegisterPair("uavcan.sub.power.id", "uavcan.pub.power.id",
+                             reg.udral.service.actuator.common.Feedback_0_1,
+                             is_subscription=True),
+                RegisterPair("power", "uavcan.pub.power.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
-                             reg.udral.physics.electricity.PowerTs_0_1),
-                RegisterPair("uavcan.sub.status.id", "uavcan.pub.status.id",
+                             reg.udral.physics.electricity.PowerTs_0_1,
+                             is_subscription=True),
+                RegisterPair("status", "uavcan.pub.status.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
-                             reg.udral.service.actuator.common.Status_0_1),
-                RegisterPair("uavcan.sub.dynamics.id", "uavcan.pub.dynamics.id",
+                             reg.udral.service.actuator.common.Status_0_1,
+                             is_subscription=True),
+                RegisterPair("dynamics", "uavcan.pub.dynamics.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
-                             reg.udral.physics.dynamics.rotation.PlanarTs_0_1)
+                             reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
+                             is_subscription=True)
             ]
 
         time.sleep(2)
@@ -122,13 +134,13 @@ class TestESC:
             configure_tester_side_registers(combined_registry, tester_node)
             node_info.registers = combined_registry
             for registry_item in combined_registry:
-                if ".sub." in registry_item.tester_reg_name:
-                    pure_name = registry_item.tester_reg_name[11:].replace(".id", "")
-                    assert "." not in pure_name, "There was a problem converting the compound name to a pure name"
-                    sub = tester_node.make_subscriber(registry_item.communication_type, pure_name)
-                    node_info.store_subscription(sub, registry_item.value.natural16.value,
-                                                 registry_item.tester_reg_name,
-                                                 data_type=registry_item.communication_type)
+                if registry_item and registry_item.tester_reg_name:
+                    pure_name = registry_item.tester_reg_name
+                    print(f"Pure name: {pure_name}")
+                    # sub = tester_node.make_subscriber(registry_item.communication_type, pure_name)
+                    # node_info.store_subscription(sub, registry_item.value.natural16.value,
+                    #                              registry_item.tester_reg_name,
+                    #                              data_type=registry_item.communication_type)
 
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
@@ -137,16 +149,17 @@ class TestESC:
         node_info_list = await our_allocator(2, node_to_use=tester_node)
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
+            for register in node_info.registers:
+                if register.is_subscription:
+                    register.actual_subscription = tester_node.make_subscriber(register.communication_type,
+                                                                               register.tester_reg_name)
+
         readiness_message = reg.udral.service.common.Readiness_0_1(3)
         readiness_stop_message = reg.udral.service.common.Readiness_0_1(2)  # it is actually standby
-        subscription_store = {}
         readiness_pub = tester_node.make_publisher(reg.udral.service.common.Readiness_0_1, "readiness")
         await readiness_pub.publish(readiness_message)
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
-        for index, node_info in enumerate(node_info_list):
-            feedback_subscription = tester_node.make_subscriber(reg.udral.service.actuator.common.Feedback_0_1,
-                                                                "feedback")
-        dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
+        # dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         current_speeds = [0, 0]
         assert len(node_info_list) >= 2, "Please restart" \
                                          " the nodes before continuing. This test was supposed" \
@@ -158,12 +171,17 @@ class TestESC:
             if (node := next(new_filter, None)) is not None:
                 current_speeds[node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
 
-        dynamics_sub.receive_in_background(receive_dynamics)
+        for index, node_info in enumerate(node_info_list):
+            node_info.motor_index = index
+            for register in node_info.registers:
+                if register.is_subscription and register.actual_subscription is not None:
+                    if "dynamics" in register.tester_reg_name:
+                        register.actual_subscription.receive_in_background(receive_dynamics)
         starting_time = time.time()
         try:
             for i in range(40000):
-                input_array = [rpm_to_radians_per_second(200), rpm_to_radians_per_second(200)]
-                input_array.extend([0 for i in range(6)])
+                input_array = [rpm_to_radians_per_second(200),
+                               rpm_to_radians_per_second(200)]  # ,*[0 for i in range(6)]]
                 if time.time() - starting_time > 4:
                     for i2, s in enumerate(current_speeds):
                         speed_difference = abs(input_array[i2] - s)
@@ -172,12 +190,15 @@ class TestESC:
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
                 start_time2 = time.time()
-                for node_info in node_info_list:
-                    feedback_subscription = node_info.get_subscription(reg.udral.service.actuator.common.Feedback_0_1)
-                    feedback_result = await feedback_subscription.receive_for(0.5)
-                    assert feedback_result is not None, "Feedback was not received."
+
+                # for node_info in node_info_list:
+                #     feedback_subscription = node_info.get_subscription(reg.udral.service.actuator.common.Feedback_0_1)
+                #     if feedback_subscription:
+                #         feedback_result = await feedback_subscription.receive_for(0.5)
+                #         assert feedback_result is not None, "Feedback was not received."
                 # Sleep the time that hasn't been already used of 0.2 seconds
-                time.sleep(clip(.2 - time.time() - start_time2, 0, 0.2))
+                time.sleep(0.1)
+                # time.sleep(clip(.2 - time.time() - start_time2, 0, 0.2))
         except KeyboardInterrupt:
             # The ESC would stop after TTL itself, but it is important to have quicker control available when all
             # communications are still available
