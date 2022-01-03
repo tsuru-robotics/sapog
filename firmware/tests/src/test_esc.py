@@ -191,11 +191,12 @@ class TestESC:
                 await readiness_pub.publish(readiness_message)
                 start_time2 = time.time()
 
-                # for node_info in node_info_list:
-                #     feedback_subscription = node_info.get_subscription(reg.udral.service.actuator.common.Feedback_0_1)
-                #     if feedback_subscription:
-                #         feedback_result = await feedback_subscription.receive_for(0.5)
-                #         assert feedback_result is not None, "Feedback was not received."
+                for node_info in node_info_list:
+                    for register in node_info.registers:
+                        if register.is_subscription and register.actual_subscription is not None:
+                            if "feedback" in register.tester_reg_name:
+                                feedback_result = register.actual_subscription.receive_for(0.2)
+                                assert feedback_result is not None, "Feedback was not received."
                 # Sleep the time that hasn't been already used of 0.2 seconds
                 time.sleep(0.1)
                 # time.sleep(clip(.2 - time.time() - start_time2, 0, 0.2))
