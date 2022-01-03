@@ -261,7 +261,7 @@ def main():
             file, port = file_given_scenario(args.input_file)
         else:
             if args.all_yes:
-                run_on_all_available_debug_interfaces(get_needed_elf_file(args.dir), args.gdb_executable, args.size_executable)
+                run_on_all_available_debug_interfaces(os.path.join(args.dir, get_needed_elf_file(args.dir)), args.gdb_executable, args.size_executable)
                 return
             else:
                 file, port = no_given_file_scenario(args.dir)
