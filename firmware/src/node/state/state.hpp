@@ -82,7 +82,7 @@ struct State
   CanardTxQueue queues[BXCAN_MAX_IFACE_INDEX + 1];
   Readiness readiness;
   Health health;
-  uint16_t id_in_esc_group;
+  uint16_t id_in_esc_group = 255;
   PublishPorts publish_ports;
   ControlMode control_mode;
   uint16_t ttl_milliseconds = 100;

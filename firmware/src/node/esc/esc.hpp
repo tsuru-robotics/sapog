@@ -43,7 +43,7 @@ struct : IHandler
 {
   void operator()(node::state::State &state, CanardRxTransfer *transfer)
   {
-    if (state.readiness == Readiness::ENGAGED)
+    if (state.readiness == Readiness::ENGAGED && state.id_in_esc_group != 255)
     {
       reg_udral_service_actuator_common_sp_Vector31_0_1 setpoint{};
       size_t size = transfer->payload_size;
@@ -53,7 +53,7 @@ struct : IHandler
       {
         if (state.control_mode == ControlMode::RPM)
         {
-          float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0 / 3.14159265358979f;
+          float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0f / 3.14159265358979f;
           unsigned int rpm = rotations_per_second * 60;
           motor_set_rpm(rpm, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;

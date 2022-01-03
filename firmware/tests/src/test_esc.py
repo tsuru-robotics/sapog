@@ -64,9 +64,9 @@ def modify_tester_registry_name_with_number(registry_item: RegisterPair, number:
 
 
 class SpeedController:
-    def __init__(self, node_amount: int, current_speeds, starting_speed=200, allowed_acceleration_time: float = 3.0):
+    def __init__(self, node_amount: int, starting_speed=0, allowed_acceleration_time: float = 3.0):
         self.speed_array = [starting_speed for x in range(node_amount)]
-        self.current_speeds = current_speeds
+        self.current_speeds = [0 for x in range(node_amount)]
         self.allowed_acceleration_time = allowed_acceleration_time
 
     def change_speed(self, node_index: int, new_speed: float):
@@ -107,7 +107,6 @@ class TestESC:
 
         def make_device_specific_registry(device_index: int) -> typing.List[RegisterPair]:
             return [
-
                 # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
                 #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
 
@@ -151,7 +150,7 @@ class TestESC:
             combined_registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
                                                                 uavcan.register.Value_1_0(
                                                                     natural16=uavcan.primitive.array.Natural16_1_0(
-                                                                        index))))
+                                                                        [index]))))
             await configure_embedded_registers(combined_registry, tester_node, node_info)
             configure_tester_side_registers(combined_registry, tester_node)
             node_info.registers = combined_registry
@@ -191,7 +190,8 @@ class TestESC:
                              tf: pyuavcan.transport._transfer.TransferFrom):
             new_filter = filter(lambda n: n.node_id == tf.source_node_id, node_info_list)
             if (node := next(new_filter, None)) is not None:
-                speed_controller.speed_array[node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
+                speed_controller.current_speeds[
+                    node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
 
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
@@ -200,15 +200,19 @@ class TestESC:
                     if "dynamics" in register.tester_reg_name:
                         register.actual_subscription.receive_in_background(receive_dynamics)
 
-        def get_input_array():
-            return [rpm_to_radians_per_second(200),
-                    rpm_to_radians_per_second(300)]  # ,*[0 for i in range(6)]]
+        async def run_first_motor():
+            speed_controller.change_speed(0, rpm_to_radians_per_second(200))
 
+        async def run_second_motor():
+            await asyncio.sleep(5)
+            speed_controller.change_speed(1, rpm_to_radians_per_second(0))
+
+        asyncio.create_task(run_first_motor())
+        asyncio.create_task(run_second_motor())
         try:
             for i in range(40000):
-                input_array = get_input_array()
 
-                rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=input_array)
+                rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=speed_controller.speed_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
                 # start_time2 = time.time()
