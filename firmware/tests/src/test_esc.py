@@ -3,6 +3,7 @@
 # Distributed under the MIT License, available in the file LICENSE.
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
+import asyncio
 import typing
 
 import math
@@ -60,6 +61,27 @@ class SubjectIdGenerator:
 
 def modify_tester_registry_name_with_number(registry_item: RegisterPair, number: int):
     registry_item.tester_reg_name = f"{registry_item.tester_reg_name}_{number}"
+
+
+class SpeedController:
+    def __init__(self, node_amount: int, current_speeds, starting_speed=200, allowed_acceleration_time: float = 3.0):
+        self.speed_array = [starting_speed for x in range(node_amount)]
+        self.current_speeds = current_speeds
+        self.allowed_acceleration_time = allowed_acceleration_time
+
+    def change_speed(self, node_index: int, new_speed: float):
+        assert len(
+            self.speed_array) > node_index, \
+            f"Cannot access index {node_index} in array of {len(self.speed_array)} elements"
+        self.speed_array[node_index] = new_speed
+        task = asyncio.create_task(self.check_speed_correctness())
+
+    async def check_speed_correctness(self):
+        # Allowing time for the motors to reach their desired speeds
+        await asyncio.sleep(self.allowed_acceleration_time)
+        for i2, s in enumerate(self.current_speeds):
+            speed_difference = abs(self.speed_array[i2] - s)
+            assert speed_difference < 100, "There is a problem with reporting RPM."
 
 
 class TestESC:
@@ -160,7 +182,7 @@ class TestESC:
         await readiness_pub.publish(readiness_message)
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
         # dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
-        current_speeds = [0, 0]
+        speed_controller = SpeedController(2)
         assert len(node_info_list) >= 2, "Please restart" \
                                          " the nodes before continuing. This test was supposed" \
                                          "to allocate nodes and then keep the info about them. "
@@ -169,7 +191,7 @@ class TestESC:
                              tf: pyuavcan.transport._transfer.TransferFrom):
             new_filter = filter(lambda n: n.node_id == tf.source_node_id, node_info_list)
             if (node := next(new_filter, None)) is not None:
-                current_speeds[node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
+                speed_controller.speed_array[node.motor_index] = msg.value.kinematics.angular_velocity.radian_per_second
 
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
@@ -177,19 +199,19 @@ class TestESC:
                 if register.is_subscription and register.actual_subscription is not None:
                     if "dynamics" in register.tester_reg_name:
                         register.actual_subscription.receive_in_background(receive_dynamics)
-        starting_time = time.time()
+
+        def get_input_array():
+            return [rpm_to_radians_per_second(200),
+                    rpm_to_radians_per_second(300)]  # ,*[0 for i in range(6)]]
+
         try:
             for i in range(40000):
-                input_array = [rpm_to_radians_per_second(200),
-                               rpm_to_radians_per_second(200)]  # ,*[0 for i in range(6)]]
-                if time.time() - starting_time > 4:
-                    for i2, s in enumerate(current_speeds):
-                        speed_difference = abs(input_array[i2] - s)
-                        assert speed_difference < 100, "There is a problem with reporting RPM."
+                input_array = get_input_array()
+
                 rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=input_array)
                 await pub.publish(rpm_message)
                 await readiness_pub.publish(readiness_message)
-                start_time2 = time.time()
+                # start_time2 = time.time()
 
                 for node_info in node_info_list:
                     for register in node_info.registers:
