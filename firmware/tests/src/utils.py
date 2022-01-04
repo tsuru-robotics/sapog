@@ -107,10 +107,12 @@ def rpm_to_radians_per_second(rpm: int):
 async def make_access_request(reg_name, reg_value, node_info: typing.Union[my_nodes.NodeInfo, int],
                               node: pyuavcan.application.Node):
     if type(node_info) == int:
-        node_info = {"node_id": node_info}
-    if not node_info.node_id or node_info.node_id == 0xFFFF:
+        node_id = node_info
+    else:
+        node_id = node_info.node_id
+    if not node_id or node_id == 0xFFFF:
         assert False, f"Device cannot be configured, it is missing a node_id, please allocate it first"
-    service_client = node.make_client(uavcan.register.Access_1_0, node_info.node_id)
+    service_client = node.make_client(uavcan.register.Access_1_0, node_id)
     service_client.response_timeout = 2
     msg = uavcan.register.Access_1_0.Request()
     msg.name.name = reg_name

@@ -56,7 +56,8 @@ struct : IHandler
             printf("Read requested.\n");
           } else
           {
-            printf("Value that cannot be stored in any register.\n");
+            printf(
+              "Value that cannot be stored in any register. This device doesn't support string register values btw.\n");
           }
           break;
         case conversion::ConversionStatus::WRONG_TYPE:

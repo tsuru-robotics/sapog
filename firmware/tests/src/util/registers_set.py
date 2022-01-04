@@ -1,3 +1,6 @@
+import importlib
+import typing
+
 import sys
 from pyuavcan.application import make_node, NodeInfo
 
@@ -28,14 +31,15 @@ async def main():
         register = yaml.load(f)
         tester_node = prepared_double_redundant_node()
         for key, value in register.items():
-            get_type_response = await make_access_request(key,
-                                                          uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                          int(node_id),
-                                                          tester_node)
-            response = await make_access_request(key,
-                                                 uavcan.register.Value_1_0(value),
-                                                 int(node_id),
-                                                 tester_node)
+            if ".type" in key:
+                continue
+            if isinstance(value, int):
+                value_to_be_sent = uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0([value]))
+            elif isinstance(value, str):
+                value_to_be_sent = uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0(value))
+            elif isinstance(value, bool):
+                value_to_be_sent = uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0([value]))
+            response = await make_access_request(key, value_to_be_sent, int(node_id), tester_node)
 
 
 if __name__ == "__main__":
