@@ -54,7 +54,6 @@ struct : IHandler
         if (state.control_mode == ControlMode::RPM)
         {
           float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0f / 3.14159265358979f;
-          printf("Rotations / s: %f\n", rotations_per_second);
           unsigned int rpm = rotations_per_second * 60;
           motor_set_rpm(rpm, state.ttl_milliseconds);
           ttl_expiry_handler.state = &state;

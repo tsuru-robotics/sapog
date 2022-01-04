@@ -36,8 +36,11 @@ std::string_view all_register_names[] = {
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_register_List,
                             1, 0);
+
 namespace node::essential
 {
+constexpr size_t all_register_names_size = sizeof(all_register_names) / sizeof(all_register_names[0]);
+
 struct RegisterListHandlerType : IHandler
 {
   void operator()(node::state::State &state, CanardRxTransfer *transfer);
@@ -53,12 +56,17 @@ void RegisterListHandlerType::operator()(node::state::State &state, CanardRxTran
   {
     auto serializer = uavcan_l6::DSDL<uavcan_register_List_Response_1_0>::Serializer();
     auto response_value = uavcan_register_List_Response_1_0{};
-    if (sizeof(all_register_names) / sizeof(all_register_names[0]) > 0)
+    printf("Current index: %d\n", request->index);
+
+    if (request->index < all_register_names_size)
     {
       std::copy(std::begin(all_register_names[request->index]),
                 std::end(all_register_names[request->index]),
                 std::begin(response_value.name.name.elements));
       response_value.name.name.count = all_register_names[request->index].size();
+    } else
+    {
+      response_value.name.name.count = 0;
     }
     auto res = serializer.serialize(response_value);
     CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.

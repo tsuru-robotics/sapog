@@ -26,3 +26,5 @@ CONFIG_PARAM_INT("uavcan.sub.setpoint.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURA
 CONFIG_PARAM_INT("control_mode_rpm", 1, 0, 1)
 
 CONFIG_PARAM_INT("id_in_esc_group", 255, 0, 255)
+
+CONFIG_PARAM_INT("ttl_milliseconds", 10, 0, 500)
