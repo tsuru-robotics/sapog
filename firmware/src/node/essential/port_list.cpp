@@ -25,6 +25,22 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     size_t *const cnt = &m.publishers.sparse_list.count;
     m.publishers.sparse_list.elements[(*cnt)++].value = uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_;
     m.publishers.sparse_list.elements[(*cnt)++].value = uavcan_node_port_List_0_1_FIXED_PORT_ID_;
+    if (state.publish_ports.esc_feedback != CONFIGURABLE_SUBJECT_ID)
+    {
+      m.publishers.sparse_list.elements[(*cnt)++].value = state.publish_ports.esc_feedback;
+    }
+    if (state.publish_ports.esc_dynamics != CONFIGURABLE_SUBJECT_ID)
+    {
+      m.publishers.sparse_list.elements[(*cnt)++].value = state.publish_ports.esc_dynamics;
+    }
+    if (state.publish_ports.esc_power != CONFIGURABLE_SUBJECT_ID)
+    {
+      m.publishers.sparse_list.elements[(*cnt)++].value = state.publish_ports.esc_power;
+    }
+    if (state.publish_ports.esc_status != CONFIGURABLE_SUBJECT_ID)
+    {
+      m.publishers.sparse_list.elements[(*cnt)++].value = state.publish_ports.esc_status;
+    }
   }
 
   auto iterators = get_dyn_subscription_iterators();

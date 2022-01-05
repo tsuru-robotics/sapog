@@ -10,11 +10,10 @@
 using namespace node::state;
 
 IntStateVariableInRegister publish_ports[] = {
-  {"uavcan.pub.esc_heartbeat.id", &state.publish_ports.esc_heartbeat},
-  {"uavcan.pub.feedback.id",      &state.publish_ports.esc_feedback},
-  {"uavcan.pub.status.id",        &state.publish_ports.esc_status},
-  {"uavcan.pub.power.id",         &state.publish_ports.esc_power},
-  {"uavcan.pub.dynamics.id",      &state.publish_ports.esc_dynamics}
+  {"uavcan.pub.feedback.id", &state.publish_ports.esc_feedback},
+  {"uavcan.pub.status.id",   &state.publish_ports.esc_status},
+  {"uavcan.pub.power.id",    &state.publish_ports.esc_power},
+  {"uavcan.pub.dynamics.id", &state.publish_ports.esc_dynamics}
 };
 
 IntStateVariableInRegister state_variables_in_register[] = {

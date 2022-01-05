@@ -29,38 +29,6 @@ UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_physics_dynamics_rotation_PlanarTs,
                             0, 1);
 
 
-void publish_esc_heartbeat(node::state::State &state)
-{
-  if (state.publish_ports.esc_heartbeat == CONFIGURABLE_SUBJECT_ID)
-  {
-    return;
-  }
-  uavcan_l6::DSDL<reg_udral_service_common_Heartbeat_0_1>::Serializer serializer{};
-  reg_udral_service_common_Heartbeat_0_1 hb{};
-  hb.readiness = reg_udral_service_common_Readiness_0_1{};
-  hb.readiness.value = static_cast<uint8_t>(state.readiness);
-  hb.health = uavcan_node_Health_1_0{};
-  hb.health.value = static_cast<uint8_t>(state.health);
-  auto res = serializer.serialize(hb);
-  if (res.has_value())
-  {
-    CanardTransferMetadata rtm{};  // Response transfers are similar to their requests.
-    rtm.transfer_kind = CanardTransferKindMessage;
-    rtm.transfer_id = state.transfer_ids.reg_udral_service_common_Heartbeat_0_1++;
-    for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
-    {
-      (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
-                          get_monotonic_microseconds() + ONE_SECOND_DEADLINE_usec,
-                          &rtm,
-                          res.value(),
-                          serializer.getBuffer());
-    }
-  } else
-  {
-    assert(false);
-  }
-}
-
 void publish_esc_feedback(node::state::State &state)
 {
 

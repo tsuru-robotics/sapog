@@ -65,7 +65,6 @@ struct PlugAndPlay
 };
 struct PublishPorts
 {
-  uint16_t esc_heartbeat;
   uint16_t esc_status;
   uint16_t esc_power;
   uint16_t esc_feedback;
