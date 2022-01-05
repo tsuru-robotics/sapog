@@ -128,13 +128,18 @@ async def make_access_request(reg_name, reg_value, node_id: int,
     return await service_client.call(msg)
 
 
-def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node):
+def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+                                    append_counter: bool = True):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.tester_reg_name:
             if ".id" not in pair.tester_reg_name:
-                node.registry[f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"] = pair.value
-                pair.tester_reg_name = f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"
+                if append_counter:
+                    node.registry[f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"] = pair.value
+                    pair.tester_reg_name = f"{pair.tester_reg_name}_{pair.tester_side_counter_number}"
+                else:
+                    node.registry[f"{pair.tester_reg_name}"] = pair.value
+                    pair.tester_reg_name = f"{pair.tester_reg_name}"
             else:
                 node.registry[pair.tester_reg_name] = pair.value
 
