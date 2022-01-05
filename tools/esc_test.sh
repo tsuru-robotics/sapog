@@ -9,13 +9,13 @@ export uavcan__sub__dynamics__id=141
 export UAVCAN__CAN__IFACE="socketcan:slcan0 socketcan:slcan1"
 export UAVCAN__NODE__ID=0
 # Allocate node_ids
-yakut pub uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {elements: [21], count: 1}}"
-yakut pub uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {elements: [22], count: 1}}"
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {21}}"
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {22}}"
 yakut call 21 uavcan.node.ExecuteCommand.1.1 "command: 65535" # Restart node
 sleep 3
 # Allocate node_ids
-yakut pub uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {elements: [21], count: 1}}"
-yakut pub uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {elements: [22], count: 1}}"
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {21}}"
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {22}}"
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.sub.setpoint.id},  value: {natural16: {value: 135}}}"
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.sub.readiness.id}, value: {natural16: {value: 136}}}"
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.esc_heartbeat.id},    value: {natural16: {value: 137}}}"
@@ -25,5 +25,8 @@ yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.status.id},  
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.dynamics.id},  value: {natural16: {value: 141}}}"
 yakut call 21 uavcan.node.ExecuteCommand.1.1 "command: 65530" # Save persistent states
 yakut call 21 uavcan.node.ExecuteCommand.1.1 "command: 65535" # Restart node
+# Allocate node_ids
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {21}}"
+yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {22}}"
 y pub -T 0.1 136:reg.udral.service.actuator.common.sp.Vector2.0.1 'value: !$ "[A(2,3) * 1000, 0]"' 137:reg.udral.service.common.Readiness.0.1 'value: !$ "T(2,23)*3"'
 

@@ -45,7 +45,7 @@ handle_possible_imaginary_register_access(std::string_view request_name, uavcan_
     return_value.value.count = natural16_string.size();
     std::copy(natural16_string.begin(), natural16_string.end(), std::begin(return_value.value.elements));
     out_value._string = return_value;
-    return RegisterCriteria{._mutable=false, .persistent = true};
+    return RegisterCriteria{._mutable=true, .persistent = true};
   } else if (endsWithType)
   {
     std::string_view type_string = find_type_name(request_name.data());
@@ -69,6 +69,10 @@ handle_possible_imaginary_register_access(std::string_view request_name, uavcan_
 RegisterCriteria handle_real_register_access(std::string_view request_name, uavcan_register_Value_1_0 &out_value,
                                              ConfigParam &param)
 {
+  bool endsWithId =
+    request_name.size() >= 3 && request_name.at(request_name.size() - 1) == 'd' &&
+    request_name.at(request_name.size() - 2) == 'i' &&
+    request_name.at(request_name.size() - 3) == '.';
   float value = configGet(request_name.data());
   std::optional<node::conf::wrapper::converter_type> converter = node::conf::wrapper::find_converter(
     request_name.data());
@@ -101,6 +105,10 @@ RegisterCriteria handle_real_register_access(std::string_view request_name, uavc
       printf("nunavutSetBit %d\n", nunavutSetBit(out_value.bit.value.bitpacked, 1, 0, value != 0));
       out_value.bit.value.count = 1;
     }
+  }
+  if (endsWithId)
+  {
+    return RegisterCriteria{true, true};
   }
   return RegisterCriteria{};
 }
