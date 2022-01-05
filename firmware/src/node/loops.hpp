@@ -31,7 +31,6 @@ struct : ILoopMethod
   void operator()(node::state::State &state)
   {
     node::essential::publish_heartbeat(state.canard, state);
-    publish_esc_heartbeat(state);
     publish_esc_feedback(state);
     transmit(state);
     // Before code below is uncommented, make sure that the node has an id.

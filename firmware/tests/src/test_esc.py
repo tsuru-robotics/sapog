@@ -115,11 +115,6 @@ class TestESC:
                 OnlyEmbeddedDeviceRegister("ttl_milliseconds",
                                            uavcan.register.Value_1_0(
                                                natural16=uavcan.primitive.array.Natural16_1_0([300]))),
-                RegisterPair("esc_heartbeat", "uavcan.pub.esc_heartbeat.id",
-                             uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
-                             sid_gen2(),
-                             type_communicated=reg.udral.service.common.Heartbeat_0_1,
-                             is_subscription=True),
                 RegisterPair("feedback", "uavcan.pub.feedback.id",
                              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])),
                              sid_gen2(),
