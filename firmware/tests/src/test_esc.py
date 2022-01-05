@@ -151,7 +151,7 @@ class TestESC:
                                                                 uavcan.register.Value_1_0(
                                                                     natural16=uavcan.primitive.array.Natural16_1_0(
                                                                         [index]))))
-            await configure_embedded_registers(combined_registry, tester_node, node_info)
+            await configure_embedded_registers(combined_registry, tester_node, node_info.node_id)
             configure_tester_side_registers(combined_registry, tester_node)
             node_info.registers = combined_registry
             for registry_item in combined_registry:

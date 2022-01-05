@@ -73,14 +73,26 @@ def test_add_to_dictionary_list():
 
 
 @pytest.fixture(scope="class")
-def prepared_sapogs():
-    from my_simple_test_allocator import make_simple_node_allocator
-    if is_running_on_my_laptop and is_device_with_node_id_running(21):
-        print("Device with node id 21 is already running so I will use that.")
-        return {21: "idk"}
-    else:
-        print("Allocating one node")
-        return make_simple_node_allocator()(1)  # This will allocate id 21 too
+def prepared_sapogs(prepared_node):
+    hb_sub = prepared_node.make_subscriber(uavcan.node.Heartbeat_1_0)
+    allowed_listen_time = 1.5
+    listen_start_time = time.time()
+    collected_nodes = {}
+    from pyuavcan.transport import TransferFrom
+
+    def receive_heartbeat(heartbeat: uavcan.node.Heartbeat_1_0, sending_node: TransferFrom):
+        if time.time() - listen_start_time <= allowed_listen_time:
+            collected_nodes[sending_node.source_node_id] = "idk"
+
+    hb_sub.receive_in_background(receive_heartbeat)
+
+    # from my_simple_test_allocator import make_simple_node_allocator
+    # if is_running_on_my_laptop and is_device_with_node_id_running(21):
+    #     print("Device with node id 21 is already running so I will use that.")
+    #     return {21: "idk"}
+    # else:
+    #     print("Allocating one node")
+    #     return make_simple_node_allocator()(1)  # This will allocate id 21 too
 
 
 @pytest.fixture()
@@ -104,12 +116,8 @@ def rpm_to_radians_per_second(rpm: int):
     return radians_per_second
 
 
-async def make_access_request(reg_name, reg_value, node_info: typing.Union[my_nodes.NodeInfo, int],
+async def make_access_request(reg_name, reg_value, node_id: int,
                               node: pyuavcan.application.Node):
-    if type(node_info) == int:
-        node_id = node_info
-    else:
-        node_id = node_info.node_id
     if not node_id or node_id == 0xFFFF:
         assert False, f"Device cannot be configured, it is missing a node_id, please allocate it first"
     service_client = node.make_client(uavcan.register.Access_1_0, node_id)
@@ -132,11 +140,11 @@ def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuav
 
 
 async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
-                                       target_node_info: my_nodes.NodeInfo):
+                                       node_id: int):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
         if pair.embedded_device_reg_name:
-            await make_access_request(pair.embedded_device_reg_name, pair.value, target_node_info, node)
+            await make_access_request(pair.embedded_device_reg_name, pair.value, node_id, node)
 
 
 def allocate_one_node_id(node_name):

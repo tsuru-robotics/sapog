@@ -60,10 +60,10 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
     print_can_error_if_exists();
     if (state.is_save_requested)
     {
-      state.is_save_requested = false;
       configSave();
+      state.is_save_requested = false;
     }
-    if (state.is_restart_required && !os::isRebootRequested())
+    if (!state.is_save_requested && state.is_restart_required && !os::isRebootRequested())
     {
       printf("Sent %d remaining frames before restarting\n", transmit(state));
       os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag

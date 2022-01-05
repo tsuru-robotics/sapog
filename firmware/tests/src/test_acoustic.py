@@ -3,13 +3,17 @@
 # Distributed under the MIT License, available in the file LICENSE.
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
+import asyncio
 import os
 
 import pytest
-import time
 import typing
 
-from utils import configure_a_port_on_sapog, prepared_sapogs, prepared_node, restarted_sapogs
+from RegisterPair import RegisterPair
+from utils import configure_a_port_on_sapog, prepared_sapogs, restarted_sapogs, configure_tester_side_registers, \
+    configure_embedded_registers
+
+from node_fixtures.drnf import prepared_double_redundant_node
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -19,11 +23,6 @@ import uavcan.register.Access_1_0
 import uavcan.primitive.array
 import reg.udral.physics.acoustics.Note_0_1
 import reg.udral.service.common.Readiness_0_1
-
-import pyuavcan
-from pyuavcan.application import Node, register
-
-from _await_wrap import wrap_await
 
 sapog_name = "io.px4.sapog"
 
@@ -39,35 +38,31 @@ def configure_note_register():
     print(reg.drone.physics.acoustics.Note_0_1)
 
 
-import subprocess
-
-
-async def play_note(frequency, duration, prepared_node):
+async def play_note(frequency, duration, tester_node):
     note_message = reg.udral.physics.acoustics.Note_0_1(
         frequency=uavcan.si.unit.frequency.Scalar_1_0(frequency),
         acoustic_power=uavcan.si.unit.power.Scalar_1_0(1),
         duration=uavcan.si.unit.duration.Scalar_1_0(duration))
-    publisher = prepared_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
+    publisher = tester_node.make_publisher(reg.udral.physics.acoustics.Note_0_1, "note_response")
     await publisher.publish(note_message)
 
 
-class TestFun:
+class TestAcoustics:
     @staticmethod
     @pytest.mark.asyncio
-    async def test_assign_port_for_note_acoustics(prepared_node, prepared_sapogs):
-        # During this test, we need to save the configuration
-        # But we don't want to save any other configuration
-        # that could have been left on the device during tests,
-        # we only care about saving the configuration for
-        # the uavcan.pub.note_response.id configurable port.
-        # Restarting to lose any other configuration.
-        configure_a_port_on_sapog("note_response", 135, prepared_sapogs, prepared_node)
+    async def test_play_acoustic_note(prepared_double_redundant_node):
+        tester_node = prepared_double_redundant_node
+        common_registers = [
+            RegisterPair("uavcan.pub.note_response.id", "uavcan.sub.note_response.id",
+                         uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([135])), None,
+                         None),
+        ]
+        configure_tester_side_registers(common_registers, tester_node)
+        await configure_embedded_registers(common_registers, tester_node, 21)
+        await configure_embedded_registers(common_registers, tester_node, 22)
         arps = [[(196.00, 0.05), (246.94, 0.05), (293.66, 0.2)]]
         for arp in arps:
-            for i in range(1):
+            for i in range(2):
                 for frequency, duration in arp:
-                    play_note(frequency, duration, prepared_node)
-                    time.sleep(duration)
-
-
-import uavcan.si.unit.angular_velocity.Scalar_1_0
+                    await play_note(frequency, duration, tester_node)
+                    await asyncio.sleep(duration)

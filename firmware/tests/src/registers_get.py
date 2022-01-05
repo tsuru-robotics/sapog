@@ -1,6 +1,18 @@
-from pyuavcan.application import make_node, NodeInfo
+import pathlib
 
-from conftest import add_deps
+import sys
+from pyuavcan.application import make_node, NodeInfo
+from make_registry import make_registry
+
+
+def add_deps():
+    """This is necessary to extend the python path with the compiled DSDL."""
+    source_path = pathlib.Path(__file__).parent.absolute()
+    dependency_path = source_path.parent / "deps"
+    namespace_path = dependency_path / "namespaces"
+    sys.path.insert(0, str(namespace_path.absolute()))
+
+
 from make_registry import make_registry
 
 add_deps()
@@ -111,7 +123,7 @@ async def main():
         for register_name in available_register_names:
             response = await make_access_request(register_name,
                                                  uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                 node_info,
+                                                 node_info.node_id,
                                                  tester_node)
             if response and response[0]:
                 register[register_name] = get_any_value_out_of_value(response[0].value)
