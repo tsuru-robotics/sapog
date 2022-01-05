@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import typing
 from typing import Optional, List
@@ -82,6 +83,6 @@ def make_simple_node_allocator():
 
 if __name__ == "__main__":
     try:
-        make_simple_node_allocator()(None, continuous=True)
+        asyncio.run(make_simple_node_allocator()(None, continuous=True))
     except KeyboardInterrupt:
         pass

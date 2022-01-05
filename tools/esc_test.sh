@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+set -ex
 y compile https://github.com/UAVCAN/public_regulated_data_types/zipball/master
 export uavcan__pub__setpoint__id=135
 export uavcan__pub__readiness__id=136
@@ -23,10 +25,18 @@ yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.feedback.id},
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.power.id},     value: {natural16: {value: 139}}}"
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.status.id},    value: {natural16: {value: 140}}}"
 yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.dynamics.id},  value: {natural16: {value: 141}}}"
+
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.sub.setpoint.id},  value: {natural16: {value: 142}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.sub.readiness.id}, value: {natural16: {value: 143}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.esc_heartbeat.id},    value: {natural16: {value: 144}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.feedback.id},    value: {natural16: {value: 145}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.power.id},     value: {natural16: {value: 146}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.status.id},    value: {natural16: {value: 147}}}"
+yakut call 21 uavcan.register.Access.1.0 "{name: {name: uavcan.pub.dynamics.id},  value: {natural16: {value: 148}}}"
+
 yakut call 21 uavcan.node.ExecuteCommand.1.1 "command: 65530" # Save persistent states
 yakut call 21 uavcan.node.ExecuteCommand.1.1 "command: 65535" # Restart node
 # Allocate node_ids
 yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 75720222859564, allocated_node_id: {21}}"
 yakut pub -N 1 uavcan.pnp.NodeIDAllocationData.1.0 "{unique_id_hash: 205537128692115, allocated_node_id: {22}}"
-y pub -T 0.1 136:reg.udral.service.actuator.common.sp.Vector2.0.1 'value: !$ "[A(2,3) * 1000, 0]"' 137:reg.udral.service.common.Readiness.0.1 'value: !$ "T(2,23)*3"'
 

@@ -102,11 +102,12 @@ def get_any_value_out_of_value(value: uavcan.register.Value_1_0):
 
 
 async def main():
-    our_allocator = make_simple_node_allocator()
+    # our_allocator = make_simple_node_allocator()
     tester_node = prepared_double_redundant_node()
-    node_info_list = await our_allocator(2, node_to_use=tester_node)
-    for index, node_info in enumerate(node_info_list[:1]):
-        service_client = tester_node.make_client(uavcan.register.List_1_0, node_info.node_id)
+    # node_info_list = await our_allocator(2, node_to_use=tester_node)
+    # for index, node_info in enumerate(node_info_list[:1]):
+    for node_id in [21, 22]:
+        service_client = tester_node.make_client(uavcan.register.List_1_0, node_id)
         service_client.response_timeout = 2
         counter = 0
         available_register_names = []
