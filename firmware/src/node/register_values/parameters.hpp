@@ -23,7 +23,7 @@ CONFIG_PARAM_INT("uavcan.sub.note_response.id", CONFIGURABLE_SUBJECT_ID, 0, CONF
 
 CONFIG_PARAM_INT("uavcan.sub.setpoint.id", CONFIGURABLE_SUBJECT_ID, 0, CONFIGURABLE_SUBJECT_ID)
 
-CONFIG_PARAM_INT("control_mode_rpm", 1, 0, 1)
+CONFIG_PARAM_BOOL("control_mode_rpm", true)
 
 CONFIG_PARAM_INT("id_in_esc_group", 255, 0, 255)
 
