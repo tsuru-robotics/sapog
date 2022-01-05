@@ -104,7 +104,7 @@ async def run_continuous_allocator(time_out: Optional[int] = None, allocator_id:
                                    name="com.zubax.sapog.tests.allocator"):
     event = asyncio.Event()
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"
+    registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = 1
     with make_node(NodeInfo(name="allocator_node"), registry01) as node:
