@@ -12,6 +12,7 @@
 #include "temperature_sensor.hpp"
 #include "node/transmit.hpp"
 #include "board/board.hpp"
+#include "motor/motor.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);
@@ -88,7 +89,7 @@ void publish_esc_status(node::state::State &state)
 {
   uavcan_l6::DSDL<reg_udral_service_actuator_common_Status_0_1>::Serializer serializer{};
   reg_udral_service_actuator_common_Status_0_1 status{};
-  status.error_count = state.error_count;
+  status.error_count = motor_get_zc_failures_since_start();
   status.fault_flags = state.fault_flags;
   status.motor_temperature = uavcan_si_unit_temperature_Scalar_1_0{};
   status.motor_temperature.kelvin = NAN;
