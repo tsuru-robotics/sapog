@@ -200,6 +200,7 @@ int get_max_can_interface_index()
       return 0;
   }
   assert(false);
+  return 0;
 }
 
 float get_current_shunt_resistance()
