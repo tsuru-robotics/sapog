@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Zubax, zubax.com
+ * Copyright (c) 2022 Zubax, zubax.com
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
@@ -8,9 +8,8 @@
 #include "zubax_chibios/zubax_chibios/config/config.hpp"
 #include "libcanard/canard.h"
 #include "reg/udral/service/actuator/common/FaultFlags_0_1.h"
+#include "node/node_config_macros/node_config.hpp"
 
-#define CONFIGURABLE_ID_IN_ESC_GROUP 0xFFFF
-#define CONFIGURABLE_SUBJECT_ID -1
 namespace node::state
 {
 struct Timing

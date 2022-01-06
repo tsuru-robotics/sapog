@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Zubax, zubax.com
+ * Copyright (c) 2022 Zubax, zubax.com
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
@@ -12,6 +12,7 @@
 #include "node/register_values/register_variables.hpp"
 #include "node_config_macros/node_config.hpp"
 #include "node/register_values/parameters.hpp"
+#include "node/node_config_macros/node_config.hpp"
 #include "board/board.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
@@ -55,19 +56,6 @@ void init_canard()
     }
   }
   accept_transfers(state);
-//  {
-//    os::CriticalSectionLocker lock;
-//    BXCAN1->IER = BXCAN_IER_TMEIE | BXCAN_IER_FMPIE0 | BXCAN_IER_FFIE0 | BXCAN_IER_FOVIE0 |
-//                  BXCAN_IER_FMPIE1 | BXCAN_IER_FFIE1 | BXCAN_IER_FOVIE1 | BXCAN_IER_EWGIE |
-//                  BXCAN_IER_EPVIE | BXCAN_IER_BOFIE | BXCAN_IER_LECIE | BXCAN_IER_ERRIE |
-//                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
-//# if BXCAN_MAX_IFACE_INDEX > 0
-//    BXCAN2->IER = BXCAN_IER_TMEIE | BXCAN_IER_FMPIE0 | BXCAN_IER_FFIE0 | BXCAN_IER_FOVIE0 |
-//                  BXCAN_IER_FMPIE1 | BXCAN_IER_FFIE1 | BXCAN_IER_FOVIE1 | BXCAN_IER_EWGIE |
-//                  BXCAN_IER_EPVIE | BXCAN_IER_BOFIE | BXCAN_IER_LECIE | BXCAN_IER_ERRIE |
-//                  BXCAN_IER_WKUIE | BXCAN_IER_SLKIE;
-//#endif
-//  }
 
   BxCANTimings timings{};
   bxCANComputeTimings(STM32_PCLK1, 1'000'000, &timings); // uavcan.can.bitrate
@@ -138,36 +126,36 @@ void init_canard()
   }
   state.timing.started_at = get_monotonic_microseconds();
   auto it_pair2 = get_dyn_subscription_iterators();
-  for (auto dyn_id_subscription = it_pair2.first; dyn_id_subscription != it_pair2.second; dyn_id_subscription++)
+  for (auto subscription = it_pair2.first; subscription != it_pair2.second; subscription++)
   {
-    if (dyn_id_subscription->subscription.port_id == CONFIGURABLE_SUBJECT_ID)
+    if (subscription->subscription.port_id == CONFIGURABLE_SUBJECT_ID)
     {
-      if (configGetDescr(dyn_id_subscription->name, &_) != -ENOENT)
+      if (configGetDescr(subscription->name, &_) != -ENOENT)
       {
-        float new_port = configGet(dyn_id_subscription->name);
+        float new_port = configGet(subscription->name);
         if ((int) new_port == CONFIGURABLE_SUBJECT_ID)
         {
-          printf("no %s\n", dyn_id_subscription->name);
+          printf("no %s\n", subscription->name);
           continue;
         }
-        dyn_id_subscription->subscription.port_id = new_port;
+        subscription->subscription.port_id = new_port;
       } else
       {
-        printf("no %s\n", dyn_id_subscription->type);
+        printf("no %s\n", subscription->type);
         continue;
       }
     }
     const int8_t res =
       canardRxSubscribe(&state.canard,
-                        dyn_id_subscription->transfer_kind,
-                        dyn_id_subscription->subscription.port_id,
-                        dyn_id_subscription->subscription.extent,
-                        dyn_id_subscription->subscription.transfer_id_timeout_usec,
-                        &dyn_id_subscription->subscription);
+                        subscription->transfer_kind,
+                        subscription->subscription.port_id,
+                        subscription->subscription.extent,
+                        subscription->subscription.transfer_id_timeout_usec,
+                        &subscription->subscription);
 
-    if (dyn_id_subscription->subscription.user_reference == nullptr)
+    if (subscription->subscription.user_reference == nullptr)
     {
-      printf("no handler %s\n", dyn_id_subscription->name);
+      printf("no handler %s\n", subscription->name);
       continue;
     }
     if (res < 0)
@@ -176,6 +164,6 @@ void init_canard()
     }
     chThdSleepMicroseconds(400);
     assert(res >= 0); // This is to make sure that the subscription was successful.
-    printf("New sub %s: %d, res=%d\n", dyn_id_subscription->name, dyn_id_subscription->subscription.port_id, res);
+    printf("New sub %s: %d, res=%d\n", subscription->name, subscription->subscription.port_id, res);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Zubax, zubax.com
+ * Copyright (c) 2022 Zubax, zubax.com
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
@@ -19,9 +19,6 @@
 #include "print_can_error.hpp"
 #include "node/register_values/subscriptions.hpp"
 #include "init_can.hpp"
-
-
-#define CONFIGURABLE_SUBJECT_ID -1
 
 
 extern void board::die(int error);
