@@ -21,7 +21,7 @@
 #include "init_can.hpp"
 
 
-#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+#define CONFIGURABLE_SUBJECT_ID -1
 
 
 extern void board::die(int error);

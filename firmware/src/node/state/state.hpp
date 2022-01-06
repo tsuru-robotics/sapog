@@ -10,7 +10,7 @@
 #include "reg/udral/service/actuator/common/FaultFlags_0_1.h"
 
 #define CONFIGURABLE_ID_IN_ESC_GROUP 0xFFFF
-#define CONFIGURABLE_SUBJECT_ID 0xFFFF
+#define CONFIGURABLE_SUBJECT_ID -1
 namespace node::state
 {
 struct Timing
