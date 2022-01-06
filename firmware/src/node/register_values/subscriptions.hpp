@@ -18,6 +18,6 @@ struct AnySubscription
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of
 // the subscriptions array
-extern std::pair<AnySubscription *, AnySubscription *> get_dyn_subscription_iterators();
+extern std::pair<AnySubscription *, AnySubscription *> get_subscription_iterators();
 
 bool is_port_configurable(AnySubscription &reg);

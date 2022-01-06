@@ -125,7 +125,7 @@ void init_canard()
     printf("id_in_esc_group=%d\n", state.id_in_esc_group);
   }
   state.timing.started_at = get_monotonic_microseconds();
-  auto it_pair2 = get_dyn_subscription_iterators();
+  auto it_pair2 = get_subscription_iterators();
   for (auto subscription = it_pair2.first; subscription != it_pair2.second; subscription++)
   {
     if (subscription->subscription.port_id == CONFIGURABLE_SUBJECT_ID)

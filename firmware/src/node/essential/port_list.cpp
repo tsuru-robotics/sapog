@@ -44,7 +44,7 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
     }
   }
 
-  auto iterators = get_dyn_subscription_iterators();
+  auto iterators = get_subscription_iterators();
   for (auto iter = iterators.first; iter < iterators.second; iter++)
   {
     if (iter->transfer_kind == CanardTransferKindRequest)
@@ -53,7 +53,10 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
                     true);
     } else
     {
-      m.subscribers.sparse_list.elements[m.subscribers.sparse_list.count++].value = iter->subscription.port_id;
+      if (iter->subscription.port_id != CONFIGURABLE_SUBJECT_ID)
+      {
+        m.subscribers.sparse_list.elements[m.subscribers.sparse_list.count++].value = iter->subscription.port_id;
+      }
     }
   }
   // Notice that we don't check the clients because our application doesn't invoke any services.

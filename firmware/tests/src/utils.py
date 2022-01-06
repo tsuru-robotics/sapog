@@ -72,20 +72,23 @@ def test_add_to_dictionary_list():
                                my_nodes.NodeInfo('205537128692115', ['socketcan:slcan2'])]
 
 
-@pytest.fixture(scope="class")
-def prepared_sapogs(prepared_node):
+async def get_prepared_sapogs(prepared_node) -> typing.List[my_nodes.NodeInfo]:
     hb_sub = prepared_node.make_subscriber(uavcan.node.Heartbeat_1_0)
     allowed_listen_time = 1.5
     listen_start_time = time.time()
-    collected_nodes = {}
+    recorded_node_ids = {}
+    node_info_list: typing.List[my_nodes.NodeInfo] = []
     from pyuavcan.transport import TransferFrom
 
     def receive_heartbeat(heartbeat: uavcan.node.Heartbeat_1_0, sending_node: TransferFrom):
-        if time.time() - listen_start_time <= allowed_listen_time:
-            collected_nodes[sending_node.source_node_id] = "idk"
+        if time.time() - listen_start_time <= allowed_listen_time and not recorded_node_ids.get(
+                sending_node.source_node_id):
+            recorded_node_ids[sending_node.source_node_id] = True
+            node_info_list.append(my_nodes.NodeInfo(None, None, sending_node.source_node_id))
 
     hb_sub.receive_in_background(receive_heartbeat)
-
+    await asyncio.sleep(allowed_listen_time + 1)
+    return node_info_list
     # from my_simple_test_allocator import make_simple_node_allocator
     # if is_running_on_my_laptop and is_device_with_node_id_running(21):
     #     print("Device with node id 21 is already running so I will use that.")

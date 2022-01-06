@@ -43,7 +43,7 @@ AnySubscription registered_ports[] =
                                          &sub_readiness_handler, CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC)
   };
 
-std::pair<AnySubscription *, AnySubscription *> get_dyn_subscription_iterators()
+std::pair<AnySubscription *, AnySubscription *> get_subscription_iterators()
 {
   return {
     std::begin(registered_ports), std::end(registered_ports)

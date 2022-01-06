@@ -24,7 +24,7 @@ from numpy import clip
 from my_simple_test_allocator import make_simple_node_allocator
 from RegisterPair import RegisterPair, OnlyEmbeddedDeviceRegister
 from utils import rpm_to_radians_per_second, restart_node, \
-    command_save, configure_embedded_registers, configure_tester_side_registers
+    command_save, configure_embedded_registers, configure_tester_side_registers, get_prepared_sapogs
 
 from node_fixtures.drnf import prepared_double_redundant_node
 
@@ -88,10 +88,14 @@ class TestESC:
     @staticmethod
     @pytest.mark.asyncio
     async def test_rpm_run_2_sec(prepared_double_redundant_node):
-        our_allocator = make_simple_node_allocator()
         tester_node = prepared_double_redundant_node
-        node_info_list = await our_allocator(2, node_to_use=tester_node)
-
+        prepared_sapogs = await get_prepared_sapogs(tester_node)
+        our_allocator = None
+        if len(prepared_sapogs) == 0:
+            our_allocator = make_simple_node_allocator()
+            node_info_list = await our_allocator(2, node_to_use=tester_node)
+        else:
+            node_info_list = prepared_sapogs
         sid_gen = SubjectIdGenerator(135)
         sid_gen2 = SubjectIdGenerator(135)
         common_registers = [
@@ -105,11 +109,8 @@ class TestESC:
         ]
         sid_gen2.set(sid_gen.get())
 
-        def make_device_specific_registry(device_index: int) -> typing.List[RegisterPair]:
+        def make_device_specific_registry() -> typing.List[RegisterPair]:
             return [
-                # RegisterPair("uavcan.pub.radians_in_second_velocity.id", "uavcan.sub.radians_in_second_velocity.id",
-                #              uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0(136))),
-
                 OnlyEmbeddedDeviceRegister("control_mode_rpm",
                                            uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
                 OnlyEmbeddedDeviceRegister("ttl_milliseconds",
@@ -141,7 +142,7 @@ class TestESC:
 
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
-            combined_registry = make_device_specific_registry(index) + common_registers
+            combined_registry = make_device_specific_registry() + common_registers
             combined_registry.append(OnlyEmbeddedDeviceRegister("id_in_esc_group",
                                                                 uavcan.register.Value_1_0(
                                                                     natural16=uavcan.primitive.array.Natural16_1_0(
@@ -149,20 +150,12 @@ class TestESC:
             await configure_embedded_registers(combined_registry, tester_node, node_info.node_id)
             configure_tester_side_registers(combined_registry, tester_node)
             node_info.registers = combined_registry
-            for registry_item in combined_registry:
-                if registry_item and registry_item.tester_reg_name:
-                    pure_name = registry_item.tester_reg_name
-                    print(f"Pure name: {pure_name}")
-                    # sub = tester_node.make_subscriber(registry_item.communication_type, pure_name)
-                    # node_info.store_subscription(sub, registry_item.value.natural16.value,
-                    #                              registry_item.tester_reg_name,
-                    #                              data_type=registry_item.communication_type)
-
             await command_save(tester_node, node_info.node_id)
             if await restart_node(tester_node, node_info.node_id) is None:
                 assert False, f"Node {node_info.node_id} couldn't be restarted"
         time.sleep(4)
-        node_info_list = await our_allocator(2, node_to_use=tester_node)
+        if our_allocator:
+            node_info_list = await our_allocator(2, node_to_use=tester_node)
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
             for register in node_info.registers:
