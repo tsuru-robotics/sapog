@@ -133,6 +133,8 @@ async def main():
                                                  tester_node)
             if response and response[0]:
                 register[register_name] = get_any_value_out_of_value(response[0].value)
+            else:
+                print(f"Didn't get response for {register_name}")
         print(yaml.dump(register, default_flow_style=False, allow_unicode=True))
 
 

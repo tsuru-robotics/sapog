@@ -97,9 +97,18 @@ RegisterCriteria handle_real_register_access(std::string_view request_name, uavc
     } else if (param.type == CONFIG_TYPE_INT)
     {
       printf("Response type: int: %d\n", (uint16_t) value);
-      uavcan_register_Value_1_0_select_integer64_(&out_value);
-      out_value.integer64.value.elements[0] = value;
-      out_value.integer64.value.count = 1;
+
+      if (endsWithId)
+      {
+        uavcan_register_Value_1_0_select_natural16_(&out_value);
+        out_value.natural16.value.elements[0] = value;
+        out_value.natural16.value.count = 1;
+      } else
+      {
+        uavcan_register_Value_1_0_select_integer64_(&out_value);
+        out_value.integer64.value.elements[0] = value;
+        out_value.integer64.value.count = 1;
+      }
     } else if (param.type == CONFIG_TYPE_BOOL)
     {
       printf("Response type: bool\n");

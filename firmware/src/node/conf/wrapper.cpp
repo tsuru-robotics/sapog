@@ -11,7 +11,6 @@ namespace node::conf::wrapper
 convert_pair converters[] = {
   {"uavcan.node.id",
    [](float in, uavcan_register_Value_1_0 &out_value) {
-     printf("Read %f from node_id\n", in);
      uavcan_register_Value_1_0_select_natural16_(&out_value);
      out_value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
      out_value.natural16.value.count = 1;
