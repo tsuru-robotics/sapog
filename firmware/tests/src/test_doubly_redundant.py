@@ -41,8 +41,8 @@ async def test_double_redundancy(prepared_double_redundant_node):
         subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
         event = asyncio.Event()
 
-        def hb_handler(message_class: MessageClass,
-                       transfer_from: pyuavcan.transport._transfer.TransferFrom):
+        async def hb_handler(message_class: MessageClass,
+                             transfer_from: pyuavcan.transport._transfer.TransferFrom):
             if transfer_from.source_node_id == node_info.node_id:
                 event.set()
 

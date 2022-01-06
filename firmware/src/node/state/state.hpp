@@ -27,7 +27,6 @@ struct TransferIds
   uint64_t reg_udral_physics_dynamics_rotation_PlanarTs_0_1;
   uint64_t reg_udral_service_actuator_common_Status_0_1;
   uint64_t reg_udral_service_actuator_common_Feedback_0_1;
-  uint64_t reg_udral_service_common_Heartbeat_0_1;
 };
 enum class PNPStatus
 {

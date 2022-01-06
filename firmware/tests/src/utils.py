@@ -35,21 +35,21 @@ from pyuavcan.presentation._presentation import MessageClass
 from _await_wrap import wrap_await
 
 
-def is_device_with_node_id_running(node_id):
+async def is_device_with_node_id_running(node_id):
     """This creates a new node with node_id 3 that will look for heart beats from node_id."""
     registry01 = make_registry(3)
     with make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01) as node:
         subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
         event = asyncio.Event()
 
-        def hb_handler(message_class: MessageClass,
-                       transfer_from: pyuavcan.transport._transfer.TransferFrom):
+        async def hb_handler(message_class: MessageClass,
+                             transfer_from: pyuavcan.transport._transfer.TransferFrom):
             if transfer_from.source_node_id == node_id:
                 event.set()
 
         subscriber.receive_in_background(hb_handler)
         try:
-            wrap_await(asyncio.wait_for(event.wait(), 1.7))
+            await asyncio.wait_for(event.wait(), 1.7)
         except exceptions.TimeoutError as e:
             return False
         return True
@@ -80,7 +80,7 @@ async def get_prepared_sapogs(prepared_node) -> typing.List[my_nodes.NodeInfo]:
     node_info_list: typing.List[my_nodes.NodeInfo] = []
     from pyuavcan.transport import TransferFrom
 
-    def receive_heartbeat(heartbeat: uavcan.node.Heartbeat_1_0, sending_node: TransferFrom):
+    async def receive_heartbeat(heartbeat: uavcan.node.Heartbeat_1_0, sending_node: TransferFrom):
         if time.time() - listen_start_time <= allowed_listen_time and not recorded_node_ids.get(
                 sending_node.source_node_id):
             recorded_node_ids[sending_node.source_node_id] = True

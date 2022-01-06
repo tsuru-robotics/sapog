@@ -174,8 +174,8 @@ class TestESC:
                                          " the nodes before continuing. This test was supposed" \
                                          "to allocate nodes and then keep the info about them. "
 
-        def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
-                             tf: pyuavcan.transport._transfer.TransferFrom):
+        async def receive_dynamics(msg: reg.udral.physics.dynamics.rotation.PlanarTs_0_1,
+                                   tf: pyuavcan.transport._transfer.TransferFrom):
             new_filter = filter(lambda n: n.node_id == tf.source_node_id, node_info_list)
             if (node := next(new_filter, None)) is not None:
                 speed_controller.current_speeds[

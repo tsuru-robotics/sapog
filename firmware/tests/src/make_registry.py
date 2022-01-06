@@ -12,7 +12,6 @@ def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_inter
         registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
     else:
         registry01["uavcan.can.iface"] = " ".join(interfaces)
-    print("Using these interfaces: " + str(registry01["uavcan.can.iface"]))
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01

@@ -8,5 +8,5 @@ def get_available_slcan_interfaces():
     for interface_name in list_of_interfaces:
         if "slcan" in interface_name:
             result_interfaces.append("socketcan:" + interface_name)
-    print(f"Available interfaces {result_interfaces}")
+    # print(f"Available interfaces {result_interfaces}")
     return result_interfaces
