@@ -83,8 +83,7 @@ RegisterCriteria handle_real_register_access(std::string_view request_name, uavc
   std::string_view request_name_sw(request_name.data());
   if (converter.has_value())
   {
-    auto converter_response = converter.value()(value);
-    out_value = converter_response.value;
+    auto converter_response = converter.value()(value, out_value);
     return RegisterCriteria{._mutable = converter_response._mutable, .persistent = converter_response.persistent};
   } else
   {

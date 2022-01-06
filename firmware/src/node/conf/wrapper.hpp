@@ -20,10 +20,10 @@ struct ConverterReturnType
   bool _mutable = true;
   bool persistent = true;
 };
-using function_type = ConverterReturnType(float);
+using value_type = uavcan_register_Value_1_0;
+using function_type = ConverterReturnType(float in, uavcan_register_Value_1_0 &out_value);
 using converter_type = std::function<function_type>;
 using convert_pair = std::pair<const char *, converter_type>;
-using value_type = uavcan_register_Value_1_0;
 
 std::optional<converter_type> find_converter(const char *name);
 }

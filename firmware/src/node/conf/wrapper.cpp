@@ -3,18 +3,19 @@
  * Distributed under the MIT License, available in the file LICENSE.
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
+#include <cstdio>
 #include "wrapper.hpp"
 
 namespace node::conf::wrapper
 {
-
 convert_pair converters[] = {
   {"uavcan.node.id",
-   [](float in) {
-     value_type value{};
-     uavcan_register_Value_1_0_select_natural16_(&value);
-     value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
-     return ConverterReturnType{.value = value, ._mutable = true, .persistent = true};
+   [](float in, uavcan_register_Value_1_0 &out_value) {
+     printf("Read %f from node_id\n", in);
+     uavcan_register_Value_1_0_select_natural16_(&out_value);
+     out_value.natural16.value.elements[0] = in; // NOLINT(cppcoreguidelines-narrowing-conversions)
+     out_value.natural16.value.count = 1;
+     return ConverterReturnType{.value = out_value, ._mutable = true, .persistent = true};
    }},
 }; // NOLINT(bugprone-dynamic-static-initializers)
 }
