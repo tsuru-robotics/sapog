@@ -26,8 +26,8 @@ __process_stack_size__  = 0x0800;
 
 MEMORY
 {
-    flash : org = 0x08004000, len = 239k  /* 16K for bootloader, 1K for configs */
-    ram   : org = 0x20000000, len = 64k
+    flash : org = 0x08008000, len = 223k  /* 16K for bootloader, 1K for configs */
+    ram   : org = 0x20000100, len = 65280 /* 64K - 256 for AppShared struct */
 }
 
 

@@ -7,9 +7,7 @@ import time
 
 import my_simple_test_allocator
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import is_device_with_node_id_running, restart_node, get_interfaces_by_hw_id, \
-    get_available_slcan_interfaces
-from utils import prepared_sapogs
+from utils import is_device_with_node_id_running, restart_node
 
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from make_registry import make_registry

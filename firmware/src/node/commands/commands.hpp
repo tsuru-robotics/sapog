@@ -20,7 +20,10 @@
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
 #include "node/interfaces/IHandler.hpp"
+#include "software_update/util.hpp"
 #include <node/stop_gap.hpp>
+#include <cstring>
+#include <string_view>
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
                             1, 1);
@@ -53,8 +56,14 @@ struct : IHandler
             response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_STATE;
           }
           break;
-        default:
-          response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_COMMAND;
+        case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_BEGIN_SOFTWARE_UPDATE:
+          os::bootloader::AppShared out{};
+          std::memcpy(out.uavcan_file_name, request->parameter.elements, request->parameter.count);
+          out.can_bus_speed = 1'000'000;
+          out.uavcan_node_id = state.canard.node_id;
+          out.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
+          std::memcpy(reinterpret_cast<void *>(0x2000000), &out, sizeof(out));
+          break;
       }
       uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
       auto res = serializer.serialize(response);

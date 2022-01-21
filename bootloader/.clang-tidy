@@ -1,0 +1,43 @@
+# These rules are intentionally lax due to the specifics of the bootloader.
+---
+Checks: >-
+  boost-*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  google-*,
+  hicpp-*,
+  llvm-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -google-readability-todo,
+  -readability-avoid-const-params-in-decls,
+  -llvm-header-guard,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp,
+  -*-use-trailing-return-type,
+  -*array*decay,
+  -*array-index,
+  -*-owning-*,
+  -*-magic-numbers,
+  -*NewDeleteLeaks,
+  -*cstyle-cast,
+  -*int-to-ptr,
+  -*vararg,
+  -*union-access,
+  -*pass-by-value,
+  -*non-private-member-variables*,
+  -*non-const-global-variables*,
+  -*pointer-arithmetic,
+  -*signed-bitwise,
+  -*macro-usage,
+  -*reserved-identifier,
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*\.hpp'
+AnalyzeTemporaryDtors: false
+FormatStyle: file
+...

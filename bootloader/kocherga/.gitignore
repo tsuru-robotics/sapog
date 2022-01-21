@@ -1,0 +1,38 @@
+# Build outputs
+*.slo
+*.lo
+*.o
+*.obj
+*.so
+*.lai
+*.la
+*.a
+*.elf
+*.hex
+lib*.so
+lib*.so.*
+*.d
+build
+*.cout
+*.pbd
+*.pbi
+*.browse
+cmake-build-*
+
+# Temp files
+*.swp
+*~
+*.bak
+*.tmp
+*.log
+
+# IDE
+.metadata
+.settings
+.project
+.cproject
+.pydevproject
+*.kdev4
+**/.idea/*
+!**/.idea/dictionaries
+!**/.idea/dictionaries/*
