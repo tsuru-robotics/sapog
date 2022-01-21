@@ -65,10 +65,14 @@ def make_simple_node_allocator():
             if time_budget_seconds is not None:
                 started_time = time.time()
             while True:
-                message, metadata = await allocate_subscription.receive_for(1.3)
-                await allocate_one_node(message, metadata)
-                if time_budget_seconds and time.time() - started_time > time_budget_seconds:
-                    break
+                try:
+                    message, metadata = await allocate_subscription.receive_for(1.3)
+                    await allocate_one_node(message, metadata)
+                except TypeError:
+                    continue
+                finally:
+                    if time_budget_seconds and time.time() - started_time > time_budget_seconds:
+                        break
         else:
             while allocation_counter < nr:
                 allocate_message = await allocate_subscription.receive_for(1.3)

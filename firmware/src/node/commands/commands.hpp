@@ -58,11 +58,18 @@ struct : IHandler
           break;
         case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_BEGIN_SOFTWARE_UPDATE:
           os::bootloader::AppShared out{};
+          if (request->parameter.count == 0)
+          {
+            response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_PARAMETER;
+            break;
+          }
           std::memcpy(out.uavcan_file_name, request->parameter.elements, request->parameter.count);
           out.can_bus_speed = 1'000'000;
           out.uavcan_node_id = state.canard.node_id;
           out.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
-          std::memcpy(reinterpret_cast<void *>(0x2000000), &out, sizeof(out));
+          std::memcpy(reinterpret_cast<void *>(0x20000000), &out, sizeof(out));
+          state.is_restart_required = true;
+          response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
           break;
       }
       uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};

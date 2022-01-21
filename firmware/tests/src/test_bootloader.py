@@ -1,8 +1,6 @@
+import pytest
 import asyncio
 from pathlib import Path
-
-import pytest
-
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
@@ -11,21 +9,22 @@ import uavcan.primitive.array
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
 from pyuavcan.presentation._presentation import MessageClass
+import pyuavcan.application.file
 
+from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node
 
 
-@staticmethod
 @pytest.mark.asyncio
-async def test_bootloader(prepared_double_redundant_node) -> None:
+async def test_bootloader(prepared_double_redundant_node):
     tester_node = prepared_double_redundant_node
     tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
-    prepared_sapogs = await get_prepared_sapogs(tester_node)
-    our_allocator = None
+    prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
-        node_info_list = await our_allocator(1, node_to_use=tester_node)
+        node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
+                                             time_budget_seconds=2)
     else:
         node_info_list = prepared_sapogs
     for index, node_info in enumerate(node_info_list):
@@ -36,7 +35,7 @@ async def test_bootloader(prepared_double_redundant_node) -> None:
                 command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
         )
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
-        assert resp.status == resp.STATUS_BAD_PARAMETER  # Indeed it is bad because empty.
+        assert resp.status == resp.STATUS_BAD_PARAMETER, "Status should have been STATUS_BAD_PARAMETER"
 
         # Launch the file server.
         # TODO: currently, pyuavcan.application service objects cannot be stopped once started; fix that in PyUAVCAN.
@@ -44,18 +43,18 @@ async def test_bootloader(prepared_double_redundant_node) -> None:
         broken_fw_path = ""
         # INSTALL INVALID FIRMWARE AND ENSURE THE DEVICE IS NOT BRICKED.
         with open("invalid_image_for_bootloader_test.bin", "wb") as broken_fw:
-            broken_fw.write(open("/dev/random").read(2000))
-            broken_fw_path = str(broken_fw.resolve())
-            req = uavcan.node.ExecuteCommand_1.Request(
-                command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
-                parameter=broken_fw_path,
-            )
+            broken_fw.write(open("/dev/random", "rb").read(2000))
+            broken_fw_path = str(Path.cwd() / "invalid_image_for_bootloader_test.bin")
+        req = uavcan.node.ExecuteCommand_1.Request(
+            command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
+            parameter=broken_fw_path,
+        )
         await asyncio.sleep(3.0)
         print("Requesting the device to install an invalid firmware image: %s", req)
         task_restart = await restart_node(tester_node, node_info.node_id)
         resp, _ = await cln_exe.call(req)
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
-        assert resp.status == resp.STATUS_SUCCESS
+        assert resp.status == resp.STATUS_SUCCESS, "Execute command response was not a success"
         assert await task_restart
         print("Device restarted, good; waiting for the bootloader to finish...")
         deadline = asyncio.get_running_loop().time() + 10.0
