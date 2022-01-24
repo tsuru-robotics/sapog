@@ -53,7 +53,8 @@ class TestEssential:
         our_allocator = make_simple_node_allocator()
         result = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True, time_budget_seconds=2)
         prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
-        assert len(result) == len(prepared_sapogs), "Not all nodes are emitting heartbeats"
+        assert len(result) == len(prepared_sapogs) and len(
+            prepared_sapogs) >= 1, "Not all nodes are emitting heartbeats"
 
     @staticmethod
     @pytest.mark.asyncio

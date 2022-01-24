@@ -19,7 +19,8 @@ from utils import get_prepared_sapogs, restart_node
 @pytest.mark.asyncio
 async def test_bootloader(prepared_double_redundant_node):
     tester_node = prepared_double_redundant_node
-    tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
+    tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
+    tracker.get_info_timeout = 1.0
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
@@ -28,9 +29,9 @@ async def test_bootloader(prepared_double_redundant_node):
     else:
         node_info_list = prepared_sapogs
     for index, node_info in enumerate(node_info_list):
-        cln_exe = tester_node.make_client(uavcan.node.ExecuteCommand_1, node_info.node_id)
+        command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1, node_info.node_id)
         print("Sending an invalid firmware update command with empty parameter")
-        resp, _ = await cln_exe.call(
+        resp, _ = await command_client.call(
             uavcan.node.ExecuteCommand_1.Request(
                 command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
         )
@@ -52,30 +53,38 @@ async def test_bootloader(prepared_double_redundant_node):
         await asyncio.sleep(3.0)
         print("Requesting the device to install an invalid firmware image: %s", req)
         task_restart = await restart_node(tester_node, node_info.node_id)
-        resp, _ = await cln_exe.call(req)
+        resp, _ = await command_client.call(req)
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
         assert resp.status == resp.STATUS_SUCCESS, "Execute command response was not a success"
-        assert await task_restart
+        assert task_restart
         print("Device restarted, good; waiting for the bootloader to finish...")
         deadline = asyncio.get_running_loop().time() + 10.0
+        count_key_not_found = 0
         while True:
-            assert deadline > asyncio.get_running_loop().time()
-            await asyncio.sleep(1.0)
-            entry = tracker.registry[node_info.node_id]
-            assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"
-            if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
-                print(
-                    "Bootloader reported critical error, this means that it finished "
-                    "installing the firmware and discovered that it is invalid"
-                )
-                break
+            try:
+                assert deadline > asyncio.get_running_loop().time()
+                await asyncio.sleep(1.0)
+                entry = tracker.registry[node_info.node_id]
+                assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"
+                if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
+                    print(
+                        "Bootloader reported critical error, this means that it finished "
+                        "installing the firmware and discovered that it is invalid"
+                    )
+                    break
+            except KeyError:
+                count_key_not_found += 1
+                if count_key_not_found > 20:
+                    raise Exception("Key was not found for too many times")
+                else:
+                    continue
         print("Invalid firmware installation finished")
         await asyncio.sleep(3.0)
         entry = tracker.registry[node_info.node_id]
         print("Current state (should be in the bootloader and WARNING): %r", entry)
         assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE
         assert entry.heartbeat.health.value == uavcan.node.Health_1.WARNING
-        assert entry.info.name.tobytes().decode() == "com.zubax.telega"
+        assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
 
         # REPAIR THE DEVICE BY REPLACING THE FIRMWARE WITH A VALID ONE.
         req = uavcan.node.ExecuteCommand_1.Request(
@@ -83,7 +92,7 @@ async def test_bootloader(prepared_double_redundant_node):
             parameter=broken_fw_path,
         )
         print("Asking the bootloader to reinstall the valid firmware: %s", req)
-        resp, _ = await cln_exe.call(req)
+        resp, _ = await command_client.call(req)
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
         assert resp.status == resp.STATUS_SUCCESS
         deadline = asyncio.get_running_loop().time() + 120.0  # This may take some time

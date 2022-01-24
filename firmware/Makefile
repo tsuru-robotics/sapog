@@ -33,8 +33,8 @@
 PROJECT = io.px4.sapog
 
 HW_VERSION_MAJOR = 1
-FW_VERSION_MAJOR = 2
-FW_VERSION_MINOR = 3
+FW_VERSION_MAJOR = 3
+FW_VERSION_MINOR = 0
 
 export SAPOG_BASE := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export SAPOG_SRC_DIR = $(abspath $(SAPOG_BASE)/src)
@@ -85,6 +85,10 @@ SERIAL_CLI_PORT_NUMBER = 1
 
 BOOTLOADER_SIZE = 32768
 
+# This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
+# therefore, the minor version is not specified here.
+FW_VERSION_MAJOR_MINOR_VCS_HASH := $(FW_VERSION_MAJOR).$(FW_VERSION_MINOR).$(GIT_HASH)
+
 DDEFS += -DCORTEX_VTOR_INIT=$(BOOTLOADER_SIZE)            \
          -DCRT1_AREAS_NUMBER=0                            \
          -DCONFIG_PARAMS_MAX=50	                          \
@@ -102,9 +106,7 @@ CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -W
 CWARN += -Wno-error=implicit-fallthrough -Wno-deprecated
 CPPWARN = $(CWARN)
 
-# This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
-# therefore, the minor version is not specified here.
-FW_VERSION_MAJOR_MINOR_VCS_HASH := $(FW_VERSION_MAJOR).$(FW_VERSION_MINOR).$(GIT_HASH)
+
 COMPOUND_IMAGE_FILE := $(PROJECT)-$(HW_VERSION_MAJOR)-$(FW_VERSION_MAJOR_MINOR_VCS_HASH).compound.bin
 BOOTLOADER_DIR := $(abspath $(SAPOG_BASE)/../bootloader)
 BOOTLOADER_IMAGE := $(BOOTLOADER_DIR)/build/bootloader.bin

@@ -5,6 +5,7 @@
 #include "rom.hpp"
 #include "app_shared.hpp"
 #include <ch.hpp>
+#include <cstdio>
 #include "bootloader_app_interface.hpp"
 
 namespace sapog_bootloader
@@ -93,6 +94,13 @@ int main()
   // Fast boot is not possible -- initialize the interfaces.
 //    board::usb::init();  // USB initialization may take some time.
   static sapog_bootloader::SerialPort serial_port;
+  char message[] = "Hello";
+  for (unsigned xi = 0; xi < sizeof(message[0]) / sizeof(message); xi++)
+  {
+    auto result = serial_port.send(message[xi]);
+    (void) result;
+  }
+  printf("Hello\n");
   static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
   if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
   {
@@ -118,7 +126,7 @@ int main()
                                          uavcan_can_node_id);
   (void) boot.addNode(&can_node);
 
-  // ----------------------------------------------------------------------------------------------------------------
+  // ------------------------------w----------------------------------------------------------------------------------
   // Commence the update process if requested by the application.
   if (args &&                                                                        //
       (args->uavcan_fw_server_node_id < std::numeric_limits<kocherga::NodeID>::max()))

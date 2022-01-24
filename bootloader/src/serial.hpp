@@ -10,7 +10,7 @@ namespace sapog_bootloader
 {
 class SerialPort final : public kocherga::serial::ISerialPort
 {
-private:
+public:
     [[nodiscard]] auto receive() -> std::optional<std::uint8_t> override
     {
         const auto res = chnGetTimeout(getChannel(), TIME_IMMEDIATE);
@@ -21,6 +21,8 @@ private:
     {
         return STM_OK == chnPutTimeout(getChannel(), b, TIME_IMMEDIATE);
     }
+private:
+
 
     [[nodiscard]] static auto getChannel() -> ::BaseChannel*
     {return reinterpret_cast<::BaseChannel*>(&STDOUT_SD);  // NOLINT
