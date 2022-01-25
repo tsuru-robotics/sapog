@@ -11,8 +11,8 @@ import typing
 
 from RegisterPair import RegisterPair
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import configure_a_port_on_sapog, prepared_sapogs, restarted_sapogs, configure_tester_side_registers, \
-    configure_embedded_registers, command_save, restart_node
+from utils import restarted_sapogs, configure_tester_side_registers, \
+    configure_embedded_registers, command_save, restart_node, get_prepared_sapogs
 
 from node_fixtures.drnf import prepared_double_redundant_node
 
@@ -58,8 +58,13 @@ class TestAcoustics:
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([180])), None,
                          None),
         ]
-        our_allocator = make_simple_node_allocator()
-        node_info_list = await our_allocator(2, node_to_use=tester_node)
+        prepared_sapogs = await get_prepared_sapogs(tester_node)
+        our_allocator = None
+        if len(prepared_sapogs) == 0:
+            our_allocator = make_simple_node_allocator()
+            node_info_list = await our_allocator(2, node_to_use=tester_node)
+        else:
+            node_info_list = prepared_sapogs
         configure_tester_side_registers(common_registers, tester_node, append_counter=False)
         await configure_embedded_registers(common_registers, tester_node, 21)
         await configure_embedded_registers(common_registers, tester_node, 22)

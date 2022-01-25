@@ -1,6 +1,10 @@
+#
+# Copyright (c) 2022 Zubax, zubax.com
+# Distributed under the MIT License, available in the file LICENSE.
+# Author: Silver Valdvee <silver.valdvee@zubax.com>
+#
 import asyncio
 import pathlib
-import typing
 from typing import Optional, List
 
 import sys

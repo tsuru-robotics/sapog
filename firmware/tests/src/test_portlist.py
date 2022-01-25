@@ -1,8 +1,12 @@
+#
+# Copyright (c) 2022 Zubax, zubax.com
+# Distributed under the MIT License, available in the file LICENSE.
+# Author: Silver Valdvee <silver.valdvee@zubax.com>
+#
 """This port.List test is in its own file because it is really slow to execute, port list is supposed to be published
 every 5 seconds on Sapog so that's the maximum amount of time that has to be waited to verify if it works."""
 import pytest
 
-from _await_wrap import wrap_await
 import asyncio
 from utils import restarted_sapogs
 from make_registry import make_registry

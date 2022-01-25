@@ -6,8 +6,6 @@
 
 import asyncio
 import json
-import pathlib
-import sys
 import re
 from typing import Optional
 from itertools import chain
@@ -21,8 +19,6 @@ from pyuavcan.transport.can import CANErrorTrace
 from conftest import add_deps
 
 add_deps()
-# print(f"Namespace path: {namespace_path}")
-# print(f"sys.path: {sys.path}")
 
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0

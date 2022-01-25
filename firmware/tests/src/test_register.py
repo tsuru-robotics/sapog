@@ -1,11 +1,14 @@
+#
+# Copyright (c) 2022 Zubax, zubax.com
+# Distributed under the MIT License, available in the file LICENSE.
+# Author: Silver Valdvee <silver.valdvee@zubax.com>
+#
 import os
 
 import pytest
 import time
 
-from _await_wrap import wrap_await
 from utils import make_access_request, get_prepared_sapogs
-from utils import restarted_sapogs
 
 from node_fixtures.drnf import prepared_double_redundant_node
 

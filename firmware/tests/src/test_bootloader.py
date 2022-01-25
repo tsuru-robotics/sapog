@@ -8,7 +8,6 @@ import uavcan.primitive.array
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
-from pyuavcan.presentation._presentation import MessageClass
 import pyuavcan.application.file
 
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node

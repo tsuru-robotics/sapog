@@ -13,7 +13,6 @@ dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 sys.path.insert(0, str(namespace_path.absolute()))
 
-from multiprocessing import cpu_count
 import subprocess
 import requests
 

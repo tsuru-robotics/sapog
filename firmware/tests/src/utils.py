@@ -6,7 +6,6 @@
 import asyncio
 import os
 import subprocess
-import traceback
 
 import time
 import typing
@@ -31,8 +30,6 @@ import uavcan.primitive.array
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
-
-from _await_wrap import wrap_await
 
 
 async def is_device_with_node_id_running(node_id):
@@ -155,9 +152,9 @@ async def configure_embedded_registers(regs: typing.List[RegisterPair], node: py
             await make_access_request(pair.embedded_device_reg_name, pair.value, node_id, node)
 
 
-def allocate_one_node_id(node_name):
+async def allocate_one_node_id(node_name):
     with OneTimeAllocator(node_name) as allocator:
-        wrap_await(asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3))
+        await asyncio.wait_for(allocator.one_node_allocated_event.wait(), 3)
         return allocator.allocated_node_id, allocator.allocated_node_name
 
 
@@ -201,30 +198,3 @@ async def command_save(prepared_node, node_id):
     msg = uavcan.node.ExecuteCommand_1_1.Request()
     msg.command = msg.COMMAND_STORE_PERSISTENT_STATES
     await command_client.call(msg)
-
-
-def configure_a_port_on_sapog(name, subject_id, prepared_sapogs_, prepared_node):
-    from my_simple_test_allocator import make_simple_node_allocator
-    for node_id in prepared_sapogs.keys():
-        if restart_node(prepared_sapogs_, node_id):
-            time.sleep(4)
-        else:
-            assert False
-            return
-    result = make_simple_node_allocator()(len(prepared_sapogs.keys()))
-    time.sleep(1)
-    assert len(result.keys()) == len(prepared_sapogs.keys())
-    prepared_sapogs_.registry[f"uavcan.pub.{name}.id"] = subject_id
-    assert len(prepared_sapogs.keys()) > 0
-    for node_id in prepared_sapogs.keys():
-        make_access_request(f"uavcan.sub.{name}.id",
-                            uavcan.register.Value_1_0(integer64=uavcan.primitive.array.Integer64_1_0(subject_id)),
-                            node_id,
-                            prepared_sapogs_)
-        command_save(prepared_sapogs_, node_id)
-        if restart_node(prepared_sapogs_, node_id):
-            time.sleep(3)
-            result = make_simple_node_allocator()(len(prepared_sapogs.keys()))
-        else:
-            assert False
-            return
