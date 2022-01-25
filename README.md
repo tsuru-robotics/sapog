@@ -17,6 +17,7 @@ Additional documentation and related resources can be found at the
 
 * Migrated from GCC 7.2 to GCC 10.3.1 20210824
 * Implemented support in application for UAVCAN v1
+* Implemented use of interrupts to keep the 3 CAN message boxes from overflowing in case of full bandwidth
 * Replaced bootloader with a Kocherga-based bootloader which can handle UAVCAN v1 and v0 requests.
  The bootloader application update functionality is tested to not work. This is being fixed.
 * Implemented integration tests and hardware-in-the-loop testing.

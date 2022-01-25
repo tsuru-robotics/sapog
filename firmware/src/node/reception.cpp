@@ -6,7 +6,6 @@
 #include <sys/unistd.h>
 #include "node/reception.hpp"
 #include "uavcan/_register/Name_1_0.h"
-#include "zubax_chibios/zubax_chibios/config/config.h"
 #include "transmit.hpp"
 #include "src/node/can_interrupt/extern_queue.hpp"
 #include "node/interfaces/IHandler.hpp"
@@ -40,7 +39,6 @@ void accept_transfers(State &state)
         can_interrupt::fifo_queues[i].reset();
         break;
       }
-//      printf("queues: %08x\n", reinterpret_cast<int>(&can_interrupt::fifo_queues));
       CanardRxTransfer transfer{};
       CanardRxSubscription *this_subscription;
       volatile const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(),
@@ -50,22 +48,12 @@ void accept_transfers(State &state)
 
       if (canard_result == 1)
       {
-//        printf("Transfer\n");
         if (this_subscription->user_reference != nullptr)
         {
-//          printf("subscription\n");
           IHandler *handler = static_cast<IHandler *>(this_subscription->user_reference);
           handler->operator()(state, &transfer);
           board::deallocate(static_cast<const uint8_t *>(transfer.payload));
         }
-      } else if (canard_result == 0)
-      {
-//        printf("Queue %08x      ", static_cast<unsigned>(fifo_queue_item.value().frame.extended_can_id));
-//        for (std::size_t x = 0; x < fifo_queue_item.value().frame.payload_size; x++)
-//        {
-//          printf("%02x ", fifo_queue_item.value().payload[x]);
-//        }
-//        printf("\n");
       }
     }
   }
@@ -79,7 +67,6 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
   std::array<std::uint8_t, 8> payload_array{};
   frame.payload = &payload_array;
 
-  //palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
   for (uint16_t j = 0;
        j < (max_frames_to_process_per_iteration * (board::get_max_can_interface_index() + 1)); j += (
     board::get_max_can_interface_index() +
@@ -100,18 +87,9 @@ std::pair<std::optional<CanardRxTransfer>, void *> receive_transfer(State &state
 
       const int8_t canard_result = canardRxAccept(&state.canard, get_monotonic_microseconds(), &frame, i,
                                                   &transfer, &this_subscription);
-      //this_subscription->
       if (canard_result > 0)
       {
-//                printf("Got full transfer: %d\n", transfer.metadata.port_id);
         return {transfer, this_subscription->user_reference};
-        //state.canard.memory_free(&state.canard, (void *) transfer.payload);
-      } else
-      {
-        if (transfer.metadata.port_id != 0)
-        {
-//                    printf("Got one frame of: %d\n", transfer.metadata.port_id);
-        }
       }
     }
     bool canSleep = true;

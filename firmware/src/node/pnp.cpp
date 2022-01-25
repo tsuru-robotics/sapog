@@ -30,8 +30,8 @@ static void save_crc(State &state);
 static bool unsubscribe_plug_and_play_response(State &state);
 
 static bool save_node_id(State &state);
-// Keywords: automatic node id allocation
 
+// Keywords: automatic node id allocation
 namespace node::pnp
 {
 void plug_and_play_loop(State &state)

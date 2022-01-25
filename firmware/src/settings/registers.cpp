@@ -9,9 +9,6 @@
 #include <cstdio>
 #include "zubax_chibios/zubax_chibios/config/config.h"
 #include "node/conf/wrapper.hpp"
-#include <variant>
-#include <motor/realtime/api.h>
-#include "motor/motor.hpp"
 
 namespace board
 {
