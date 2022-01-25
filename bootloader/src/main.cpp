@@ -50,7 +50,7 @@ constexpr std::chrono::seconds BootDelayAfterWatchdogTimedOut(20);
   kocherga::SystemInfo out{};
   out.hardware_version = board::detectHardwareVersion();
   out.unique_id = board::readUniqueID();
-  out.node_name = "com.zubax.sapog";
+  out.node_name = "io.px.sapog";
   if (coa)
   {
     out.certificate_of_authenticity_len = coa->size();
@@ -66,7 +66,6 @@ int main()
 {
   const auto reset_cause = board::init(board::Cyan);
   static const auto system_info = sapog_bootloader::initSystemInfo();
-
   // ----------------------------------------------------------------------------------------------------------------
   // Initialize the bootloader. Boot immediately if everything is okay before adding the nodes/transports.
   // If we reset due to watchdog, add an extra delay to allow for intervention.
@@ -94,13 +93,13 @@ int main()
   // Fast boot is not possible -- initialize the interfaces.
 //    board::usb::init();  // USB initialization may take some time.
   static sapog_bootloader::SerialPort serial_port;
-  char message[] = "Hello";
+  /*char message[] = "Hello";
   for (unsigned xi = 0; xi < sizeof(message[0]) / sizeof(message); xi++)
   {
     auto result = serial_port.send(message[xi]);
     (void) result;
   }
-  printf("Hello\n");
+  printf("Hello\n");*/
   static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
   if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
   {

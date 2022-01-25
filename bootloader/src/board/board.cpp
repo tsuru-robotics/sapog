@@ -17,6 +17,26 @@ const PALConfig pal_default_config = {
   {VAL_GPIODODR, VAL_GPIODCRL, VAL_GPIODCRH},
   {VAL_GPIOEODR, VAL_GPIOECRL, VAL_GPIOECRH}
 };
+/// Called from ChibiOS init
+void boardInit()
+{
+  uint32_t mapr = AFIO->MAPR;
+  mapr &= ~AFIO_MAPR_SWJ_CFG; // these bits are write-only
+
+  // Enable SWJ only, JTAG is not needed at all:
+  mapr |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+
+  // TIM1 - motor control
+  mapr |= AFIO_MAPR_TIM1_REMAP_0;
+
+  // Serial CLI
+  mapr |= AFIO_MAPR_USART1_REMAP;
+
+  // TIM3 - RGB LED PWM
+  mapr |= AFIO_MAPR_TIM3_REMAP_FULLREMAP;
+
+  AFIO->MAPR = mapr;
+}
 namespace board
 {
 namespace
@@ -164,33 +184,12 @@ std::uint8_t* getAppSharedStructLocation()
     return &AppSharedStruct[0];
 }
 
-/// Called from ChibiOS init
-void boardInit()
-{
-  uint32_t mapr = AFIO->MAPR;
-  mapr &= ~AFIO_MAPR_SWJ_CFG; // these bits are write-only
-
-  // Enable SWJ only, JTAG is not needed at all:
-  mapr |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
-
-  // TIM1 - motor control
-  mapr |= AFIO_MAPR_TIM1_REMAP_0;
-
-  // Serial CLI
-  mapr |= AFIO_MAPR_USART1_REMAP;
-
-  // TIM3 - RGB LED PWM
-  mapr |= AFIO_MAPR_TIM3_REMAP_FULLREMAP;
-
-  AFIO->MAPR = mapr;
-}
-
 void setRGBLED(const RGB& rgb)
 {
     (void)rgb;
-    TIM3->CCR1 = 0xA000;
-    TIM3->CCR2 = 0;
-    TIM3->CCR3 = 0;
+    TIM3->CCR1 = rgb[0] * 257U;
+    TIM3->CCR2 = rgb[1] * 257U;
+    TIM3->CCR3 = rgb[2] * 257U;
 }
 
 void setCANActivityLED(const int interface_index, const bool state)
@@ -312,8 +311,6 @@ static void initGPIO()
 //        board::setCANActivityLED(1, true);  // Indicate that HSE is unknown by turning on the CAN2 LED.
 //    }
 }
-
-void boardInit() {}
 
 [[noreturn]] extern void _crt0_entry() noexcept;
 
