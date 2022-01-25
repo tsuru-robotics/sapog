@@ -4,10 +4,10 @@ import pytest
 import time
 
 from _await_wrap import wrap_await
-from utils import make_access_request
-from utils import prepared_sapogs, restarted_sapogs
+from utils import make_access_request, get_prepared_sapogs
+from utils import restarted_sapogs
 
-from node_fixtures.drnf import prepared_node
+from node_fixtures.drnf import prepared_double_redundant_node
 
 is_running_on_my_laptop = os.path.exists("/home/silver")
 
@@ -20,10 +20,11 @@ import uavcan.register.List_1_0
 
 class TestRegisters:
     @pytest.mark.asyncio
-    async def test_register_list(self, prepared_node, prepared_sapogs):
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
-            service_client = prepared_node.make_client(uavcan.register.List_1_0, node_id)
+    async def test_register_list(self, prepared_double_redundant_node):
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
+            service_client = prepared_double_redundant_node.make_client(uavcan.register.List_1_0, node_info.node_id)
             service_client.response_timeout = 1
             msg = uavcan.register.List_1_0.Request(20)
             result = await service_client.call(msg)
@@ -31,33 +32,35 @@ class TestRegisters:
             assert result is not None
 
     @pytest.mark.asyncio
-    async def test_write_unsupported_sapog_register(self, prepared_node, prepared_sapogs):
+    async def test_write_unsupported_sapog_register(self, prepared_double_redundant_node):
         """Checks if the response is empty when writing to a register that doesn't exit on Sapog.
         uavcan.node.description is a register that would exist on other nodes but on this node, only storage of floats
         is implemented and string storage is not supported."""
         time.sleep(0.2)
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("uavcan.node.description",
                                                  uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             is_result_good = response is not None and response[0].value.empty is not None
             assert is_result_good
             if not is_result_good:
                 return
 
     @pytest.mark.asyncio
-    async def test_write_supported_sapog_register_int(self, prepared_node, prepared_sapogs):
+    async def test_write_supported_sapog_register_int(self, prepared_double_redundant_node):
         """Writes a non-default value and checks if it was successfully saved. Then writes back the default value and
         checks if that was saved."""
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("mot_pwm_hz",
                                                  uavcan.register.Value_1_0(
                                                      integer64=uavcan.primitive.array.Integer64_1_0(60001)),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -74,8 +77,8 @@ class TestRegisters:
             response = await make_access_request("mot_pwm_hz",
                                                  uavcan.register.Value_1_0(
                                                      integer64=uavcan.primitive.array.Integer64_1_0(60000)),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 int_value = response[0].value.integer64
                 if int_value:
@@ -93,15 +96,16 @@ class TestRegisters:
             assert False
 
     @pytest.mark.asyncio
-    async def test_write_supported_sapog_register_bit(self, prepared_node, prepared_sapogs):
+    async def test_write_supported_sapog_register_bit(self, prepared_double_redundant_node):
         """Writes to a register and checks the value to match what was written, then writes the opposite value and
         checks again to see if it was saved correctly."""
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("pwm_enable",
                                                  uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(1)),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -120,8 +124,8 @@ class TestRegisters:
                 print("Response is None")
             response = await make_access_request("pwm_enable",
                                                  uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(0)),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -142,15 +146,16 @@ class TestRegisters:
             assert False
 
     @pytest.mark.asyncio
-    async def test_read_existing_register_float(self, prepared_node, prepared_sapogs):
+    async def test_read_existing_register_float(self, prepared_double_redundant_node):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("rpmctl_p",
                                                  uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 real_value = response[0].value.real64
                 if real_value:
@@ -168,15 +173,16 @@ class TestRegisters:
             assert False
 
     @pytest.mark.asyncio
-    async def test_read_existing_register_bool(self, prepared_node, prepared_sapogs):
+    async def test_read_existing_register_bool(self, prepared_double_redundant_node):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("pwm_enable",
                                                  uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 bit_value = response[0].value.bit
                 if bit_value:
@@ -193,15 +199,16 @@ class TestRegisters:
             assert False
 
     @pytest.mark.asyncio
-    async def test_read_existing_register_int(self, prepared_node, prepared_sapogs):
+    async def test_read_existing_register_int(self, prepared_double_redundant_node):
         """The read test doesn't check if the value matches anything, just if it is the correct datatype and that
         there is one of it."""
-        assert len(prepared_sapogs.keys()) > 0
-        for node_id in prepared_sapogs.keys():
+        prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+        assert len(prepared_sapogs) > 0
+        for node_info in prepared_sapogs:
             response = await make_access_request("mot_tim_adv_min",
                                                  uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                 node_id,
-                                                 prepared_node)
+                                                 node_info.node_id,
+                                                 prepared_double_redundant_node)
             if response:
                 real_value = response[0].value.integer64
                 if real_value:
