@@ -18,6 +18,7 @@ from utils import get_prepared_sapogs, restart_node
 
 @pytest.mark.asyncio
 async def test_bootloader(prepared_double_redundant_node):
+    print()
     tester_node = prepared_double_redundant_node
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
@@ -31,10 +32,12 @@ async def test_bootloader(prepared_double_redundant_node):
     for index, node_info in enumerate(node_info_list):
         command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1, node_info.node_id)
         print("Sending an invalid firmware update command with empty parameter")
-        resp, _ = await command_client.call(
+        result_response = await command_client.call(
             uavcan.node.ExecuteCommand_1.Request(
                 command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
         )
+        assert result_response, "Got no response"
+        resp, _ = result_response
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
         assert resp.status == resp.STATUS_BAD_PARAMETER, "Status should have been STATUS_BAD_PARAMETER"
 
@@ -62,7 +65,7 @@ async def test_bootloader(prepared_double_redundant_node):
         count_key_not_found = 0
         while True:
             try:
-                assert deadline > asyncio.get_running_loop().time()
+                assert deadline > asyncio.get_running_loop().time(), "Didn't find bootloader's heartbeat in time."
                 await asyncio.sleep(1.0)
                 entry = tracker.registry[node_info.node_id]
                 assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"

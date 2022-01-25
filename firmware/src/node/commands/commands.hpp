@@ -39,9 +39,15 @@ struct : IHandler
     {
       uavcan_node_ExecuteCommand_Response_1_1 response{};
 //            printf("Commanded: %d\n", request.value().command);
+      os::bootloader::AppShared *app_shared = reinterpret_cast<os::bootloader::AppShared *>(0x20000000);
       switch (request.value().command)
       {
         case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
+          if (app_shared->stay_in_bootloader)
+          {
+            printf("Stay in bootloader was set, so resetting it.\n");
+            app_shared->stay_in_bootloader = false;
+          }
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
           printf("Restart is requested.\n");

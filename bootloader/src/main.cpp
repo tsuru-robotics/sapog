@@ -70,7 +70,7 @@ int main()
   // Initialize the bootloader. Boot immediately if everything is okay before adding the nodes/transports.
   // If we reset due to watchdog, add an extra delay to allow for intervention.
   const auto args = sapog_bootloader::takeAppShared();
-  std::chrono::seconds boot_delay(0);
+  std::chrono::seconds boot_delay(2);
   if (reset_cause == board::ResetCause::Watchdog)
   {
     boot_delay = sapog_bootloader::BootDelayAfterWatchdogTimedOut;
@@ -98,8 +98,8 @@ int main()
   {
     auto result = serial_port.send(message[xi]);
     (void) result;
-  }
-  printf("Hello\n");*/
+  }*/
+
   static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
   if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
   {

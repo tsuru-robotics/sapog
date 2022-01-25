@@ -41,6 +41,7 @@
 #include <board/unique_id.h>
 #include <cstdio>
 #include "o1heap/o1heap.h"
+#include "software_update/util.hpp"
 
 extern "C" void _unhandled_exception()
 {
@@ -108,7 +109,6 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
   // OS
   halInit();
   chSysInit();
-
   // Watchdog - initializing as soon as possible
   os::watchdog::init();
   os::watchdog::Timer wdt;
@@ -284,4 +284,4 @@ void boardInit()
   AFIO->MAPR = mapr;
 }
 
-}
+} // extern "C"
