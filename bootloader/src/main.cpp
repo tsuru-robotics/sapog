@@ -7,6 +7,10 @@
 #include <ch.hpp>
 #include <cstdio>
 #include "bootloader_app_interface.hpp"
+#include "shell.h"
+#include "board/sys.hpp"
+
+extern void console_init();
 
 namespace sapog_bootloader
 {
@@ -71,11 +75,13 @@ int main()
   // If we reset due to watchdog, add an extra delay to allow for intervention.
   const auto args = sapog_bootloader::takeAppShared();
   std::chrono::seconds boot_delay(2);
+  printf("Hello\n");
   if (reset_cause == board::ResetCause::Watchdog)
   {
     boot_delay = sapog_bootloader::BootDelayAfterWatchdogTimedOut;
   }
   static sapog_bootloader::ROMBackend rom_backend(APPLICATION_OFFSET);
+  console_init();
   static kocherga::Bootloader boot(rom_backend, system_info, board::getFlashSize(), bool(args), boot_delay, true);
   static const auto poll = []() {
     board::kickWatchdog();
@@ -151,4 +157,22 @@ int main()
     }
   } while (!fin);
   sapog_bootloader::finalize(fin.value());
+}
+
+#define COMMAND(cmd)    {#cmd, cmd_##cmd},
+static const ShellCommand _commands[] =
+  {
+    {NULL, NULL}
+  };
+
+
+static const ShellConfig _config = {(BaseSequentialStream *) &STDOUT_SD, _commands};
+
+static THD_WORKING_AREA(_wa_shell, 1024);
+
+void console_init(void)
+{
+  shellInit();
+
+  ASSERT_ALWAYS(shellCreateStatic(&_config, _wa_shell, sizeof(_wa_shell), LOWPRIO));
 }

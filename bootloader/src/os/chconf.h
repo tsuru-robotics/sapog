@@ -30,7 +30,7 @@
 #define CH_CFG_USE_MUTEXES_RECURSIVE        CH_CFG_USE_MUTEXES
 #define CH_CFG_USE_CONDVARS                 FALSE
 #define CH_CFG_USE_CONDVARS_TIMEOUT         CH_CFG_USE_CONDVARS
-#define CH_CFG_USE_EVENTS                   FALSE
+#define CH_CFG_USE_EVENTS                   TRUE
 #define CH_CFG_USE_EVENTS_TIMEOUT           CH_CFG_USE_EVENTS
 #define CH_CFG_USE_MESSAGES                 FALSE
 #define CH_CFG_USE_MESSAGES_PRIORITY        FALSE

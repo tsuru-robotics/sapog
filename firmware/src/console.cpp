@@ -91,10 +91,6 @@ static void cmd_beep(BaseSequentialStream *chp, int argc, char *argv[])
   motor_beep(freq, duration);
 }
 
-static void cmd_uavcan(BaseSequentialStream *, int, char **)
-{
-}
-
 static void cmd_stat(BaseSequentialStream *chp, int argc, char *argv[])
 {
   float voltage = 0, current = 0;
@@ -321,7 +317,6 @@ static const ShellCommand _commands[] =
     COMMAND(md)
     COMMAND(m)
     COMMAND(zubax_id)
-    COMMAND(uavcan)
     {NULL, NULL}
   };
 

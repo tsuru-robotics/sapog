@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+import os
 from pathlib import Path
 import uavcan.pnp.NodeIDAllocationData_1_0
 import uavcan.node.ID_1_0
@@ -21,7 +22,9 @@ async def test_bootloader(prepared_double_redundant_node):
     tester_node = prepared_double_redundant_node
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
+    # Gathering heartbeats from any online nodes
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+    # If no heartbeats were detected then the allocator is run
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
         node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
@@ -52,6 +55,7 @@ async def test_bootloader(prepared_double_redundant_node):
             command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
             parameter=broken_fw_path,
         )
+        assert os.path.exists(Path.cwd() / "invalid_image_for_bootloader_test.bin"), "Creating invalid image failed."
         await asyncio.sleep(3.0)
         print("Requesting the device to install an invalid firmware image: %s", req)
         task_restart = await restart_node(tester_node, node_info.node_id)
