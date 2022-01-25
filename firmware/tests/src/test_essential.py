@@ -1,13 +1,10 @@
 import asyncio
 import os
-import typing
 
 import pytest
-import time
 
-import my_simple_test_allocator
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import is_device_with_node_id_running, restart_node, get_prepared_sapogs
+from utils import get_prepared_sapogs
 
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from make_registry import make_registry
@@ -21,9 +18,6 @@ import uavcan.primitive.array
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
-from pyuavcan.presentation._presentation import MessageClass
-
-from _await_wrap import wrap_await
 
 
 class TestEssential:

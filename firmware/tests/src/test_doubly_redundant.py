@@ -1,20 +1,15 @@
 import asyncio
 
 import pytest
-import time
-import typing
 
 from _await_wrap import wrap_await
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import prepared_sapogs
 
 import uavcan.primitive.array.Integer64_1_0
 import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 
-from RegisterPair import RegisterPair, OnlyEmbeddedDeviceRegister
 import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo, register
 from pyuavcan.presentation._presentation import MessageClass
 import subprocess
 from utils import is_running_on_my_laptop
