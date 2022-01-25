@@ -8,7 +8,6 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <node/units.hpp>
 #include "src/node/uavcan_thread.hpp"
-#include <cstdio>
 #include <node/time.h>
 #include "port_list.hpp"
 #include "board/board.hpp"

@@ -6,7 +6,6 @@
 #pragma once
 
 static const int max_frames_to_process_per_iteration = 1000;
-#define NUNAVUT_ASSERT assert
 
 #include <libcanard/canard.h>
 #include <uavcan/node/GetInfo_1_0.h>

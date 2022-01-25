@@ -26,8 +26,6 @@ std::string_view find_type_name(std::string_view request_name)
 RegisterCriteria
 handle_possible_imaginary_register_access(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
 {
-
-  // Now what happens if the size of the incoming string is less than 3 or 5
   bool endsWithType = request_name.size() >= 5 &&
                       request_name.at(request_name.size() - 1) == 'e' &&
                       request_name.at(request_name.size() - 2) == 'p' &&

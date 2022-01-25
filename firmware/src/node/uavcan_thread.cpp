@@ -51,7 +51,7 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
   node::pnp::plug_and_play_loop(state);
   enable_interrupt_handlers();
   printf("Has this node_id after pnp: %d\n", state.canard.node_id);
-  // Loops begin running
+  // This is the main loop of the uavcan_thread
   while (true)
   {
     print_can_error_if_exists();
@@ -66,6 +66,8 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
       os::requestReboot(); // This actually runs multiple times, like 7 usually, just puts up a flag
     }
     CanardMicrosecond current_time = get_monotonic_microseconds();
+    // These are loops because they are run in repeatedly according to their run delays.
+    // A neat feature is that a loop can change its delay when needed but this hasn't been used.
     for (Loop &loop: node::loops::loops)
     {
       if (loop.is_time_to_execute(current_time))

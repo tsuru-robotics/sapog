@@ -220,7 +220,7 @@ static void update_filters(float dt)
             1.0F, dt);
 }
 
-// This code manages having a handler for when the TTL is expired
+// Section: This code manages having a handler for when the TTL is expired
 struct : IStateAwareHandler
 {
   void operator()(node::state::State *state)
@@ -231,16 +231,11 @@ struct : IStateAwareHandler
 
 IStateAwareHandler *current_ttl_expiry_handler = &default_expected_stop_handler;
 
-IStateAwareHandler *motor_get_current_ttl_expiry_handler()
-{
-  return current_ttl_expiry_handler;
-}
-
 void motor_set_current_ttl_expiry_handler(IStateAwareHandler *handler)
 {
   current_ttl_expiry_handler = handler;
 }
-// end of managing having a handler for when the TTL is expired
+// End of section
 
 static void stop(bool expected)
 {

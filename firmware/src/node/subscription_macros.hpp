@@ -2,6 +2,13 @@
 
 #include "libcanard/canard.h"
 
+/* These macros depend on one another, here is how one requires another to save you time looking through the code:
+ * CONFIGURABLE_ID_MESSAGE_SUBSCRIPTION -> CONFIGURABLE_ID_SUBSCRIPTION -> ANY_SUBSCRIPTION
+ * CONFIGURABLE_ID_SERVICE_SUBSCRIPTION -> CONFIGURABLE_ID_SUBSCRIPTION -> ANY_SUBSCRIPTION
+ * FIXED_ID_MESSAGE_SUBSCRIPTION        -> FIXED_ID_SUBSCRIPTION        -> ANY_SUBSCRIPTION
+ * FIXED_ID_SERVICE_SUBSCRIPTION        -> FIXED_ID_SUBSCRIPTION        -> ANY_SUBSCRIPTION
+ */
+
 #define str(x) #x
 
 #define defaults \
