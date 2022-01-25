@@ -12,10 +12,8 @@ jobs:
         run: groom_begin.py sapog
       - name: installing dependencies
         run: |
-          python -m pip install -U nunavut
+          python -m pip install -U nunavut yakut pytest pytest-asyncio
           sudo apt install libjack-jackd2-dev libasound2-dev
-          python -m pip install yakut
-          python -m pip install pytest
       - name: Building Sapog
         run: |
           source /home/zubaxpc/.profile
