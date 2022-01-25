@@ -75,13 +75,16 @@ int main()
   // If we reset due to watchdog, add an extra delay to allow for intervention.
   const auto args = sapog_bootloader::takeAppShared();
   std::chrono::seconds boot_delay(2);
-  printf("Hello\n");
+
   if (reset_cause == board::ResetCause::Watchdog)
   {
     boot_delay = sapog_bootloader::BootDelayAfterWatchdogTimedOut;
   }
   static sapog_bootloader::ROMBackend rom_backend(APPLICATION_OFFSET);
   console_init();
+  printf("Hello\n");
+  // Delaying to wait for print to work
+  chThdSleepSeconds(2);
   static kocherga::Bootloader boot(rom_backend, system_info, board::getFlashSize(), bool(args), boot_delay, true);
   static const auto poll = []() {
     board::kickWatchdog();

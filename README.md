@@ -13,7 +13,7 @@ Additional documentation and related resources can be found at the
 
 ## Change Log
 
-### v3.0alpha
+### v3.0-alpha
 
 * Migrated from GCC 7.2 to GCC 10.3.1 20210824
 * Implemented support in application for UAVCAN v1

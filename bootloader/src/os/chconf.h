@@ -2,17 +2,19 @@
 
 #pragma once
 
+
 #define _CHIBIOS_RT_CONF_
 #define _CHIBIOS_RT_CONF_VER_5_0_
 
 #define CH_CFG_INTERVALS_SIZE               32
 #define CH_CFG_TIME_TYPES_SIZE              32
 
+
 // High temporal granularity is required for the CAN driver; refer to that for more info.
 // We can't use ticked mode for time tracking because the execution is stalled for a short time when we access flash.
 // With tickless mode it is safe to use a very high timer frequency since there will be no CPU load penalties.
-#define CH_CFG_ST_FREQUENCY                 100000
-#define CH_CFG_ST_TIMEDELTA                 2
+#define CH_CFG_ST_FREQUENCY                 5000
+#define CH_CFG_ST_TIMEDELTA                 0
 #define CH_CFG_ST_RESOLUTION                16
 
 #define CH_CFG_TIME_QUANTUM                 0
@@ -75,7 +77,8 @@
 
 #define CH_CFG_TRACE_HOOK(tep)              { }
 
-#define PORT_INT_REQUIRED_STACK             4096
+#define PORT_IDLE_THREAD_STACK_SIZE     64
+#define PORT_INT_REQUIRED_STACK         512
 
 #if !defined(__ASSEMBLER__) && !defined(__cplusplus)
 extern void systemHaltHook(const char*);
