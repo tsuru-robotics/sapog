@@ -24,8 +24,8 @@ jobs:
           cd firmware
           make dsdl
           make -j4
-      - name: Enabling a can interface
-        run: sudo slcand -o -s8 -t hw -S 3000000 $(realpath /dev/serial/by-id/usb-Zubax*Babel*-if00) && sudo ifconfig slcan0 up && sudo ifconfig slcan0 txqueuelen 100
+      - name: Creating and enabling all can interfaces
+        run: set -- $(realpath /dev/serial/by-id/usb-Zubax*Babel*-if00) && for ((i=1;i<=$#;i++)); do sudo slcand -o -s8 -t hw -S 3000000 "${!i}" "slcan$((i-1))" && sudo ifconfig "slcan$((i-1))" txqueuelen 100 && sudo ifconfig "slcan$((i-1))" up; done
       - name: Building Python DSDL
         run: yakut compile /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/reg /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/uavcan --output /home/zubaxpc/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces
       - name: Powering on sapog
