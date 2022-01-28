@@ -79,7 +79,7 @@
 #define VAL_GPIOACRH            0x088b8000      // 15..8
 #define VAL_GPIOAODR            ((1 << 11)) // This 11th bit set to 1 is something for CAN1_RX
 
-#define VAL_GPIOBCRL            0x00000000
+#define VAL_GPIOBCRL            0x8b000000
 #define VAL_GPIOBCRH            0x00b80000
 #define VAL_GPIOBODR            0x00000000
 

@@ -329,6 +329,5 @@ static THD_WORKING_AREA(_wa_shell, 1024);
 void console_init(void)
 {
   shellInit();
-
   ASSERT_ALWAYS(shellCreateStatic(&_config, _wa_shell, sizeof(_wa_shell), LOWPRIO));
 }

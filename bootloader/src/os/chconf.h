@@ -19,7 +19,7 @@
 
 #define CH_CFG_TIME_QUANTUM                 0
 #define CH_CFG_MEMCORE_SIZE                 0
-#define CH_CFG_NO_IDLE_THREAD               FALSE
+#define CH_CFG_NO_IDLE_THREAD               TRUE
 
 #define CH_CFG_OPTIMIZE_SPEED               FALSE
 
