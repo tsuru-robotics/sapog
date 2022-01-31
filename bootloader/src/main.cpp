@@ -69,24 +69,19 @@ constexpr std::chrono::seconds BootDelayAfterWatchdogTimedOut(20);
 int main()
 {
   const auto reset_cause = board::init(board::Cyan);
-  chThdSetPriority(NORMALPRIO);
   static const auto system_info = sapog_bootloader::initSystemInfo();
   // ----------------------------------------------------------------------------------------------------------------
   // Initialize the bootloader. Boot immediately if everything is okay before adding the nodes/transports.
   // If we reset due to watchdog, add an extra delay to allow for intervention.
   const auto args = sapog_bootloader::takeAppShared();
-  std::chrono::seconds boot_delay(2);
+  std::chrono::seconds boot_delay(1);
 
   if (reset_cause == board::ResetCause::Watchdog)
   {
     boot_delay = sapog_bootloader::BootDelayAfterWatchdogTimedOut;
   }
   static sapog_bootloader::ROMBackend rom_backend(APPLICATION_OFFSET);
-  console_init();
   // Delaying to wait for print to work, which doesn't help actually
-  chThdSleepSeconds(1);
-  printf("Hello\n");
-  chThdSleepSeconds(1);
   static kocherga::Bootloader boot(rom_backend, system_info, board::getFlashSize(), bool(args), boot_delay, true);
   static const auto poll = []() {
     board::kickWatchdog();
@@ -103,20 +98,15 @@ int main()
   // ----------------------------------------------------------------------------------------------------------------
   // Fast boot is not possible -- initialize the interfaces.
 //    board::usb::init();  // USB initialization may take some time.
-//  static sapog_bootloader::SerialPort serial_port;
-  /*char message[] = "Hello";
-  for (unsigned xi = 0; xi < sizeof(message[0]) / sizeof(message); xi++)
+  static sapog_bootloader::SerialPort serial_port;
+  char message[] = "Hello";
+  streamWrite(serial_port.getChannel(), reinterpret_cast<uint8_t *>(message), 6);
+  static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
+  if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
   {
-    auto result = serial_port.send(message[xi]);
-    (void) result;
-  }*/
-
-  /* static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
-   if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
-   {
-     serial_node.setLocalNodeID(args->uavcan_node_id);
-   }
-   (void) boot.addNode(&serial_node);*/
+    serial_node.setLocalNodeID(args->uavcan_node_id);
+  }
+  (void) boot.addNode(&serial_node);
 
   std::optional<kocherga::can::ICANDriver::Bitrate> can_bitrate;
   std::optional<std::uint8_t> uavcan_can_version;

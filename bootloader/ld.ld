@@ -14,7 +14,7 @@ MEMORY
      *  32512      32768        256     Digital signature
      *  32768                           Application
      */
-    flash : org = 0x08000000, len = 32512 /* 32K for the bootloader minus 256 for the signature */
+    flash : org = 0x08000000, len = 57088 /* 32512 32K for the bootloader minus 256 for the signature */
 
     /*
      * We use both SRAM1 and SRAM2 as a single contiguous memory region.
@@ -36,7 +36,7 @@ __ram_end__            = __ram_start__ + __ram_size__;
 
 ENTRY(Reset_Handler)
 
-PROVIDE(DeviceSignatureStorage = 0x0800bf00);
+PROVIDE(DeviceSignatureStorage = 0x0800E000);
 PROVIDE(AppSharedStruct = 0x20000000);
 
 SECTIONS

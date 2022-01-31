@@ -11,7 +11,7 @@ CSRC   = $(shell find src -name '*.c'   | sort) bxcan/bxcan.c
 UINCDIR = src src/os kocherga/kocherga bxcan
 
 UDEFS = -DHW_VERSION_MAJOR=$(HW_VERSION_MAJOR)           \
-        -DAPPLICATION_OFFSET=32768                       \
+        -DAPPLICATION_OFFSET=58368                       \
         -DBXCAN_MAX_IFACE_INDEX=0
 
 # ChibiOS
@@ -88,7 +88,7 @@ USE_CPPOPT += -std=c++17 -fno-rtti -fno-exceptions -fno-threadsafe-statics -Wno-
 
 USE_OPT += -nodefaultlibs -lc -lgcc -lm
 
-USE_OPT += -Os
+USE_OPT += -Og
 
 RELEASE ?= 0
 ifneq ($(RELEASE),0)

@@ -59,7 +59,9 @@ async def test_bootloader(prepared_double_redundant_node):
         await asyncio.sleep(3.0)
         print("Requesting the device to install an invalid firmware image: %s", req)
         task_restart = await restart_node(tester_node, node_info.node_id)
-        resp, _ = await command_client.call(req)
+        response = await command_client.call(req)
+        assert response, "There was no response to the software update to the invalid software image."
+        resp, _ = response
         assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
         assert resp.status == resp.STATUS_SUCCESS, "Execute command response was not a success"
         assert task_restart

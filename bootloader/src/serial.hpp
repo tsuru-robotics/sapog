@@ -21,9 +21,6 @@ public:
     {
         return STM_OK == chnPutTimeout(getChannel(), b, TIME_IMMEDIATE);
     }
-private:
-
-
     [[nodiscard]] static auto getChannel() -> ::BaseChannel*
     {return reinterpret_cast<::BaseChannel*>(&STDOUT_SD);  // NOLINT
     }

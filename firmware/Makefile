@@ -84,7 +84,7 @@ BUILD_CHIBIOS_SHELL = 1
 
 SERIAL_CLI_PORT_NUMBER = 1
 
-BOOTLOADER_SIZE = 32768
+BOOTLOADER_SIZE = 58368
 
 # This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
 # therefore, the minor version is not specified here.
@@ -101,7 +101,7 @@ LDSCRIPT= linker.ld
 USE_LTO = yes
 # Warning: GCC 4.9 with O3 and LTO breaks the code mysteriously! GCC 5.x segfaults during linking. Why GCC, why!?
 RELEASE_OPT = -O3 -fomit-frame-pointer -DNDEBUG=1 -D"CANARD_ASSERT(x)" -fno-strict-aliasing
-DEBUG_OPT = -O1 -g3 -DDISABLE_WATCHDOG=1 -fno-strict-aliasing #-DNDEBUG=1 -D"CANARD_ASSERT(x)" -D"O1HEAP_ASSERT(x)"
+DEBUG_OPT = -Og -g3 -DDISABLE_WATCHDOG=1 -fno-strict-aliasing #-DNDEBUG=1 -D"CANARD_ASSERT(x)" -D"O1HEAP_ASSERT(x)"
 # More warnings are enabled in the included makefile
 CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow #-Werror
 CWARN += -Wno-error=implicit-fallthrough -Wno-deprecated

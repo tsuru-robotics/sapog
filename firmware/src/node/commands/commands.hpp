@@ -78,7 +78,6 @@ struct : IHandler
           std::memcpy(reinterpret_cast<void *>(0x20000000), &out, sizeof(out));
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
-          break;
       }
       uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
       auto res = serializer.serialize(response);

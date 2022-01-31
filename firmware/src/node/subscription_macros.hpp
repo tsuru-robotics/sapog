@@ -31,6 +31,7 @@
 .sessions={}                                                                               \
 }}
 
+// separator is abbreviated sep
 #define FIXED_ID_SUBSCRIPTION(nunavut_type, version_major, version_minor, handler, kind, sep, timeout) \
 ANY_SUBSCRIPTION(                                                                               \
 nunavut_type##_##version_major##_##version_minor##_FIXED_PORT_ID_,                              \
