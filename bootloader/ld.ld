@@ -26,7 +26,7 @@ MEMORY
      *    256     130560    130304    Bootloader
      * 130560       128K       512    Space for application-bootloader data exchange
      */
-    ram   : org = 0x20000100, len = 65280 /* First 256 bytes are reserved for bootloader/app communication */
+    ram   : org = 0x20000140, len = 65280 /* First 256 bytes are reserved for bootloader/app communication and the next 64 are for its CRC */
 }
 
 

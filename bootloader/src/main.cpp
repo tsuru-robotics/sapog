@@ -99,8 +99,8 @@ int main()
   // Fast boot is not possible -- initialize the interfaces.
 //    board::usb::init();  // USB initialization may take some time.
   static sapog_bootloader::SerialPort serial_port;
-  char message[] = "Hello";
-  streamWrite(serial_port.getChannel(), reinterpret_cast<uint8_t *>(message), 6);
+//  char message[] = "Hello";
+//  streamWrite(serial_port.getChannel(), reinterpret_cast<uint8_t *>(message), 6);
   static kocherga::serial::SerialNode serial_node(serial_port, system_info.unique_id);
   if (args && (args->uavcan_node_id <= kocherga::serial::MaxNodeID))
   {

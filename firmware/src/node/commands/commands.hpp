@@ -24,6 +24,7 @@
 #include <node/stop_gap.hpp>
 #include <cstring>
 #include <string_view>
+#include "software_update/app_shared.hpp"
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
                             1, 1);
@@ -69,14 +70,18 @@ struct : IHandler
             printf("Bad parameter\n");
             break;
           }
-          os::bootloader::AppShared out{};
-          std::memcpy(out.uavcan_file_name, request->parameter.elements, request->parameter.count);
-          out.can_bus_speed = 1'000'000;
-          out.uavcan_node_id = state.canard.node_id;
-          out.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
-          out.stay_in_bootloader = true;
-          std::memcpy(reinterpret_cast<void *>(0x20000000), &out, sizeof(out));
-          state.is_restart_required = true;
+          os::bootloader::AppShared my_app_shared{};
+          std::memcpy(my_app_shared.uavcan_file_name, request->parameter.elements, request->parameter.count);
+          my_app_shared.can_bus_speed = 1'000'000;
+          my_app_shared.uavcan_node_id = state.canard.node_id;
+          my_app_shared.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
+          my_app_shared.stay_in_bootloader = true;
+          auto x = os::bootloader::app_shared::makeAppSharedMarshaller<os::bootloader::AppShared>(
+            reinterpret_cast<void *>(0x20000000));
+          x.write(my_app_shared);
+          __asm volatile("bkpt #0\n");  // NOLINT Break into the debugger
+//          std::memcpy(reinterpret_cast<void *>(0x20000000), &my_app_shared, sizeof(my_app_shared));
+//          state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
       }
       uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
