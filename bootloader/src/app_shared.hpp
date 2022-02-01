@@ -10,23 +10,11 @@ namespace sapog_bootloader
 {
 struct AppShared
 {
-    std::uint32_t reserved_a = 0;                               ///< Reserved for future use
-    std::uint32_t reserved_b = 0;                               ///< Reserved for future use
-
-    /*
-     * UAVCAN part
-     */
     std::uint32_t can_bus_speed = 0;
     std::uint8_t uavcan_node_id = 0;
     std::uint8_t uavcan_fw_server_node_id = 0;
-
-    static constexpr std::uint8_t UAVCANFileNameMaxLength = 201;
-    std::uint8_t uavcan_file_name[UAVCANFileNameMaxLength] = {};
-
-    /*
-     * General part
-     */
-    bool stay_in_bootloader = false;
+    std::uint8_t uavcan_file_name[256] = {};
+    // std::uint64_t crc; this is not in the struct itself but will be stored after it
 };
 
 namespace impl

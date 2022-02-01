@@ -26,7 +26,7 @@ MEMORY
      *    256     130560    130304    Bootloader
      * 130560       128K       512    Space for application-bootloader data exchange
      */
-    ram   : org = 0x20000140, len = 65280 /* First 256 bytes are reserved for bootloader/app communication and the next 64 are for its CRC */
+    ram   : org = 0x20000000, len = 65265 /* 64K - 263 - 8 for AppShared */
 }
 
 
@@ -37,7 +37,7 @@ __ram_end__            = __ram_start__ + __ram_size__;
 ENTRY(Reset_Handler)
 
 PROVIDE(DeviceSignatureStorage = 0x0800E000);
-PROVIDE(AppSharedStruct = 0x20000000);
+PROVIDE(AppSharedStruct = 0x2000FEF0);
 
 SECTIONS
 {

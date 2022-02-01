@@ -35,6 +35,7 @@ async def test_bootloader(prepared_double_redundant_node):
         if node_info.node_id == 2:
             continue
         command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1, node_info.node_id)
+        command_client.response_timeout = 10.0
         print("Sending an invalid firmware update command with empty parameter")
         result_response = await command_client.call(
             uavcan.node.ExecuteCommand_1.Request(

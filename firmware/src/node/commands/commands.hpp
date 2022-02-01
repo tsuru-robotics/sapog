@@ -40,15 +40,9 @@ struct : IHandler
     {
       uavcan_node_ExecuteCommand_Response_1_1 response{};
 //            printf("Commanded: %d\n", request.value().command);
-      os::bootloader::AppShared *app_shared = reinterpret_cast<os::bootloader::AppShared *>(0x20000000);
       switch (request.value().command)
       {
         case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
-          if (app_shared->stay_in_bootloader)
-          {
-            printf("Stay in bootloader was set, so resetting it.\n");
-            app_shared->stay_in_bootloader = false;
-          }
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
           printf("Restart is requested.\n");
@@ -75,13 +69,11 @@ struct : IHandler
           my_app_shared.can_bus_speed = 1'000'000;
           my_app_shared.uavcan_node_id = state.canard.node_id;
           my_app_shared.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
-          my_app_shared.stay_in_bootloader = true;
           auto x = os::bootloader::app_shared::makeAppSharedMarshaller<os::bootloader::AppShared>(
-            reinterpret_cast<void *>(0x20000000));
+            reinterpret_cast<void *>(0x2000FEF0));
           x.write(my_app_shared);
-          __asm volatile("bkpt #0\n");  // NOLINT Break into the debugger
 //          std::memcpy(reinterpret_cast<void *>(0x20000000), &my_app_shared, sizeof(my_app_shared));
-//          state.is_restart_required = true;
+          state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
       }
       uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
