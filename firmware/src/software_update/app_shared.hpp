@@ -72,16 +72,16 @@ class AppSharedMarshaller
     ContainerWrapper(const Container &c) :
       container(c)
     {
-      CRC64WE crc_computer;
-      crc_computer.add(&container, sizeof(container));
+      CRC64 crc_computer;
+      crc_computer.update(reinterpret_cast<const uint8_t *>(&container), sizeof(container));
       const auto computed = crc_computer.get();
       std::memmove(&crc_bytes[0], &computed, CRCSize);
     }
 
     bool isCRCValid() const
     {
-      CRC64WE crc_computer;
-      crc_computer.add(&container, sizeof(container));
+      CRC64 crc_computer;
+      crc_computer.update(&container, sizeof(container));
       const auto computed = crc_computer.get();
       return 0 == std::memcmp(&computed, &crc_bytes[0], CRCSize);
     }

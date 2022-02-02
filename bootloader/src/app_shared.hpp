@@ -17,41 +17,6 @@ struct AppShared
     // std::uint64_t crc; this is not in the struct itself but will be stored after it
 };
 
-namespace impl
-{
-template <typename Container>
-std::optional<Container> takeLegacy(void* const ptr)
-{
-    class ContainerWrapper
-    {
-    public:
-        Container container;
-
-        [[nodiscard]] bool isValid() const
-        {
-            kocherga::CRC64 crc_computer;
-            crc_computer.update(reinterpret_cast<const std::uint8_t*>(&container), sizeof(container));  // NOLINT
-            return crc_ == crc_computer.get();
-        }
-
-    private:
-        std::uint64_t crc_;
-    };
-    ContainerWrapper wrapper{};
-    std::memmove(&wrapper, ptr, sizeof(ContainerWrapper));
-    if (wrapper.isValid())
-    {
-        ContainerWrapper empty{};
-        std::memset(&empty, 0, sizeof(empty));  // NOLINT
-        std::memmove(ptr, &empty, sizeof(ContainerWrapper));
-        return wrapper.container;
-    }
-    return {};
-}
-
-
-}  // namespace impl
-
 /// Reads and destroys the AppShared struct from the app-bootloader exchange area, if there is one.
 /// Returns an empty option otherwise.
 /// This function supports all legacy versions and storage locations of the app shared struct to ensure maximum

@@ -48,7 +48,7 @@ async def test_bootloader(prepared_double_redundant_node):
 
         # Launch the file server.
         # TODO: currently, pyuavcan.application service objects cannot be stopped once started; fix that in PyUAVCAN.
-        _srv_file = pyuavcan.application.file.FileServer(tester_node, [Path.cwd().root])
+        file_server = pyuavcan.application.file.FileServer(tester_node, [Path.cwd()])
         broken_fw_path = ""
         # INSTALL INVALID FIRMWARE AND ENSURE THE DEVICE IS NOT BRICKED.
         with open("invalid_image_for_bootloader_test.bin", "wb") as broken_fw:

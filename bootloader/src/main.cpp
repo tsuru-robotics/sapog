@@ -6,7 +6,6 @@
 #include "app_shared.hpp"
 #include <ch.hpp>
 #include <cstdio>
-#include "bootloader_app_interface.hpp"
 #include "shell.h"
 #include "board/sys.hpp"
 

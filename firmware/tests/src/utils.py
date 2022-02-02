@@ -86,13 +86,6 @@ async def get_prepared_sapogs(prepared_node) -> typing.List[my_nodes.NodeInfo]:
     hb_sub.receive_in_background(receive_heartbeat)
     await asyncio.sleep(allowed_listen_time + 1)
     return node_info_list
-    # from my_simple_test_allocator import make_simple_node_allocator
-    # if is_running_on_my_laptop and is_device_with_node_id_running(21):
-    #     print("Device with node id 21 is already running so I will use that.")
-    #     return {21: "idk"}
-    # else:
-    #     print("Allocating one node")
-    #     return make_simple_node_allocator()(1)  # This will allocate id 21 too
 
 
 @pytest.fixture()

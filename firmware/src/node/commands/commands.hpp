@@ -72,7 +72,6 @@ struct : IHandler
           auto x = os::bootloader::app_shared::makeAppSharedMarshaller<os::bootloader::AppShared>(
             reinterpret_cast<void *>(0x2000FEF0));
           x.write(my_app_shared);
-//          std::memcpy(reinterpret_cast<void *>(0x20000000), &my_app_shared, sizeof(my_app_shared));
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
       }
