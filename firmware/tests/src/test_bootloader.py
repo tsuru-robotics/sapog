@@ -25,6 +25,7 @@ async def test_bootloader(prepared_double_redundant_node):
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     # Removing the debugger node
     # If no heartbeats were detected then the allocator is run
+
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
         node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
@@ -34,16 +35,22 @@ async def test_bootloader(prepared_double_redundant_node):
     for index, node_info in enumerate(node_info_list):
         if node_info.node_id == 2:
             continue
-        command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1, node_info.node_id)
-        command_client.response_timeout = 10.0
+        try:
+            get_info_client = tester_node.make_client(uavcan.node.GetInfo_1_0, node_info.node_id)
+            gi_request = uavcan.node.GetInfo_1_0.Request()
+            await get_info_client.call(gi_request)
+        except TimeoutError:
+            pass
+        command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1_1, node_info.node_id)
+        command_client.response_timeout = 1.0
         print("Sending an invalid firmware update command with empty parameter")
         result_response = await command_client.call(
-            uavcan.node.ExecuteCommand_1.Request(
-                command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
+            uavcan.node.ExecuteCommand_1_1.Request(
+                command=uavcan.node.ExecuteCommand_1_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
         )
         assert result_response, "Got no response"
         resp, _ = result_response
-        assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
+        assert isinstance(resp, uavcan.node.ExecuteCommand_1_1.Response)
         assert resp.status == resp.STATUS_BAD_PARAMETER, "Status should have been STATUS_BAD_PARAMETER"
 
         # Launch the file server.
