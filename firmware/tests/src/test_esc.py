@@ -170,7 +170,7 @@ class TestESC:
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
         # dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
         speed_controller = SpeedController(2)
-        assert len(node_info_list) >= 2, "Please restart" \
+        assert len(node_info_list) >= 1, "Please restart" \
                                          " the nodes before continuing. This test was supposed" \
                                          "to allocate nodes and then keep the info about them. "
 
@@ -198,7 +198,7 @@ class TestESC:
         asyncio.create_task(run_first_motor())
         asyncio.create_task(run_second_motor())
         try:
-            for i in range(40000):
+            for i in range(4000):
 
                 rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=speed_controller.speed_array)
                 await pub.publish(rpm_message)

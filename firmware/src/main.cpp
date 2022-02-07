@@ -203,6 +203,10 @@ int main()
     if (motor_is_blocked() || !temperature_sensor::is_ok())
     {
       led_ctl.set(board::LEDColor::YELLOW);
+      if(!node::state::state.overheating){
+          node::state::state.overheating = true;
+          printf("Overheating at %d\n", temperature_sensor::get_temperature_K() - 273);
+      }
     } else
     {
       led_ctl.set(board::LEDColor::DARK_GREEN);

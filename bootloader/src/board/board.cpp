@@ -41,22 +41,6 @@ namespace board
 {
 namespace
 {
-//inline void initLEDPWM()
-//{
-//    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-//    TIM3->PSC = 0xFFFF;
-//    TIM3->ARR = 0xFF;
-//    TIM3->CR1 = 0;
-//    TIM3->CR2 = 0;
-//    // CC2, CC3, CC4 are R, G, B. Inverted mode.
-//    TIM3->CCMR1 = TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
-//    TIM3->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1;
-//    // All enabled, all inverted.
-//    TIM3->CCER = TIM_CCER_CC4E | TIM_CCER_CC3E | TIM_CCER_CC2E | TIM_CCER_CC4P | TIM_CCER_CC3P | TIM_CCER_CC2P;
-//    // Start
-//    TIM3->EGR = TIM_EGR_UG | TIM_EGR_COMG;
-//    TIM3->CR1 |= TIM_CR1_CEN;
-//}
 
 /// This data is used to decide whether the reset handler should jump to the application.
 std::uint8_t g_boot_magic[1024] __attribute__((section(".noinit")));  // NOLINT std::array<>
@@ -196,18 +180,7 @@ void setCANActivityLED(const int interface_index, const bool state)
 {
     (void) state;
     (void) interface_index;
-/*    if (interface_index == 0)
-    {
-        palWritePad(GPIOB, GPIOB_CAN1_LED_INVERSE, unsigned(!state));
-    }
-    else if (interface_index == 1)
-    {
-        palWritePad(GPIOA, GPIOA_CAN2_LED_INVERSE, unsigned(!state));
-    }
-    else
-    {
-        assert(false);
-    }*/
+
 }
 
 }  // namespace board
@@ -217,46 +190,6 @@ extern "C" {
 
 static void initGPIO()
 {
-/*    // Enabling GPIO-related clocks, the mask comes from the registry header file.
-    rccResetAHB1(STM32_GPIO_EN_MASK);
-    rccEnableAHB1(STM32_GPIO_EN_MASK, true);
-
-    static const auto hit = [](stm32_gpio_t* const gpiop,
-                               std::uint32_t       moder,
-                               std::uint32_t       otyper,
-                               std::uint32_t       ospeedr,
-                               std::uint32_t       pupdr,
-                               std::uint32_t       odr,
-                               std::uint32_t       afrl,
-                               std::uint32_t       afrh) {
-        gpiop->OTYPER  = otyper;
-        gpiop->OSPEEDR = ospeedr;
-        gpiop->PUPDR   = pupdr;
-        gpiop->ODR     = odr;
-        gpiop->AFRL    = afrl;
-        gpiop->AFRH    = afrh;
-        gpiop->MODER   = moder;
-    };
-
-    // NOLINTNEXTLINE
-#define INIT_GPIO_HIT_ONCE(x)  \
-    hit(GPIO##x,               \
-        VAL_GPIO##x##_MODER,   \
-        VAL_GPIO##x##_OTYPER,  \
-        VAL_GPIO##x##_OSPEEDR, \
-        VAL_GPIO##x##_PUPDR,   \
-        VAL_GPIO##x##_ODR,     \
-        VAL_GPIO##x##_AFRL,    \
-        VAL_GPIO##x##_AFRH)
-
-    INIT_GPIO_HIT_ONCE(A);
-    INIT_GPIO_HIT_ONCE(B);
-    INIT_GPIO_HIT_ONCE(C);
-    INIT_GPIO_HIT_ONCE(D);
-    INIT_GPIO_HIT_ONCE(E);
-    INIT_GPIO_HIT_ONCE(F);
-    INIT_GPIO_HIT_ONCE(G);
-    INIT_GPIO_HIT_ONCE(H);*/
 
 }
 
@@ -266,50 +199,7 @@ static void initGPIO()
 
     // Init the default clock configuration which is to use HSI --> PLL. The HSI is imprecise though, last resort only.
     stm32_clock_init();
-    // If the crystal frequency is known, we switch to that, otherwise we stay on HSI.
-//    auto* const        flash_otp = reinterpret_cast<std::uint8_t*>(FLASH_OTP_BASE);  // NOLINT
-//    const std::uint8_t hse_MHz   = *flash_otp;                                       // Stored in the first byte.
-//    if (((hse_MHz % 4U) == 0U) && (hse_MHz >= 4U) && (hse_MHz <= 25U))               // Ignore if invalid.
-//    {
-//        // Switch to raw HSE temporarily, disable both PLLs, reconfigure them, and then connect them to HSE.
-//        // All clocks remain the same so there's no need to reconfigure anything else.
-//        assert((RCC->APB1ENR & RCC_APB1ENR_PWREN) != 0);
-//        assert((RCC->CR & RCC_CR_HSIRDY) != 0);
-//        RCC->CR |= RCC_CR_HSEON;    // Enable HSE, takes a while to start.
-//        RCC->CFGR &= ~RCC_CFGR_SW;  // Switch to raw HSI.
-//        while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI)
-//        {
-//            (void) 0;  // Wait for the system to switch to HSI.
-//        }
-//        RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLSAION | RCC_CR_PLLI2SON);  // Shut down the PLLs.
-//        assert((hse_MHz % STM32_PLLP_VALUE) == 0);
-//        const auto pll_m = static_cast<std::uint32_t>(hse_MHz) / STM32_PLLP_VALUE;
-//        assert((pll_m >= 2) && (pll_m <= 63));
-//        RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLM;
-//        RCC->PLLCFGR |= pll_m | RCC_PLLCFGR_PLLSRC_HSE;
-//        RCC->PLLSAICFGR &= ~RCC_PLLSAICFGR_PLLSAIM;
-//        RCC->PLLSAICFGR |= pll_m;
-//        while ((RCC->CR & RCC_CR_HSERDY) != RCC_CR_HSERDY)
-//        {
-//            (void) 0;  // Wait for the HSE to become ready.
-//        }
-//        RCC->CR |= RCC_CR_PLLON | RCC_CR_PLLSAION;              // Turn on the PLLs back again.
-//        while (((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY) ||  //
-//               ((RCC->CR & RCC_CR_PLLSAIRDY) != RCC_CR_PLLSAIRDY))
-//        {
-//            (void) 0;  // Wait for the PLLs to become ready.
-//        }
-//        RCC->CFGR |= RCC_CFGR_SW_PLL;  // Switch the clock source to PLL output.
-//        while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL)
-//        {
-//            (void) 0;  // Wait for the system to switch to PLL.
-//        }
-//        assert((RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC_HSE) != 0);
-//    }
-//    else
-//    {
-//        board::setCANActivityLED(1, true);  // Indicate that HSE is unknown by turning on the CAN2 LED.
-//    }
+
 }
 
 [[noreturn]] extern void _crt0_entry() noexcept;

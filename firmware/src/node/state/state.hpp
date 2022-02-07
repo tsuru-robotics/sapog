@@ -88,6 +88,7 @@ struct State
   CanardMicrosecond next_send_power_dynamics_time;
   CanardMicrosecond previous_esc_dynamics_message_timestamp;
   double previous_esc_dynamics_angular_velocity;
+  bool overheating = false;
 };
 extern State state;
 }
