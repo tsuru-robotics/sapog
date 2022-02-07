@@ -38,6 +38,7 @@ __ram_end__            = __ram_start__ + __ram_size__;
 ENTRY(Reset_Handler)
 
 PROVIDE(DeviceSignatureStorage = ORIGIN(flash) - 256);
+PROVIDE(AppSharedStruct = 0x2000FEF0);
 
 SECTIONS
 {

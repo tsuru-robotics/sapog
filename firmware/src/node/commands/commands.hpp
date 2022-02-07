@@ -25,6 +25,11 @@
 #include <cstring>
 #include <string_view>
 #include "software_update/app_shared.hpp"
+extern std::uint8_t       AppSharedStruct[];         // NOLINT std::array<>
+std::uint8_t* getAppSharedStructLocation()
+{
+    return &AppSharedStruct[0];
+}
 
 UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
                             1, 1);
@@ -64,14 +69,13 @@ struct : IHandler
             printf("Bad parameter\n");
             break;
           }
-          os::bootloader::AppShared my_app_shared{};
+          AppShared my_app_shared{};
           std::memcpy(my_app_shared.uavcan_file_name, request->parameter.elements, request->parameter.count);
           my_app_shared.can_bus_speed = 1'000'000;
           my_app_shared.uavcan_node_id = state.canard.node_id;
           my_app_shared.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
-          auto x = os::bootloader::app_shared::makeAppSharedMarshaller<os::bootloader::AppShared>(
-            reinterpret_cast<void *>(0x2000FEF0));
-          x.write(my_app_shared);
+
+          VolatileStorage<AppShared>(getAppSharedStructLocation()).store(my_app_shared);
           state.is_restart_required = true;
           response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
       }
