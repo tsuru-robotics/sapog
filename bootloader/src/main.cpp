@@ -107,14 +107,16 @@ int main()
   }
   (void) boot.addNode(&serial_node);
 
-  std::optional<kocherga::can::ICANDriver::Bitrate> can_bitrate;
-  std::optional<std::uint8_t> uavcan_can_version;
+  std::optional<kocherga::can::ICANDriver::Bitrate> can_bitrate{
+    kocherga::can::ICANDriver::Bitrate{.arbitration=1000000, .data=1000000}};
+  std::optional<std::uint8_t> uavcan_can_version = 1;
   std::optional<kocherga::NodeID> uavcan_can_node_id;
   if (args)
   {
     can_bitrate.emplace();
     can_bitrate->arbitration = args->can_bus_speed;
     uavcan_can_node_id = args->uavcan_node_id;
+    //uavcan_can_version = 1;
   }
   static sapog_bootloader::CANDriver<8192> can_driver;
   //

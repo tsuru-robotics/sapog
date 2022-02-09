@@ -29,7 +29,7 @@ USE_OPT += -Wdouble-promotion -Wswitch-enum -Wfloat-equal -fno-strict-aliasing -
 USE_CPPOPT += -Wconversion -Wno-error=conversion -Wsign-promo -Wframe-larger-than=1024 -Werror=implicit-fallthrough  \
               -Wno-attributes
 
-USE_LTO := yes
+USE_LTO := no
 
 LDSCRIPT = ld.ld
 

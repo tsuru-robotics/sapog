@@ -126,12 +126,12 @@ def fill_ids():
 
 
 ignore_subjects = [
-    #7510  # port_list
-    #, 7509  # heartbeat
-    #, 8166  # allocation
+    # 7510  # port_list
+    # , 7509  # heartbeat
+    # , 8166  # allocation
     # , 430  # getinfo
-    #, 140
-    #, 139
+    # , 140
+    # , 139
 ]
 
 
@@ -193,7 +193,7 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
 
 async def run_debugger_node(with_debugging=False):
     registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0"  # socketcan:slcan1"
+    registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
     registry01["uavcan.can.mtu"] = 8
     debugger_node_id = 2
     registry01["uavcan.node.id"] = debugger_node_id
