@@ -24,29 +24,29 @@ namespace node::essential
 {
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    printf("GetInfo is responding\n");
-    uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
-    auto res = serializer.serialize(process_request_node_get_info());
-    if (res.has_value())
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
-      CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
-      rtm.transfer_kind = CanardTransferKindResponse;
-      for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
-      {
-        (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
-                            transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,
-                            &rtm,
-                            res.value(),
-                            serializer.getBuffer());
-      }
-    } else
-    {
-      assert(false);
+        printf("GetInfo is responding\n");
+        uavcan_l6::DSDL<uavcan_node_GetInfo_Response_1_0>::Serializer serializer{};
+        auto res = serializer.serialize(process_request_node_get_info());
+        if (res.has_value())
+        {
+            CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+            rtm.transfer_kind = CanardTransferKindResponse;
+            for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
+            {
+                (void) canardTxPush(&state.queues[i], const_cast<CanardInstance *>(&state.canard),
+                                    transfer->timestamp_usec + ONE_SECOND_DEADLINE_usec,
+                                    &rtm,
+                                    res.value(),
+                                    serializer.getBuffer());
+            }
+        } else
+        {
+            assert(false);
+        }
+        return;
     }
-    return;
-  }
 } uavcan_node_GetInfo_1_0_handler;
 }
 

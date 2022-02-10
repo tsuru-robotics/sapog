@@ -40,10 +40,10 @@ extern "C" {
 
 struct rpmctl_input
 {
-  int limit_mask;
-  float dt;
-  float pv;
-  float sp;
+    int limit_mask;
+    float dt;
+    float pv;
+    float sp;
 };
 
 int rpmctl_init(void);

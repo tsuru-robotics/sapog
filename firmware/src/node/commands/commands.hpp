@@ -25,8 +25,9 @@
 #include <cstring>
 #include <string_view>
 #include "software_update/app_shared.hpp"
-extern std::uint8_t       AppSharedStruct[];         // NOLINT std::array<>
-std::uint8_t* getAppSharedStructLocation()
+
+extern std::uint8_t AppSharedStruct[];         // NOLINT std::array<>
+std::uint8_t *getAppSharedStructLocation()
 {
     return &AppSharedStruct[0];
 }
@@ -36,71 +37,71 @@ UAVCAN_L6_NUNAVUT_C_SERVICE(uavcan_node_ExecuteCommand,
 
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    (void) state;
-    auto request = uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Request_1_1>::deserialize(transfer->payload_size,
-                                                                                        static_cast<const uint8_t *>(transfer->payload));
-    if (request.has_value())
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
-      uavcan_node_ExecuteCommand_Response_1_1 response{};
-//            printf("Commanded: %d\n", request.value().command);
-      switch (request.value().command)
-      {
-        case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
-          state.is_restart_required = true;
-          response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
-          printf("Restart is requested.\n");
-          break;
-        case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_STORE_PERSISTENT_STATES:
-          if (motor_is_idle())
-          {
-            state.is_save_requested = true;
-            response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
-          } else
-          {
-            response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_STATE;
-          }
-          break;
-        case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_BEGIN_SOFTWARE_UPDATE:
-          if (request->parameter.count == 0)
-          {
-            response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_PARAMETER;
-            printf("Bad parameter\n");
-            break;
-          }
-          AppShared my_app_shared{};
-          std::memcpy(my_app_shared.uavcan_file_name, request->parameter.elements, request->parameter.count);
-          my_app_shared.can_bus_speed = 1'000'000;
-          my_app_shared.uavcan_node_id = state.canard.node_id;
-          my_app_shared.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
-
-          VolatileStorage<AppShared>(getAppSharedStructLocation()).store(my_app_shared);
-          state.is_restart_required = true;
-          response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
-      }
-      uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
-      auto res = serializer.serialize(response);
-      assert(res.has_value());
-      if (res.has_value())
-      {
-        CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
-        rtm.transfer_kind = CanardTransferKindResponse;
-        for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
+        (void) state;
+        auto request = uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Request_1_1>::deserialize(transfer->payload_size,
+                                                                                            static_cast<const uint8_t *>(transfer->payload));
+        if (request.has_value())
         {
-          int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
-                                                           const_cast<CanardInstance *>(&state.canard),
-                                                           transfer->timestamp_usec +
-                                                           ONE_SECOND_DEADLINE_usec,
-                                                           &rtm,
-                                                           res.value(),
-                                                           serializer.getBuffer());
-          (void) number_of_frames_enqueued;
-        }
+            uavcan_node_ExecuteCommand_Response_1_1 response{};
+//            printf("Commanded: %d\n", request.value().command);
+            switch (request.value().command)
+            {
+                case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:
+                    state.is_restart_required = true;
+                    response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+                    printf("Restart is requested.\n");
+                    break;
+                case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_STORE_PERSISTENT_STATES:
+                    if (motor_is_idle())
+                    {
+                        state.is_save_requested = true;
+                        response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+                    } else
+                    {
+                        response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_STATE;
+                    }
+                    break;
+                case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_BEGIN_SOFTWARE_UPDATE:
+                    if (request->parameter.count == 0)
+                    {
+                        response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_BAD_PARAMETER;
+                        printf("Bad parameter\n");
+                        break;
+                    }
+                    AppShared my_app_shared{};
+                    std::memcpy(my_app_shared.uavcan_file_name, request->parameter.elements, request->parameter.count);
+                    my_app_shared.can_bus_speed = 1'000'000;
+                    my_app_shared.uavcan_node_id = state.canard.node_id;
+                    my_app_shared.uavcan_fw_server_node_id = transfer->metadata.remote_node_id;
 
-      }
-      return;
+                    VolatileStorage<AppShared>(getAppSharedStructLocation()).store(my_app_shared);
+                    state.is_restart_required = true;
+                    response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
+            }
+            uavcan_l6::DSDL<uavcan_node_ExecuteCommand_Response_1_1>::Serializer serializer{};
+            auto res = serializer.serialize(response);
+            assert(res.has_value());
+            if (res.has_value())
+            {
+                CanardTransferMetadata rtm = transfer->metadata;  // Response transfers are similar to their requests.
+                rtm.transfer_kind = CanardTransferKindResponse;
+                for (int i = 0; i <= board::get_max_can_interface_index(); ++i)
+                {
+                    int32_t number_of_frames_enqueued = canardTxPush(&state.queues[i],
+                                                                     const_cast<CanardInstance *>(&state.canard),
+                                                                     transfer->timestamp_usec +
+                                                                     ONE_SECOND_DEADLINE_usec,
+                                                                     &rtm,
+                                                                     res.value(),
+                                                                     serializer.getBuffer());
+                    (void) number_of_frames_enqueued;
+                }
+
+            }
+            return;
+        }
+        return;
     }
-    return;
-  }
 } uavcan_node_ExecuteCommand_Request_1_1_handler;

@@ -18,66 +18,66 @@ template<typename T, int capacity>
 class Queue
 {
 public:
-  std::array<T, capacity> array;
-  int push_counter = 0;
-  int pop_counter = 0;
-  int length = 0;
+    std::array<T, capacity> array;
+    int push_counter = 0;
+    int pop_counter = 0;
+    int length = 0;
 
-  std::optional<T> pop();
+    std::optional<T> pop();
 
-  void push(T const &element);
+    void push(T const &element);
 
-  void reset();
+    void reset();
 };
 
 template<typename T, int capacity>
 std::optional<T> Queue<T, capacity>::pop()
 {
-  if (length > 0)
-  {
-    auto &return_value = this->array.at(pop_counter);
-    pop_counter++;
-    if (pop_counter >= capacity)
+    if (length > 0)
     {
-      pop_counter = 0;
+        auto &return_value = this->array.at(pop_counter);
+        pop_counter++;
+        if (pop_counter >= capacity)
+        {
+            pop_counter = 0;
+        }
+        length--;
+        return return_value;
+    } else
+    {
+        return {};
     }
-    length--;
-    return return_value;
-  } else
-  {
-    return {};
-  }
 }
 
 template<typename T, int capacity>
 void Queue<T, capacity>::push(T const &element)
 {
-  this->array.at(push_counter) = element;
-  if (++push_counter >= capacity)
-  {
-    //printf("Fifo queue filled up!\n");
-    push_counter = 0;
-  }
-  length++;
-  if (length > capacity)
-  {
-    // Then we basically pop one element to make room for the new one.
-    // This happens say when one of the can cables gets destroyed and replaced in flight
-    // then the connection that was resurrected will have a full queue
-    length = capacity; // like length--;
-    pop_counter++;
-    if (pop_counter >= capacity)
+    this->array.at(push_counter) = element;
+    if (++push_counter >= capacity)
     {
-      pop_counter = 0;
+        //printf("Fifo queue filled up!\n");
+        push_counter = 0;
     }
-  }
+    length++;
+    if (length > capacity)
+    {
+        // Then we basically pop one element to make room for the new one.
+        // This happens say when one of the can cables gets destroyed and replaced in flight
+        // then the connection that was resurrected will have a full queue
+        length = capacity; // like length--;
+        pop_counter++;
+        if (pop_counter >= capacity)
+        {
+            pop_counter = 0;
+        }
+    }
 }
 
 template<typename T, int capacity>
 void Queue<T, capacity>::reset()
 {
-  push_counter = 0;
-  pop_counter = 0;
-  length = 0;
+    push_counter = 0;
+    pop_counter = 0;
+    length = 0;
 }
 }

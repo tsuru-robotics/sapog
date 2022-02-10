@@ -10,10 +10,10 @@
 
 struct AnySubscription
 {
-  const char *type;
-  const char *name;
-  CanardTransferKind transfer_kind;
-  CanardRxSubscription subscription;
+    const char *type;
+    const char *name;
+    CanardTransferKind transfer_kind;
+    CanardRxSubscription subscription;
 };
 
 // This pair stores two pointers to iterators (an iterator is a pointer in implementation details), for start and end of

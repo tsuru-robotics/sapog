@@ -12,8 +12,8 @@
 // An integer only state variable that is stored in a register and retrieved at startup
 struct IntStateVariableInRegister
 {
-  std::string_view name;
-  uint16_t *state_variable;
+    std::string_view name;
+    uint16_t *state_variable;
 };
 
 extern std::pair<IntStateVariableInRegister *, IntStateVariableInRegister *> get_publish_port_iterators();

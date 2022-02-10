@@ -46,18 +46,18 @@ extern "C" {
 
 struct motor_pwm_commutation_step
 {
-  int_fast8_t positive;
-  int_fast8_t negative;
-  int_fast8_t floating;
+    int_fast8_t positive;
+    int_fast8_t negative;
+    int_fast8_t floating;
 };
 
 enum motor_pwm_phase_manip
 {
-  MOTOR_PWM_MANIP_LOW,
-  MOTOR_PWM_MANIP_HIGH,
-  MOTOR_PWM_MANIP_FLOATING,
-  MOTOR_PWM_MANIP_HALF,
-  MOTOR_PWM_MANIP_END_
+    MOTOR_PWM_MANIP_LOW,
+    MOTOR_PWM_MANIP_HIGH,
+    MOTOR_PWM_MANIP_FLOATING,
+    MOTOR_PWM_MANIP_HALF,
+    MOTOR_PWM_MANIP_END_
 };
 
 /**

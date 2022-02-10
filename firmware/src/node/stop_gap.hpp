@@ -16,22 +16,22 @@ namespace uavcan_l6
 template<typename D>
 struct DSDL final
 {
-  static constexpr std::size_t getExtent();
+    static constexpr std::size_t getExtent();
 
-  struct Serializer
-  {
-    /// Returns pointer to the internal buffer where serialized data is stored.
-    [[nodiscard]] const std::uint8_t *getBuffer() const;
+    struct Serializer
+    {
+        /// Returns pointer to the internal buffer where serialized data is stored.
+        [[nodiscard]] const std::uint8_t *getBuffer() const;
 
-    /// Returns the number of bytes stored in the internal buffer; empty option if the object is invalid.
-    [[nodiscard]] std::optional<std::size_t> serialize(const D &obj);
-  };
+        /// Returns the number of bytes stored in the internal buffer; empty option if the object is invalid.
+        [[nodiscard]] std::optional<std::size_t> serialize(const D &obj);
+    };
 
-  /// Returns the deserialized object; empty option if the serialized representation is invalid.
-  [[nodiscard]] static std::optional<D> deserialize(const std::size_t size, const std::uint8_t *const buffer);
+    /// Returns the deserialized object; empty option if the serialized representation is invalid.
+    [[nodiscard]] static std::optional<D> deserialize(const std::size_t size, const std::uint8_t *const buffer);
 
-  /// This type is not instantiable.
-  DSDL() = delete;
+    /// This type is not instantiable.
+    DSDL() = delete;
 };
 
 }  // namespace uavcan_l6

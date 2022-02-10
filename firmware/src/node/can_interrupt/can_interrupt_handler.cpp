@@ -29,33 +29,33 @@ UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX1_HANDLER);
 
 UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX0_HANDLER)
 {
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
+    UAVCAN_STM32_IRQ_PROLOGUE();
+    receive_and_queue_for_processing(1);
+    UAVCAN_STM32_IRQ_EPILOGUE();
 }
 
 
 UAVCAN_STM32_IRQ_HANDLER(STM32_CAN2_RX1_HANDLER)
 {
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(1);
-  UAVCAN_STM32_IRQ_EPILOGUE();
+    UAVCAN_STM32_IRQ_PROLOGUE();
+    receive_and_queue_for_processing(1);
+    UAVCAN_STM32_IRQ_EPILOGUE();
 }
 
 
 UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX0_HANDLER)
 {
-  UAVCAN_STM32_IRQ_PROLOGUE();
-  receive_and_queue_for_processing(0);
-  UAVCAN_STM32_IRQ_EPILOGUE();
+    UAVCAN_STM32_IRQ_PROLOGUE();
+    receive_and_queue_for_processing(0);
+    UAVCAN_STM32_IRQ_EPILOGUE();
 }
 
 
 UAVCAN_STM32_IRQ_HANDLER(STM32_CAN1_RX1_HANDLER)
 {
-  UAVCAN_STM32_IRQ_PROLOGUE();
+    UAVCAN_STM32_IRQ_PROLOGUE();
 //  palWritePad(GPIOC, 12, ~palReadPad(GPIOC, 12));
-  receive_and_queue_for_processing(0);
-  UAVCAN_STM32_IRQ_EPILOGUE();
+    receive_and_queue_for_processing(0);
+    UAVCAN_STM32_IRQ_EPILOGUE();
 }
 }

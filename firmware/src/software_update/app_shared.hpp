@@ -33,9 +33,9 @@ class CRC64
 public:
     static constexpr std::size_t Size = 8U;
 
-    void update(const std::uint8_t* const data, const std::size_t len)
+    void update(const std::uint8_t *const data, const std::size_t len)
     {
-        const auto* bytes = data;
+        const auto *bytes = data;
         for (auto remaining = len; remaining > 0; remaining--)
         {
             crc_ ^= static_cast<std::uint64_t>(*bytes) << InputShift;
@@ -56,15 +56,16 @@ public:
     }
 
     /// The current CRC value.
-    [[nodiscard]] auto get() const { return crc_ ^ Xor; }
+    [[nodiscard]] auto get() const
+    { return crc_ ^ Xor; }
 
     /// The current CRC value represented as a big-endian sequence of bytes.
     /// This method is designed for inserting the computed CRC value after the data.
     [[nodiscard]] auto getBytes() const -> std::array<std::uint8_t, Size>
     {
-        auto                           x = get();
+        auto x = get();
         std::array<std::uint8_t, Size> out{};
-        const auto                     rend = std::rend(out);
+        const auto rend = std::rend(out);
         for (auto it = std::rbegin(out); it != rend; ++it)
         {
             *it = static_cast<std::uint8_t>(x);
@@ -74,12 +75,13 @@ public:
     }
 
     /// True if the current CRC value is a correct residue (i.e., CRC verification successful).
-    [[nodiscard]] auto isResidueCorrect() const { return crc_ == Residue; }
+    [[nodiscard]] auto isResidueCorrect() const
+    { return crc_ == Residue; }
 
 private:
-    static constexpr auto Poly    = static_cast<std::uint64_t>(0x42F0'E1EB'A9EA'3693ULL);
-    static constexpr auto Mask    = static_cast<std::uint64_t>(1) << 63U;
-    static constexpr auto Xor     = static_cast<std::uint64_t>(0xFFFF'FFFF'FFFF'FFFFULL);
+    static constexpr auto Poly = static_cast<std::uint64_t>(0x42F0'E1EB'A9EA'3693ULL);
+    static constexpr auto Mask = static_cast<std::uint64_t>(1) << 63U;
+    static constexpr auto Xor = static_cast<std::uint64_t>(0xFFFF'FFFF'FFFF'FFFFULL);
     static constexpr auto Residue = static_cast<std::uint64_t>(0xFCAC'BEBD'5931'A992ULL);
 
     static constexpr auto InputShift = 56U;
@@ -122,14 +124,15 @@ private:
 ///     }
 ///
 /// Writing the data into the storage: storage.store(data).
-template <typename Container>
+template<typename Container>
 class VolatileStorage
 {
 public:
     /// The amount of memory required to store the data. This is the size of the container plus 8 bytes for the CRC.
     static constexpr auto StorageSize = sizeof(Container) + CRC64::Size;  // NOLINT
 
-    explicit VolatileStorage(std::uint8_t* const location) : ptr_(location) {}
+    explicit VolatileStorage(std::uint8_t *const location) : ptr_(location)
+    {}
 
     /// Checks if the data is available and reads it, then erases the storage to prevent deja-vu.
     /// Returns an empty option if no data is available (in that case the storage is not erased).
@@ -148,7 +151,7 @@ public:
     }
 
     /// Writes the data into the storage with CRC64 protection.
-    void store(const Container& data)
+    void store(const Container &data)
     {
         (void) std::memmove(ptr_, &data, sizeof(Container));
         CRC64 crc;
@@ -160,6 +163,6 @@ public:
 protected:
     static constexpr std::uint8_t EraseFillValue = 0xCA;
 
-    std::uint8_t* const ptr_;
+    std::uint8_t *const ptr_;
 };
 

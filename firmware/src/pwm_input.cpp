@@ -68,124 +68,124 @@ CONFIG_PARAM_INT("pwm_max_usec", 2000, 1800, 2200)
 
 static void icu_pulse_width_callback(ICUDriver *icup)
 {
-  const unsigned new_width = icuGetWidthX(icup);
+    const unsigned new_width = icuGetWidthX(icup);
 
-  if ((new_width >= MIN_VALID_PULSE_WIDTH_USEC) && (new_width <= MAX_VALID_PULSE_WIDTH_USEC))
-  {
-    _last_pulse_width_usec = new_width;
+    if ((new_width >= MIN_VALID_PULSE_WIDTH_USEC) && (new_width <= MAX_VALID_PULSE_WIDTH_USEC))
+    {
+        _last_pulse_width_usec = new_width;
 
-    chSysLockFromISR();
-    chEvtBroadcastFlagsI(&_update_event.ev_source, ALL_EVENTS);      // TODO: use C++ API
-    chSysUnlockFromISR();
-  }
+        chSysLockFromISR();
+        chEvtBroadcastFlagsI(&_update_event.ev_source, ALL_EVENTS);      // TODO: use C++ API
+        chSysUnlockFromISR();
+    }
 }
 
 static void icu_period_callback(ICUDriver *icup)
 {
-  (void) icup;
-  /*
-   * Nothing to do here.
-   * This handler is required by the ICU driver, see the link:
-   * http://forum.chibios.org/phpbb/viewtopic.php?f=3&t=2078
-   */
+    (void) icup;
+    /*
+     * Nothing to do here.
+     * This handler is required by the ICU driver, see the link:
+     * http://forum.chibios.org/phpbb/viewtopic.php?f=3&t=2078
+     */
 }
 
 static void thread(void *)
 {
-  event_listener_t listener;
-  chEvtRegisterMask(&_update_event.ev_source, &listener, ALL_EVENTS);  // TODO: use C++ API
+    event_listener_t listener;
+    chEvtRegisterMask(&_update_event.ev_source, &listener, ALL_EVENTS);  // TODO: use C++ API
 
-  const unsigned min_pulse_width_usec = configGet("pwm_min_usec");
-  const unsigned max_pulse_width_usec = configGet("pwm_max_usec");
+    const unsigned min_pulse_width_usec = configGet("pwm_min_usec");
+    const unsigned max_pulse_width_usec = configGet("pwm_max_usec");
 
-  g_logger.println("Started");
+    g_logger.println("Started");
 
-  while (!os::isRebootRequested())
-  {
-    if (chEvtWaitAnyTimeout(ALL_EVENTS, US2ST(65536)) == 0)
+    while (!os::isRebootRequested())
     {
-      if (_last_pulse_width_usec > 0)
-      {
-        g_logger.println("Timeout");
-        // We don't stop the motor here - it will be stopped automatically when TTL has expired
-      }
-      _last_pulse_width_usec = 0;
-      continue;
+        if (chEvtWaitAnyTimeout(ALL_EVENTS, US2ST(65536)) == 0)
+        {
+            if (_last_pulse_width_usec > 0)
+            {
+                g_logger.println("Timeout");
+                // We don't stop the motor here - it will be stopped automatically when TTL has expired
+            }
+            _last_pulse_width_usec = 0;
+            continue;
+        }
+
+        /*
+         * Scale the input signal into [0, 1]
+         */
+        unsigned local_copy = _last_pulse_width_usec;
+        if (local_copy < min_pulse_width_usec)
+        {
+            local_copy = min_pulse_width_usec;
+        }
+        if (local_copy > max_pulse_width_usec)
+        {
+            local_copy = max_pulse_width_usec;
+        }
+
+        float dc = (local_copy - min_pulse_width_usec) / (float) (max_pulse_width_usec - min_pulse_width_usec);
+        assert(dc >= 0);
+        assert(dc <= 1);
+
+        /*
+         * Handle start/stop corner cases
+         */
+        if (motor_is_idle() && ((dc < START_MIN_DUTY_CYCLE) || (dc > START_MAX_DUTY_CYCLE)))
+        {
+            dc = 0;
+        } else if (dc < STOP_DUTY_CYCLE)
+        {
+            dc = 0;
+        } else
+        { ; // Nothing to do
+        }
+
+        /*
+         * Pass the new command into the motor controller
+         */
+        if (dc > 0)
+        {
+            motor_set_duty_cycle(dc, COMMAND_TTL_MS);
+        } else
+        {
+            motor_stop();
+        }
     }
 
-    /*
-     * Scale the input signal into [0, 1]
-     */
-    unsigned local_copy = _last_pulse_width_usec;
-    if (local_copy < min_pulse_width_usec)
-    {
-      local_copy = min_pulse_width_usec;
-    }
-    if (local_copy > max_pulse_width_usec)
-    {
-      local_copy = max_pulse_width_usec;
-    }
-
-    float dc = (local_copy - min_pulse_width_usec) / (float) (max_pulse_width_usec - min_pulse_width_usec);
-    assert(dc >= 0);
-    assert(dc <= 1);
-
-    /*
-     * Handle start/stop corner cases
-     */
-    if (motor_is_idle() && ((dc < START_MIN_DUTY_CYCLE) || (dc > START_MAX_DUTY_CYCLE)))
-    {
-      dc = 0;
-    } else if (dc < STOP_DUTY_CYCLE)
-    {
-      dc = 0;
-    } else
-    { ; // Nothing to do
-    }
-
-    /*
-     * Pass the new command into the motor controller
-     */
-    if (dc > 0)
-    {
-      motor_set_duty_cycle(dc, COMMAND_TTL_MS);
-    } else
-    {
-      motor_stop();
-    }
-  }
-
-  g_logger.println("Going down");
+    g_logger.println("Going down");
 }
 
 void pwm_input_init(void)
 {
-  assert(STOP_DUTY_CYCLE < START_MIN_DUTY_CYCLE);
-  assert(START_MIN_DUTY_CYCLE < START_MAX_DUTY_CYCLE);
+    assert(STOP_DUTY_CYCLE < START_MIN_DUTY_CYCLE);
+    assert(START_MIN_DUTY_CYCLE < START_MAX_DUTY_CYCLE);
 
-  if (!configGet("pwm_enable"))
-  {
+    if (!configGet("pwm_enable"))
+    {
 //		g_logger.println("Disabled");
-    return;
-  }
+        return;
+    }
 
-  static THD_WORKING_AREA(_wa_thread, 1024);
-  if (!chThdCreateStatic(_wa_thread, sizeof(_wa_thread), NORMALPRIO, thread, NULL))
-  {
-    abort();
-  }
+    static THD_WORKING_AREA(_wa_thread, 1024);
+    if (!chThdCreateStatic(_wa_thread, sizeof(_wa_thread), NORMALPRIO, thread, NULL))
+    {
+        abort();
+    }
 
-  static ICUConfig icucfg = {
-    ICU_INPUT_ACTIVE_HIGH,
-    1000000,
-    icu_pulse_width_callback,
-    icu_period_callback,       // Required even if not used
-    NULL,
-    ICU_CHANNEL_1,
-    0
-  };
+    static ICUConfig icucfg = {
+        ICU_INPUT_ACTIVE_HIGH,
+        1000000,
+        icu_pulse_width_callback,
+        icu_period_callback,       // Required even if not used
+        NULL,
+        ICU_CHANNEL_1,
+        0
+    };
 
-  icuStart(&ICUD5, &icucfg);
-  icuStartCapture(&ICUD5);
-  icuEnableNotifications(&ICUD5);
+    icuStart(&ICUD5, &icucfg);
+    icuStartCapture(&ICUD5);
+    icuEnableNotifications(&ICUD5);
 }

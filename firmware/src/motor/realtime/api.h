@@ -47,24 +47,24 @@ extern "C" {
  */
 enum motor_rtctl_state
 {
-  /**
-   * Unpowered.
-   * The motor can be rotated by an external force.
-   * Next state: starting.
-   */
-  MOTOR_RTCTL_STATE_IDLE,
+    /**
+     * Unpowered.
+     * The motor can be rotated by an external force.
+     * Next state: starting.
+     */
+    MOTOR_RTCTL_STATE_IDLE,
 
-  /**
-   * Motor is attempting to start.
-   * Next state: running on success, idle on failure.
-   */
-  MOTOR_RTCTL_STATE_STARTING,
+    /**
+     * Motor is attempting to start.
+     * Next state: running on success, idle on failure.
+     */
+    MOTOR_RTCTL_STATE_STARTING,
 
-  /**
-   * Motor is running in normal mode.
-   * Next state: idle.
-   */
-  MOTOR_RTCTL_STATE_RUNNING
+    /**
+     * Motor is running in normal mode.
+     * Next state: idle.
+     */
+    MOTOR_RTCTL_STATE_RUNNING
 };
 
 /**
@@ -72,9 +72,9 @@ enum motor_rtctl_state
  */
 enum motor_rtctl_forced_rotation
 {
-  MOTOR_RTCTL_FORCED_ROT_NONE,
-  MOTOR_RTCTL_FORCED_ROT_FORWARD,
-  MOTOR_RTCTL_FORCED_ROT_REVERSE,
+    MOTOR_RTCTL_FORCED_ROT_NONE,
+    MOTOR_RTCTL_FORCED_ROT_FORWARD,
+    MOTOR_RTCTL_FORCED_ROT_REVERSE,
 };
 
 /**
@@ -82,7 +82,7 @@ enum motor_rtctl_forced_rotation
  */
 struct motor_rtctl_hardware_info
 {
-  float current_shunt_resistance;
+    float current_shunt_resistance;
 };
 
 /**

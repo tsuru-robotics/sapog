@@ -8,17 +8,17 @@ namespace config::registers
 class StorageManager
 {
 public:
-  os::stm32::ConfigStorageBackend config_storage_backend;
+    os::stm32::ConfigStorageBackend config_storage_backend;
 
-  StorageManager() noexcept;
+    StorageManager() noexcept;
 
-  std::optional<uavcan_register_Value_1_0> registerRead(const char *const register_name);
+    std::optional<uavcan_register_Value_1_0> registerRead(const char *const register_name);
 
-  bool registerWrite(const char *const register_name, const uavcan_register_Value_1_0 *const input_value);
+    bool registerWrite(const char *const register_name, const uavcan_register_Value_1_0 *const input_value);
 
-  StorageManager(StorageManager const &) = delete;
+    StorageManager(StorageManager const &) = delete;
 
-  void operator=(StorageManager const &) = delete;
+    void operator=(StorageManager const &) = delete;
 };
 
 extern StorageManager &getInstance();

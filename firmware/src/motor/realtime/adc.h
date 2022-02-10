@@ -49,10 +49,10 @@ extern const int MOTOR_ADC_MIN_BLANKING_TIME_NANOSEC;
 
 struct motor_adc_sample
 {
-  uint64_t timestamp;
-  int phase_values[3];
-  int input_voltage;
-  int input_current;
+    uint64_t timestamp;
+    int phase_values[3];
+    int input_voltage;
+    int input_current;
 };
 
 

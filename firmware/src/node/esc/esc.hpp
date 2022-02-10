@@ -27,87 +27,87 @@ using ControlMode = node::state::ControlMode;
 
 struct : IStateAwareHandler
 {
-  void operator()(node::state::State *state)
-  {
-    assert(state != nullptr);
-    printf("Readiness expired!!!\n");
-    if (state != nullptr)
+    void operator()(node::state::State *state)
     {
-      state->readiness = Readiness::STANDBY;
+        assert(state != nullptr);
+        printf("Readiness expired!!!\n");
+        if (state != nullptr)
+        {
+            state->readiness = Readiness::STANDBY;
+        }
     }
-  }
 } ttl_expiry_handler;
 
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    if (state.readiness == Readiness::ENGAGED && state.id_in_esc_group != 255)
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
     {
-      reg_udral_service_actuator_common_sp_Vector31_0_1 setpoint{};
-      size_t size = transfer->payload_size;
-      if (reg_udral_service_actuator_common_sp_Vector31_0_1_deserialize_(&setpoint,
-                                                                         (const uint8_t *) transfer->payload,
-                                                                         &size) >= 0)
-      {
-        if (state.control_mode == ControlMode::RPM)
+        if (state.readiness == Readiness::ENGAGED && state.id_in_esc_group != 255)
         {
-          float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0f / 3.14159265358979f;
-          unsigned int rpm = rotations_per_second * 60;
-          motor_set_rpm(rpm, state.ttl_milliseconds);
-          ttl_expiry_handler.state = &state;
-          motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
-          publish_esc_feedback(state);
-          transmit(state);
-          return;
-        } else if (state.control_mode == ControlMode::DUTYCYCLE)
-        {
-          float dc = setpoint.value[state.id_in_esc_group];
-          // the range is clipped in here
-          motor_set_duty_cycle(dc, state.ttl_milliseconds);
-          ttl_expiry_handler.state = &state;
-          motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
-          publish_esc_feedback(state);
-          transmit(state);
-          return;
+            reg_udral_service_actuator_common_sp_Vector31_0_1 setpoint{};
+            size_t size = transfer->payload_size;
+            if (reg_udral_service_actuator_common_sp_Vector31_0_1_deserialize_(&setpoint,
+                                                                               (const uint8_t *) transfer->payload,
+                                                                               &size) >= 0)
+            {
+                if (state.control_mode == ControlMode::RPM)
+                {
+                    float rotations_per_second = setpoint.value[state.id_in_esc_group] / 2.0f / 3.14159265358979f;
+                    unsigned int rpm = rotations_per_second * 60;
+                    motor_set_rpm(rpm, state.ttl_milliseconds);
+                    ttl_expiry_handler.state = &state;
+                    motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
+                    publish_esc_feedback(state);
+                    transmit(state);
+                    return;
+                } else if (state.control_mode == ControlMode::DUTYCYCLE)
+                {
+                    float dc = setpoint.value[state.id_in_esc_group];
+                    // the range is clipped in here
+                    motor_set_duty_cycle(dc, state.ttl_milliseconds);
+                    ttl_expiry_handler.state = &state;
+                    motor_set_current_ttl_expiry_handler(&ttl_expiry_handler);
+                    publish_esc_feedback(state);
+                    transmit(state);
+                    return;
+                }
+            }
         }
-      }
     }
-  }
 } setpoint_handler;
 
 
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    (void) state;
-    (void) transfer;
-    return;
-  }
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+    {
+        (void) state;
+        (void) transfer;
+        return;
+    }
 } sub_esc_duty_cycle_handler;
 
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    (void) state;
-    (void) transfer;
-    return;
-  }
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+    {
+        (void) state;
+        (void) transfer;
+        return;
+    }
 } sub_esc_power_handler;
 
 struct : IHandler
 {
-  void operator()(node::state::State &state, CanardRxTransfer *transfer)
-  {
-    reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
-    size_t temp_payload_size{transfer->payload_size};
-    auto result = reg_udral_physics_electricity_PowerTs_0_1_deserialize_(&power_ts,
-                                                                         (const uint8_t *) transfer->payload,
-                                                                         &temp_payload_size);
-    (void) state;
-    (void) result;
-    return;
-  }
+    void operator()(node::state::State &state, CanardRxTransfer *transfer)
+    {
+        reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
+        size_t temp_payload_size{transfer->payload_size};
+        auto result = reg_udral_physics_electricity_PowerTs_0_1_deserialize_(&power_ts,
+                                                                             (const uint8_t *) transfer->payload,
+                                                                             &temp_payload_size);
+        (void) state;
+        (void) result;
+        return;
+    }
 } reg_udral_physics_electricity_PowerTs_0_1_handler;

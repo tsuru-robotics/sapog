@@ -28,39 +28,39 @@ namespace node::loops
 
 struct : ILoopMethod
 {
-  void operator()(node::state::State &state)
-  {
-    node::essential::publish_heartbeat(state.canard, state);
-    publish_esc_feedback(state);
-    transmit(state);
-  }
+    void operator()(node::state::State &state)
+    {
+        node::essential::publish_heartbeat(state.canard, state);
+        publish_esc_feedback(state);
+        transmit(state);
+    }
 } handle_1hz_loop;
 
 struct : ILoopMethod
 {
-  void operator()(node::state::State &state)
-  {
-    publish_port_list(state.canard, state);
-    transmit(state);
-  }
+    void operator()(node::state::State &state)
+    {
+        publish_port_list(state.canard, state);
+        transmit(state);
+    }
 } handle_5_second_loop;
 
 struct : ILoopMethod
 {
-  void operator()(node::state::State &state)
-  {
-    publish_esc_status(state);
-    transmit(state);
-  }
+    void operator()(node::state::State &state)
+    {
+        publish_esc_status(state);
+        transmit(state);
+    }
 } handle_esc_status_loop;
 
 struct : ILoopMethod
 {
-  void operator()(node::state::State &state)
-  {
-    accept_transfers(state);
-    transmit(state);
-  }
+    void operator()(node::state::State &state)
+    {
+        accept_transfers(state);
+        transmit(state);
+    }
 } handle_fast_loop;
 
 Loop loops[]{Loop{handle_1hz_loop, SECOND_IN_MICROSECONDS},

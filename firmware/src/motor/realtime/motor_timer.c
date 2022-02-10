@@ -123,30 +123,30 @@ static volatile int64_t _remaining_ticks = 0;
 __attribute__((optimize(3)))
 CH_FAST_IRQ_HANDLER(TIMEVT_IRQHandler)
 {
-  if ((TIMEVT->SR & TIM_SR_CC1IF) && (TIMEVT->DIER & TIM_DIER_CC1IE))
-  {
-    TIMEVT->SR = ~TIM_SR_CC1IF;              // Acknowledge IRQ ASAP (before callback)
-
-    static const int MIN_REMAINING_TICKS = MAX_FREQUENCY / 1000000;
-
-    if (_remaining_ticks <= MIN_REMAINING_TICKS)
+    if ((TIMEVT->SR & TIM_SR_CC1IF) && (TIMEVT->DIER & TIM_DIER_CC1IE))
     {
-      TIMEVT->DIER &= ~TIM_DIER_CC1IE; // Disable this compare match
-      const uint64_t timestamp = motor_timer_hnsec() - 2;
-      motor_timer_callback(timestamp);
-    } else
-    {
-      if (_remaining_ticks >= TICKS_PER_OVERFLOW)
-      {
-        // We don't need to re-configure the CCR register - the value won't change
-        _remaining_ticks -= TICKS_PER_OVERFLOW; // Go around
-      } else
-      {
-        TIMEVT->CCR1 += _remaining_ticks;
-        _remaining_ticks = 0;                   // Go around the last time
-      }
+        TIMEVT->SR = ~TIM_SR_CC1IF;              // Acknowledge IRQ ASAP (before callback)
+
+        static const int MIN_REMAINING_TICKS = MAX_FREQUENCY / 1000000;
+
+        if (_remaining_ticks <= MIN_REMAINING_TICKS)
+        {
+            TIMEVT->DIER &= ~TIM_DIER_CC1IE; // Disable this compare match
+            const uint64_t timestamp = motor_timer_hnsec() - 2;
+            motor_timer_callback(timestamp);
+        } else
+        {
+            if (_remaining_ticks >= TICKS_PER_OVERFLOW)
+            {
+                // We don't need to re-configure the CCR register - the value won't change
+                _remaining_ticks -= TICKS_PER_OVERFLOW; // Go around
+            } else
+            {
+                TIMEVT->CCR1 += _remaining_ticks;
+                _remaining_ticks = 0;                   // Go around the last time
+            }
+        }
     }
-  }
 }
 
 /**
@@ -160,9 +160,9 @@ CH_FAST_IRQ_HANDLER(TIMEVT_IRQHandler)
 __attribute__((optimize(3)))
 CH_FAST_IRQ_HANDLER(TIMSTP_IRQHandler)
 {
-  assert(TIMSTP->SR & TIM_SR_UIF);
-  TIMSTP->SR = ~TIM_SR_UIF;
-  _raw_ticks += TICKS_PER_OVERFLOW;
+    assert(TIMSTP->SR & TIM_SR_UIF);
+    TIMSTP->SR = ~TIM_SR_UIF;
+    _raw_ticks += TICKS_PER_OVERFLOW;
 }
 
 /*
@@ -176,190 +176,190 @@ for prescaler in xrange(int(TIMEVT_INPUT_CLOCK / float(max_freq) + 0.5), 65535 +
  */
 void motor_timer_init(void)
 {
-  chSysDisable();
+    chSysDisable();
 
-  // Power-on and reset
-  TIMEVT_RCC_ENR |= TIMEVT_RCC_ENR_MASK;
-  TIMEVT_RCC_RSTR |= TIMEVT_RCC_RSTR_MASK;
-  TIMEVT_RCC_RSTR &= ~TIMEVT_RCC_RSTR_MASK;
+    // Power-on and reset
+    TIMEVT_RCC_ENR |= TIMEVT_RCC_ENR_MASK;
+    TIMEVT_RCC_RSTR |= TIMEVT_RCC_RSTR_MASK;
+    TIMEVT_RCC_RSTR &= ~TIMEVT_RCC_RSTR_MASK;
 
-  TIMSTP_RCC_ENR |= TIMSTP_RCC_ENR_MASK;
-  TIMSTP_RCC_RSTR |= TIMSTP_RCC_RSTR_MASK;
-  TIMSTP_RCC_RSTR &= ~TIMSTP_RCC_RSTR_MASK;
+    TIMSTP_RCC_ENR |= TIMSTP_RCC_ENR_MASK;
+    TIMSTP_RCC_RSTR |= TIMSTP_RCC_RSTR_MASK;
+    TIMSTP_RCC_RSTR &= ~TIMSTP_RCC_RSTR_MASK;
 
-  chSysEnable();
+    chSysEnable();
 
-  // Find the optimal prescaler value
-  uint32_t prescaler = (uint32_t) (TIMEVT_INPUT_CLOCK / ((float) MAX_FREQUENCY)); // Initial value
-  if (prescaler < 1)
-  {
-    prescaler = 1;
-  }
-
-  for (;; prescaler++)
-  {
-    ASSERT_ALWAYS(prescaler < 0xFFFF);
-
-    if (TIMEVT_INPUT_CLOCK % prescaler)
+    // Find the optimal prescaler value
+    uint32_t prescaler = (uint32_t) (TIMEVT_INPUT_CLOCK / ((float) MAX_FREQUENCY)); // Initial value
+    if (prescaler < 1)
     {
-      continue;
+        prescaler = 1;
     }
-    const uint32_t prescaled_clock = TIMEVT_INPUT_CLOCK / prescaler;
-    if (INT_1E9 % prescaled_clock)
+
+    for (;; prescaler++)
     {
-      continue;
+        ASSERT_ALWAYS(prescaler < 0xFFFF);
+
+        if (TIMEVT_INPUT_CLOCK % prescaler)
+        {
+            continue;
+        }
+        const uint32_t prescaled_clock = TIMEVT_INPUT_CLOCK / prescaler;
+        if (INT_1E9 % prescaled_clock)
+        {
+            continue;
+        }
+        break; // Ok, current prescaler value can divide the timer frequency with no remainder
     }
-    break; // Ok, current prescaler value can divide the timer frequency with no remainder
-  }
-  _nanosec_per_tick = INT_1E9 / (TIMEVT_INPUT_CLOCK / prescaler);
-  ASSERT_ALWAYS(_nanosec_per_tick < 1000);      // Make sure it is sane
+    _nanosec_per_tick = INT_1E9 / (TIMEVT_INPUT_CLOCK / prescaler);
+    ASSERT_ALWAYS(_nanosec_per_tick < 1000);      // Make sure it is sane
 
 //	printf("Motor: Timer resolution: %u nanosec\n", (unsigned)_nanosec_per_tick);
 
-  // Enable IRQ
-  nvicEnableVector(TIMEVT_IRQn, MOTOR_IRQ_PRIORITY_MASK);
-  nvicEnableVector(TIMSTP_IRQn, MOTOR_IRQ_PRIORITY_MASK);
+    // Enable IRQ
+    nvicEnableVector(TIMEVT_IRQn, MOTOR_IRQ_PRIORITY_MASK);
+    nvicEnableVector(TIMSTP_IRQn, MOTOR_IRQ_PRIORITY_MASK);
 
-  // Start the event timer
-  TIMEVT->ARR = 0xFFFF;
-  TIMEVT->PSC = (uint16_t) (prescaler - 1);
-  TIMEVT->CR1 = TIM_CR1_URS;
-  TIMEVT->SR = 0;
-  TIMEVT->EGR = TIM_EGR_UG;     // Reload immediately
-  TIMEVT->CR1 = TIM_CR1_CEN;    // Start
+    // Start the event timer
+    TIMEVT->ARR = 0xFFFF;
+    TIMEVT->PSC = (uint16_t) (prescaler - 1);
+    TIMEVT->CR1 = TIM_CR1_URS;
+    TIMEVT->SR = 0;
+    TIMEVT->EGR = TIM_EGR_UG;     // Reload immediately
+    TIMEVT->CR1 = TIM_CR1_CEN;    // Start
 
-  // Start the timestamping timer
-  TIMSTP->ARR = 0xFFFF;
-  TIMSTP->PSC = (uint16_t) (prescaler - 1);
-  TIMSTP->CR1 = TIM_CR1_URS;
-  TIMSTP->SR = 0;
-  TIMSTP->EGR = TIM_EGR_UG;     // Reload immediately
-  TIMSTP->DIER = TIM_DIER_UIE;
-  TIMSTP->CR1 = TIM_CR1_CEN;    // Start
+    // Start the timestamping timer
+    TIMSTP->ARR = 0xFFFF;
+    TIMSTP->PSC = (uint16_t) (prescaler - 1);
+    TIMSTP->CR1 = TIM_CR1_URS;
+    TIMSTP->SR = 0;
+    TIMSTP->EGR = TIM_EGR_UG;     // Reload immediately
+    TIMSTP->DIER = TIM_DIER_UIE;
+    TIMSTP->CR1 = TIM_CR1_CEN;    // Start
 }
 
 __attribute__((optimize(3)))          // To prevent code reordering
 uint64_t motor_timer_hnsec(void)
 {
-  assert(_nanosec_per_tick > 0);  // Make sure the timer was initialized
+    assert(_nanosec_per_tick > 0);  // Make sure the timer was initialized
 
 #if !NDEBUG
-  static volatile uint64_t prev_output;
-  irq_primask_disable();
-  const volatile uint64_t prev_output_sample = prev_output;
-  irq_primask_enable();
+    static volatile uint64_t prev_output;
+    irq_primask_disable();
+    const volatile uint64_t prev_output_sample = prev_output;
+    irq_primask_enable();
 #endif
 
-  volatile uint64_t ticks = 0;
-  volatile uint_fast16_t sample = 0;
+    volatile uint64_t ticks = 0;
+    volatile uint_fast16_t sample = 0;
 
-  while (1)
-  {
-    ticks = _raw_ticks;
-    sample = TIMSTP->CNT;
-
-    const volatile uint64_t ticks2 = _raw_ticks;
-
-    if (ticks == ticks2)
+    while (1)
     {
-      if (TIMSTP->SR & TIM_SR_UIF)
-      {
+        ticks = _raw_ticks;
         sample = TIMSTP->CNT;
-        ticks += TICKS_PER_OVERFLOW;
-      }
-      break;
-    }
-  }
 
-  const uint64_t output = ((ticks + sample) * _nanosec_per_tick) / 100;
+        const volatile uint64_t ticks2 = _raw_ticks;
+
+        if (ticks == ticks2)
+        {
+            if (TIMSTP->SR & TIM_SR_UIF)
+            {
+                sample = TIMSTP->CNT;
+                ticks += TICKS_PER_OVERFLOW;
+            }
+            break;
+        }
+    }
+
+    const uint64_t output = ((ticks + sample) * _nanosec_per_tick) / 100;
 #if !NDEBUG
-  irq_primask_disable();
-  // Make sure the prev output was not modified from another context.
-  if (prev_output_sample == prev_output)
-  {
-    assert(prev_output <= output);
-    prev_output = output;
-  }
-  irq_primask_enable();
+    irq_primask_disable();
+    // Make sure the prev output was not modified from another context.
+    if (prev_output_sample == prev_output)
+    {
+        assert(prev_output <= output);
+        prev_output = output;
+    }
+    irq_primask_enable();
 #endif
-  return output;
+    return output;
 }
 
 __attribute__((optimize(3)))
 void motor_timer_set_relative(int64_t delay_hnsec)
 {
-  delay_hnsec -= 1 * HNSEC_PER_USEC;
-  if (delay_hnsec < 0)
-  {
-    delay_hnsec = 0;
-  }
+    delay_hnsec -= 1 * HNSEC_PER_USEC;
+    if (delay_hnsec < 0)
+    {
+        delay_hnsec = 0;
+    }
 
-  assert(_nanosec_per_tick > 0);
-  int64_t delay_ticks = (delay_hnsec * 100) / _nanosec_per_tick;
+    assert(_nanosec_per_tick > 0);
+    int64_t delay_ticks = (delay_hnsec * 100) / _nanosec_per_tick;
 
-  /*
-   * Interrupts must be disabled completely because the following
-   * sequence requires strict timing.
-   * No port_*() functions are allowed here!
-   */
-  irq_primask_disable();
+    /*
+     * Interrupts must be disabled completely because the following
+     * sequence requires strict timing.
+     * No port_*() functions are allowed here!
+     */
+    irq_primask_disable();
 
-  if (delay_ticks <= 0xFFFF)
-  {
-    _remaining_ticks = 0;
-  } else
-  {
-    _remaining_ticks = delay_ticks - 0xFFFF;
-    delay_ticks = 0xFFFF;
-  }
+    if (delay_ticks <= 0xFFFF)
+    {
+        _remaining_ticks = 0;
+    } else
+    {
+        _remaining_ticks = delay_ticks - 0xFFFF;
+        delay_ticks = 0xFFFF;
+    }
 
-  if (delay_hnsec > HNSEC_PER_USEC)
-  {
-    TIMEVT->CCR1 = TIMEVT->CNT + delay_ticks;
-    TIMEVT->SR = ~TIM_SR_CC1IF;             // Acknowledge IRQ
-    TIMEVT->DIER |= TIM_DIER_CC1IE;         // Enable this compare match
-  } else
-  {
-    // Force the update event immediately because the delay is too small
-    TIMEVT->DIER |= TIM_DIER_CC1IE;  // Either here or at the next statement IRQ will be generated
-    TIMEVT->EGR = TIM_EGR_CC1G;
-  }
+    if (delay_hnsec > HNSEC_PER_USEC)
+    {
+        TIMEVT->CCR1 = TIMEVT->CNT + delay_ticks;
+        TIMEVT->SR = ~TIM_SR_CC1IF;             // Acknowledge IRQ
+        TIMEVT->DIER |= TIM_DIER_CC1IE;         // Enable this compare match
+    } else
+    {
+        // Force the update event immediately because the delay is too small
+        TIMEVT->DIER |= TIM_DIER_CC1IE;  // Either here or at the next statement IRQ will be generated
+        TIMEVT->EGR = TIM_EGR_CC1G;
+    }
 
-  irq_primask_enable();
+    irq_primask_enable();
 }
 
 __attribute__((optimize(3)))
 int64_t motor_timer_set_absolute(uint64_t timestamp_hnsec)
 {
-  const uint64_t current_timestamp = motor_timer_hnsec();
-  const int64_t delta = (int64_t) timestamp_hnsec - (int64_t) current_timestamp;
-  if (delta > 0)
-  {
-    motor_timer_set_relative(delta);
-  } else
-  {
-    motor_timer_set_relative(0);
-  }
-  return delta;
+    const uint64_t current_timestamp = motor_timer_hnsec();
+    const int64_t delta = (int64_t) timestamp_hnsec - (int64_t) current_timestamp;
+    if (delta > 0)
+    {
+        motor_timer_set_relative(delta);
+    } else
+    {
+        motor_timer_set_relative(0);
+    }
+    return delta;
 }
 
 void motor_timer_cancel(void)
 {
-  TIMEVT->DIER &= ~TIM_DIER_CC1IE;
-  TIMEVT->SR = ~TIM_SR_CC1IF;
+    TIMEVT->DIER &= ~TIM_DIER_CC1IE;
+    TIMEVT->SR = ~TIM_SR_CC1IF;
 }
 
 void motor_timer_hndelay(int hnsecs)
 {
-  static const int OVERHEAD_HNSEC = 1 * HNSEC_PER_USEC;
-  if (hnsecs > OVERHEAD_HNSEC)
-  {
-    hnsecs -= OVERHEAD_HNSEC;
-  } else
-  {
-    hnsecs = 0;
-  }
-  const uint64_t deadline = motor_timer_hnsec() + hnsecs;
-  while (motor_timer_hnsec() < deadline)
-  {}
+    static const int OVERHEAD_HNSEC = 1 * HNSEC_PER_USEC;
+    if (hnsecs > OVERHEAD_HNSEC)
+    {
+        hnsecs -= OVERHEAD_HNSEC;
+    } else
+    {
+        hnsecs = 0;
+    }
+    const uint64_t deadline = motor_timer_hnsec() + hnsecs;
+    while (motor_timer_hnsec() < deadline)
+    {}
 }

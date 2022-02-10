@@ -44,22 +44,22 @@ namespace board
  */
 enum class LEDColor : unsigned
 {
-  OFF = 0x000000,
-  WHITE = 0xFFFFFF,
+    OFF = 0x000000,
+    WHITE = 0xFFFFFF,
 
-  // Basic colors
-  RED = 0xFF0000,
-  YELLOW = 0xFFFF00,
-  GREEN = 0x00FF00,
-  CYAN = 0x00FFFF,
-  BLUE = 0x0000FF,
-  PURPLE = 0xFF00FF,
+    // Basic colors
+    RED = 0xFF0000,
+    YELLOW = 0xFFFF00,
+    GREEN = 0x00FF00,
+    CYAN = 0x00FFFF,
+    BLUE = 0x0000FF,
+    PURPLE = 0xFF00FF,
 
-  // Shades
-  PALE_WHITE = 0x0F0F0F,
-  DARK_RED = 0x0F0000,
-  DARK_GREEN = 0x000F00,
-  DARK_BLUE = 0x00000F
+    // Shades
+    PALE_WHITE = 0x0F0F0F,
+    DARK_RED = 0x0F0000,
+    DARK_GREEN = 0x000F00,
+    DARK_BLUE = 0x00000F
 };
 
 /**
@@ -76,56 +76,56 @@ void led_emergency_override(LEDColor color);
  */
 class LEDOverlay
 {
-  static constexpr int MAX_LAYERS = 4;
+    static constexpr int MAX_LAYERS = 4;
 
-  static LEDOverlay *layers[MAX_LAYERS];
-  static chibios_rt::Mutex mutex;
+    static LEDOverlay *layers[MAX_LAYERS];
+    static chibios_rt::Mutex mutex;
 
-  std::uint32_t color = 0;
+    std::uint32_t color = 0;
 
-  LEDOverlay &operator=(const LEDOverlay &) = delete;
+    LEDOverlay &operator=(const LEDOverlay &) = delete;
 
-  LEDOverlay(const LEDOverlay &) = delete;
+    LEDOverlay(const LEDOverlay &) = delete;
 
 public:
-  LEDOverlay()
-  {}
+    LEDOverlay()
+    {}
 
-  ~LEDOverlay()
-  { unset(); }
+    ~LEDOverlay()
+    { unset(); }
 
-  /**
-   * Accepts standard RGB hex, e.g. 0xFFFFFF for white.
-   * This function is thread-safe.
-   */
-  void set_hex_rgb(std::uint32_t hex_rgb);
+    /**
+     * Accepts standard RGB hex, e.g. 0xFFFFFF for white.
+     * This function is thread-safe.
+     */
+    void set_hex_rgb(std::uint32_t hex_rgb);
 
-  /**
-   * Accepts @ref Color.
-   * This function is thread-safe.
-   */
-  void set(LEDColor new_color)
-  { set_hex_rgb(unsigned(new_color)); }
+    /**
+     * Accepts @ref Color.
+     * This function is thread-safe.
+     */
+    void set(LEDColor new_color)
+    { set_hex_rgb(unsigned(new_color)); }
 
-  /**
-   * Accepts @ref Color.
-   * Blinks the specified color.
-   */
-  void blink(LEDColor new_color)
-  { set_hex_rgb((color > 0) ? 0 : unsigned(new_color)); }
+    /**
+     * Accepts @ref Color.
+     * Blinks the specified color.
+     */
+    void blink(LEDColor new_color)
+    { set_hex_rgb((color > 0) ? 0 : unsigned(new_color)); }
 
-  /**
-   * Returns the current color code.
-   */
-  std::uint32_t get_hex_rgb() const
-  { return color; }
+    /**
+     * Returns the current color code.
+     */
+    std::uint32_t get_hex_rgb() const
+    { return color; }
 
-  /**
-   * Makes the layer inactive.
-   * Next lower-priority layer will become active instead.
-   * This function is thread-safe.
-   */
-  void unset();
+    /**
+     * Makes the layer inactive.
+     * Next lower-priority layer will become active instead.
+     * This function is thread-safe.
+     */
+    void unset();
 };
 
 }

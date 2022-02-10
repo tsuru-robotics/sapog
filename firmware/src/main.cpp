@@ -59,52 +59,52 @@ board::LEDOverlay led_ctl;
 
 os::watchdog::Timer init()
 {
-  auto wdt = board::init(WATCHDOG_TIMEOUT);
+    auto wdt = board::init(WATCHDOG_TIMEOUT);
 
-  led_ctl.set(board::LEDColor::PALE_WHITE);
+    led_ctl.set(board::LEDColor::PALE_WHITE);
 
-  // Temperature sensor
-  int res = temperature_sensor::init();
-  if (res < 0)
-  {
-    os::lowsyslog("Failed to init temperature sensor\n");
-    board::die(res);
-  }
+    // Temperature sensor
+    int res = temperature_sensor::init();
+    if (res < 0)
+    {
+        os::lowsyslog("Failed to init temperature sensor\n");
+        board::die(res);
+    }
 
-  // Motor control (must be initialized earlier than communicaton interfaces)
-  res = motor_init(board::get_current_shunt_resistance());
-  if (res < 0)
-  {
-    board::die(res);
-  }
+    // Motor control (must be initialized earlier than communicaton interfaces)
+    res = motor_init(board::get_current_shunt_resistance());
+    if (res < 0)
+    {
+        board::die(res);
+    }
 
-  // PWM input
-  pwm_input_init();
+    // PWM input
+    pwm_input_init();
 
-  // Self test
-  res = motor_test_hardware();
-  if (res != 0)
-  {
-    board::die(res);
-  }
+    // Self test
+    res = motor_test_hardware();
+    if (res != 0)
+    {
+        board::die(res);
+    }
 
-  if (motor_test_motor())
-  {
-    os::lowsyslog("Motor is not connected or damaged\n");
-  }
+    if (motor_test_motor())
+    {
+        os::lowsyslog("Motor is not connected or damaged\n");
+    }
 
-  // Initializing console after delay to ensure that CLI is flushed
-  usleep(300000); // 0.3 seconds
-  console_init();
+    // Initializing console after delay to ensure that CLI is flushed
+    usleep(300000); // 0.3 seconds
+    console_init();
 
-  return wdt;
+    return wdt;
 }
 
 [[maybe_unused]] void do_startup_beep()
 {
-  motor_beep(1000, 100);
-  ::usleep(200 * 1000);
-  motor_beep(1000, 100);
+    motor_beep(1000, 100);
+    ::usleep(200 * 1000);
+    motor_beep(1000, 100);
 }
 
 /**
@@ -113,57 +113,57 @@ os::watchdog::Timer init()
  */
 class BackgroundConfigManager
 {
-  static constexpr float SaveDelay = 1.0F;
-  static constexpr float SaveDelayAfterError = 10.0F;
+    static constexpr float SaveDelay = 1.0F;
+    static constexpr float SaveDelayAfterError = 10.0F;
 
-  os::Logger logger{"BackgroundConfigManager"};
+    os::Logger logger{"BackgroundConfigManager"};
 
-  unsigned modification_counter_ = os::config::getModificationCounter();
-  ::systime_t last_modification_ts_ = chVTGetSystemTimeX();
-  bool pending_save_ = false;
-  bool last_save_failed_ = false;
+    unsigned modification_counter_ = os::config::getModificationCounter();
+    ::systime_t last_modification_ts_ = chVTGetSystemTimeX();
+    bool pending_save_ = false;
+    bool last_save_failed_ = false;
 
-  float getTimeSinceModification() const
-  {
-    return float(ST2MS(chVTTimeElapsedSinceX(last_modification_ts_))) / 1e3F;
-  }
+    float getTimeSinceModification() const
+    {
+        return float(ST2MS(chVTTimeElapsedSinceX(last_modification_ts_))) / 1e3F;
+    }
 
 public:
-  void poll()
-  {
-    const auto new_mod_cnt = os::config::getModificationCounter();
-
-    if (new_mod_cnt != modification_counter_)
+    void poll()
     {
-      modification_counter_ = new_mod_cnt;
-      last_modification_ts_ = chVTGetSystemTimeX();
-      pending_save_ = true;
-    }
+        const auto new_mod_cnt = os::config::getModificationCounter();
 
-    if (pending_save_)
-    {
-      if (getTimeSinceModification() > (last_save_failed_ ? SaveDelayAfterError : SaveDelay))
-      {
-        os::TemporaryPriorityChanger priority_changer(HIGHPRIO);
-        if (motor_is_idle())
+        if (new_mod_cnt != modification_counter_)
         {
-          logger.println("Saving [modcnt=%u]", modification_counter_);
-
-          const int res = os::config::save();
-          if (res >= 0)
-          {
-            pending_save_ = false;
-            last_save_failed_ = false;
-          } else
-          {
-            last_save_failed_ = true;
-            logger.println("SAVE ERROR %d '%s'",
-                           res, std::strerror(std::abs(res)));
-          }
+            modification_counter_ = new_mod_cnt;
+            last_modification_ts_ = chVTGetSystemTimeX();
+            pending_save_ = true;
         }
-      }
+
+        if (pending_save_)
+        {
+            if (getTimeSinceModification() > (last_save_failed_ ? SaveDelayAfterError : SaveDelay))
+            {
+                os::TemporaryPriorityChanger priority_changer(HIGHPRIO);
+                if (motor_is_idle())
+                {
+                    logger.println("Saving [modcnt=%u]", modification_counter_);
+
+                    const int res = os::config::save();
+                    if (res >= 0)
+                    {
+                        pending_save_ = false;
+                        last_save_failed_ = false;
+                    } else
+                    {
+                        last_save_failed_ = true;
+                        logger.println("SAVE ERROR %d '%s'",
+                                       res, std::strerror(std::abs(res)));
+                    }
+                }
+            }
+        }
     }
-  }
 };
 
 }
@@ -173,56 +173,59 @@ namespace os
 
 void applicationHaltHook()
 {
-  motor_emergency();
-  board::led_emergency_override(board::LEDColor::RED);
+    motor_emergency();
+    board::led_emergency_override(board::LEDColor::RED);
 }
 
 }
 
 int main()
 {
-  auto wdt = init();
-  chThdSetPriority(NORMALPRIO);
+    auto wdt = init();
+    chThdSetPriority(NORMALPRIO);
 
-  //do_startup_beep();
+    //do_startup_beep();
 
-  motor_confirm_initialization();
-  printf("\n\n\n\nBooted\n");
+    motor_confirm_initialization();
+    printf("\n\n\n\nBooted\n");
 
-  /*
-   * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.
-   * TODO: Refactor.
-   * TODO: Report status flags via vendor-specific status field.
-   */
-  //BackgroundConfigManager bg_config_manager;
-  uavcan_node_1_0::init();
-  while (!os::isRebootRequested())
-  {
-    wdt.reset();
-
-    if (motor_is_blocked() || !temperature_sensor::is_ok())
+    /*
+     * Here we run some high-level self diagnostics, indicating the system health via UAVCAN and LED.
+     * TODO: Refactor.
+     * TODO: Report status flags via vendor-specific status field.
+     */
+    //BackgroundConfigManager bg_config_manager;
+    uavcan_node_1_0::init();
+    while (!os::isRebootRequested())
     {
-      led_ctl.set(board::LEDColor::YELLOW);
-      if(!node::state::state.overheating){
-          node::state::state.overheating = true;
-          if(temperature_sensor::is_ok()) {
-              printf("Temperature sensor is okay but motor is blocked!\n");
-          } else {
-              printf("Temperature sensor is not okay and motor is not blocked.\n");
-          }
-      }
-    } else
-    {
-      led_ctl.set(board::LEDColor::DARK_GREEN);
+        wdt.reset();
+
+        if (motor_is_blocked() || !temperature_sensor::is_ok())
+        {
+            led_ctl.set(board::LEDColor::YELLOW);
+            if (!node::state::state.overheating)
+            {
+                node::state::state.overheating = true;
+                if (temperature_sensor::is_ok())
+                {
+                    printf("Temperature sensor is okay but motor is blocked!\n");
+                } else
+                {
+                    printf("Temperature sensor is not okay and motor is not blocked.\n");
+                }
+            }
+        } else
+        {
+            led_ctl.set(board::LEDColor::DARK_GREEN);
+        }
+
+        //bg_config_manager.poll();
+        chThdSleepMilliseconds(500);
     }
-
-    //bg_config_manager.poll();
-    chThdSleepMilliseconds(500);
-  }
-  chThdSleepMilliseconds(100);
-  motor_stop();
-  board::reboot();
-  return 0;
+    chThdSleepMilliseconds(100);
+    motor_stop();
+    board::reboot();
+    return 0;
 }
 
 

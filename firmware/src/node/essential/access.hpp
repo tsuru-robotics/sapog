@@ -30,8 +30,8 @@ std::string_view find_type_name(std::string_view request_name);
 
 struct RegisterCriteria
 {
-  bool _mutable;
-  bool persistent;
+    bool _mutable;
+    bool persistent;
 };
 
 RegisterCriteria get_response_value(std::string_view

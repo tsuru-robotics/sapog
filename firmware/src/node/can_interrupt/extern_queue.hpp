@@ -18,40 +18,40 @@
 
 struct fifo_queue_item
 {
-  CanardFrame frame{};
-  std::array<std::uint8_t, CANARD_MTU_CAN_CLASSIC> payload{};
+    CanardFrame frame{};
+    std::array<std::uint8_t, CANARD_MTU_CAN_CLASSIC> payload{};
 
-  fifo_queue_item() noexcept
-  {
-    frame.payload = payload.data();
-  }
+    fifo_queue_item() noexcept
+    {
+        frame.payload = payload.data();
+    }
 
-  ~fifo_queue_item() noexcept = default;
+    ~fifo_queue_item() noexcept = default;
 
-  fifo_queue_item(const fifo_queue_item &other) noexcept: frame(other.frame), payload(other.payload)
-  {
-    frame.payload = payload.data();
-  }
+    fifo_queue_item(const fifo_queue_item &other) noexcept: frame(other.frame), payload(other.payload)
+    {
+        frame.payload = payload.data();
+    }
 
-  auto operator=(
-    const fifo_queue_item &other
-  ) noexcept -> fifo_queue_item &
-  {
-    frame = other.frame;
-    payload = other.payload;
-    frame.payload = payload.data();
-    return *this;
-  }
+    auto operator=(
+        const fifo_queue_item &other
+    ) noexcept -> fifo_queue_item &
+    {
+        frame = other.frame;
+        payload = other.payload;
+        frame.payload = payload.data();
+        return *this;
+    }
 
-  fifo_queue_item(const fifo_queue_item &&other) = delete;
+    fifo_queue_item(const fifo_queue_item &&other) = delete;
 
-  auto operator=(
-    const fifo_queue_item &&other
-  ) noexcept -> fifo_queue_item & = delete;
+    auto operator=(
+        const fifo_queue_item &&other
+    ) noexcept -> fifo_queue_item & = delete;
 };
 namespace can_interrupt
 {
 using frame = fifo_queue_item;
 extern std::array<silver_template_library::Queue<frame, REQUIRED_FRAME_BUFFERS + 70>, BXCAN_MAX_IFACE_INDEX + 1>
-  fifo_queues;
+    fifo_queues;
 }

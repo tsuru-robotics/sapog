@@ -15,6 +15,6 @@
 /// it may change rate or make leap adjustments. The two kinds of time serve completely different purposes.
 CanardMicrosecond get_monotonic_microseconds()
 {
-  uint64_t currentTimeStamp{motor_rtctl_timestamp_hnsec()};
-  return currentTimeStamp / 10;
+    uint64_t currentTimeStamp{motor_rtctl_timestamp_hnsec()};
+    return currentTimeStamp / 10;
 }
