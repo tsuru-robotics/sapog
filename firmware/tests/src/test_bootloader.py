@@ -75,10 +75,13 @@ async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
 
 async def assert_send_empty_parameter_install_request(tester_node, node_info, command_client):
     print("Sending an invalid firmware update command with empty parameter")
-    result_response = await command_client.call(
-        uavcan.node.ExecuteCommand_1_1.Request(
-            command=uavcan.node.ExecuteCommand_1_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
-    )
+    while True:
+        result_response = await command_client.call(
+            uavcan.node.ExecuteCommand_1_1.Request(
+                command=uavcan.node.ExecuteCommand_1_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE)
+        )
+        if result_response:
+            break
     assert result_response, "Got no response"
     resp, _ = result_response
     assert isinstance(resp, uavcan.node.ExecuteCommand_1_1.Response)
@@ -121,15 +124,6 @@ async def assert_repair_device_firmware(command_client):
     assert resp.status == resp.STATUS_SUCCESS
 
 
-async def do_workaround_for_first_lost_frames_bug(tester_node, node_info):
-    try:
-        get_info_client = tester_node.make_client(uavcan.node.GetInfo_1_0, node_info.node_id)
-        gi_request = uavcan.node.GetInfo_1_0.Request()
-        await get_info_client.call(gi_request)
-    except TimeoutError:
-        pass
-
-
 @pytest.mark.asyncio
 async def test_bootloader(prepared_double_redundant_node):
     tester_node = prepared_double_redundant_node
@@ -151,7 +145,6 @@ async def test_bootloader(prepared_double_redundant_node):
         command_client.response_timeout = 1.0
         if node_info.node_id == 2:
             continue
-        do_workaround_for_first_lost_frames_bug(tester_node, node_info)
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
 
         # Launch the file server.
