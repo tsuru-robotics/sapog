@@ -17,7 +17,7 @@ from utils import get_prepared_sapogs, restart_node
 
 
 def get_valid_firmware_path():
-    return next((Path.cwd().parent.parent / "build").glob("io.px4.sapog*.application.bin"), None)
+    return str(next((Path.cwd().parent.parent / "build").glob("io.px4.sapog*.application.bin"), None).absolute())
 
 
 def create_invalid_firmware():
@@ -25,10 +25,10 @@ def create_invalid_firmware():
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(open("/dev/random", "rb").read(2000))
     assert os.path.exists(Path.cwd() / "invalid_image_for_bootloader_test.bin"), "Creating invalid image failed."
-    return broken_fw_path
+    return str(broken_fw_path)
 
 
-def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
+async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
     deadline = asyncio.get_running_loop().time() + 10.0
     count_key_not_found = 0
     while True:
@@ -58,7 +58,7 @@ def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
     assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
 
 
-def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
+async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
     deadline = asyncio.get_running_loop().time() + 120.0  # This may take some time
     while tracker.registry[node_info.node_id].heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE:
         await asyncio.sleep(1.0)
@@ -73,7 +73,7 @@ def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
     assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
 
 
-def assert_send_empty_parameter_install_request(tester_node, node_info, command_client):
+async def assert_send_empty_parameter_install_request(tester_node, node_info, command_client):
     print("Sending an invalid firmware update command with empty parameter")
     result_response = await command_client.call(
         uavcan.node.ExecuteCommand_1_1.Request(
@@ -85,7 +85,7 @@ def assert_send_empty_parameter_install_request(tester_node, node_info, command_
     assert resp.status == resp.STATUS_BAD_PARAMETER, "Status should have been STATUS_BAD_PARAMETER"
 
 
-def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker):
+async def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker):
     broken_fw_path = create_invalid_firmware()
     req = uavcan.node.ExecuteCommand_1.Request(
         command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
@@ -107,7 +107,7 @@ def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_inf
     assert_does_bootloader_have_warning_heartbeat(tracker, node_info)
 
 
-def assert_repair_device_firmware(command_client):
+async def assert_repair_device_firmware(command_client):
     valid_firmare_path = get_valid_firmware_path()
     assert valid_firmare_path, "Valid firmware doesn't exist in the folder, maybe it is not built yet."
     # REPAIR THE DEVICE BY REPLACING THE FIRMWARE WITH A VALID ONE.
@@ -121,7 +121,7 @@ def assert_repair_device_firmware(command_client):
     assert resp.status == resp.STATUS_SUCCESS
 
 
-def do_workaround_for_first_lost_frames_bug(tester_node, node_info):
+async def do_workaround_for_first_lost_frames_bug(tester_node, node_info):
     try:
         get_info_client = tester_node.make_client(uavcan.node.GetInfo_1_0, node_info.node_id)
         gi_request = uavcan.node.GetInfo_1_0.Request()
@@ -152,13 +152,13 @@ async def test_bootloader(prepared_double_redundant_node):
         if node_info.node_id == 2:
             continue
         do_workaround_for_first_lost_frames_bug(tester_node, node_info)
-        assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
+        await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
 
         # Launch the file server.
         file_server = pyuavcan.application.file.FileServer(tester_node, [Path.cwd()])
 
-        assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)
+        await assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)
 
-        assert_repair_device_firmware(command_client)
+        await assert_repair_device_firmware(command_client)
 
-        assert_does_bootloader_have_healthy_heartbeat(tracker, node_info)
+        await assert_does_bootloader_have_healthy_heartbeat(tracker, node_info)
