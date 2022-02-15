@@ -29,6 +29,7 @@ def create_invalid_firmware():
 
 
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
+    print("assert_does_bootloader_have_warning_heartbeat() beginning")
     deadline = asyncio.get_running_loop().time() + 10.0
     count_key_not_found = 0
     while True:
@@ -37,6 +38,7 @@ async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
             await asyncio.sleep(1.0)
             entry = tracker.registry[node_info.node_id]
             assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"
+            print(f"Bootloader has a health state of {entry.heartbeat.mode.value}")
             if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
                 print(
                     "Bootloader reported critical error, this means that it finished "
@@ -60,6 +62,8 @@ async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
 
 async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
     deadline = asyncio.get_running_loop().time() + 120.0  # This may take some time
+    while node_info.node_id not in tracker.registry:
+        await asyncio.sleep(0.1)
     while tracker.registry[node_info.node_id].heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE:
         await asyncio.sleep(1.0)
         assert deadline > asyncio.get_running_loop().time()
@@ -98,16 +102,23 @@ async def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, no
 
     await asyncio.sleep(3.0)
     print("Requesting the device to install an invalid firmware image: %s", req)
-    restart_response = await restart_node(tester_node, node_info.node_id)
+
+    while True:
+        restart_response = await restart_node(tester_node, node_info.node_id)
+        if restart_response:
+            break
     assert restart_response, "The device did not restart"
     await asyncio.sleep(5)
-    response = await command_client.call(req)
-    assert response, "The device did not respond to the restart request."
-    resp, _ = response
-    assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
-    assert resp.status == resp.STATUS_SUCCESS, "Execute command response was not a success"
+    while True:
+        response = await command_client.call(req)
+        if response:
+            break
+    assert response, "The device did not respond to the Execute command request."
+    response = response[0]
+    assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
+    assert response.status == response.STATUS_SUCCESS, "Execute command response was not a success"
     print("Device restarted, good; waiting for the bootloader to finish...")
-    assert_does_bootloader_have_warning_heartbeat(tracker, node_info)
+    await assert_does_bootloader_have_warning_heartbeat(tracker, node_info)
 
 
 async def assert_repair_device_firmware(command_client):
@@ -119,9 +130,13 @@ async def assert_repair_device_firmware(command_client):
         parameter=valid_firmare_path,
     )
     print("Asking the bootloader to reinstall the valid firmware: %s", req)
-    resp, _ = await command_client.call(req)
-    assert isinstance(resp, uavcan.node.ExecuteCommand_1.Response)
-    assert resp.status == resp.STATUS_SUCCESS
+    while True:
+        response = await command_client.call(req)
+        if response:
+            break
+    response = response[0]
+    assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
+    assert response.status == response.STATUS_SUCCESS
 
 
 @pytest.mark.asyncio
