@@ -160,6 +160,8 @@ async def test_bootloader(prepared_double_redundant_node):
                                              time_budget_seconds=2)
     else:
         node_info_list = prepared_sapogs
+    if len(node_info_list) == 0:
+        assert False, "There are no nodes to test"
     for index, node_info in enumerate(node_info_list):
         command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1_1, node_info.node_id)
         command_client.response_timeout = 1.0
