@@ -11,7 +11,9 @@ namespace sapog_bootloader
 class ROMBackend final : public kocherga::IROMBackend
 {
 public:
-    explicit ROMBackend(const std::size_t base_address) : base_(FLASH_BASE + base_address) {}
+    explicit ROMBackend(const std::size_t base_address)
+        : base_(FLASH_BASE + base_address) {
+    }
 
     void beginWrite() override { writer_.emplace(base_); }
 

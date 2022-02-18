@@ -120,25 +120,15 @@ private:
     {
         // clang-format off
         if (where < 0x0800'0000U) { return {}; }
-        // 16K
-        if (where < 0x0800'4000U) { return 0; }
-        if (where < 0x0800'8000U) { return 1; }
-        if (where < 0x0800'C000U) { return 2; }
-        if (where < 0x0801'0000U) { return 3; }
-        // 64K
-        if (where < 0x0802'0000U) { return 4; }
-        // 128K
-        if (where < 0x0804'0000U) { return 5; }
-        if (where < 0x0806'0000U) { return 6; }
-        if (where < 0x0808'0000U) { return 7; }
-        // clang-format on
-        return {};
+        if (where > 0x0803'FFFFU) { return {}; }
+        return (where - 0x0800'0000U) / 2048U;
     }
 
     static void eraseSector(const std::uint8_t sector_index)
     {
         Prologuer prologuer;
-        FLASH->CR = (static_cast<std::uint32_t>(sector_index) << 3U);
+        FLASH->CR |= FLASH_CR_PER_Msk;
+        FLASH->AR = static_cast<std::uint32_t>(sector_index);
         FLASH->CR |= FLASH_CR_STRT;
         waitReady();
         FLASH->CR = 0;
