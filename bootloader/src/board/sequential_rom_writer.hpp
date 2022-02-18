@@ -25,71 +25,33 @@ public:
         assert((address_ % 2U) == 0);
     }
 
-    /// The source address and the length must be aligned at two bytes.
-    /// The memory will be erased beforehand automatically as necessary.
-    bool append(const void* const what, const std::size_t how_much)
-    {
-        if (((reinterpret_cast<std::size_t>(what)) % 2 != 0) || (what == nullptr))  // NOLINT
-        {
-            return false;
-        }
-        const std::size_t original_address = address_;
-        // Erase the sectors that we're going to write into beforehand.
-        // Advance the erase sector index as we go - we don't want to erase sectors more than once because
-        // that would destroy data that we've written earlier.
-        // Note that we use granular critical sections to reduce IRQ impact.
-        for (std::size_t offset = 0; offset < how_much; offset++)
-        {
-            const auto sn = mapAddressToSectorNumber(address_);
-            address_++;
-            if (!sn)
-            {
-                return false;
-            }
-            if (*sn >= next_sector_to_erase_)
-            {
-                next_sector_to_erase_ = *sn;
-                eraseSector(next_sector_to_erase_);
-                next_sector_to_erase_++;
-            }
-        }
-        // Now the memory is ready to be written. Run the write loop, two bytes per iteration.
-        // We use a single big critical section to speed things up - writes are fast enough as they are.
-        const std::size_t       num_half_words = (how_much + 1U) / 2U;
-        volatile std::uint16_t* flashptr16     = reinterpret_cast<std::uint16_t*>(original_address);  // NOLINT
-        const auto*             ramptr16       = static_cast<const std::uint16_t*>(what);
-        {
-            Prologuer prologuer;
-            FLASH->CR = FLASH_CR_PG | FLASH_CR_PSIZE_0;
-            for (std::size_t i = 0; i < num_half_words; i++)
-            {
-                *flashptr16++ = *ramptr16++;
-                waitReady();
-            }
-            waitReady();
-            FLASH->CR = 0;
-        }
-        // Final verification - compare the memory contents with the original data.
-        return std::memcmp(what, reinterpret_cast<void*>(original_address), how_much) == 0;  // NOLINT
-    }
-
     [[nodiscard]] auto getAddress() const { return address_; }
 
     void skip(const std::size_t how_much) { address_ += how_much; }
 
 private:
+
     static void waitReady()
     {
         do
         {
             assert(!(FLASH->SR & FLASH_SR_WRPRTERR));
+#ifdef FLASH_SR_PGERR
+            assert(!(FLASH->SR & FLASH_SR_PGERR));
+#else
             assert(!(FLASH->SR & FLASH_SR_PGAERR));
-        } while (FLASH->SR & FLASH_SR_BSY);
+            assert(!(FLASH->SR & FLASH_SR_PGPERR));
+            assert(!(FLASH->SR & FLASH_SR_PGSERR));
+#endif
+        }
+        while (FLASH->SR & FLASH_SR_BSY);
         FLASH->SR |= FLASH_SR_EOP;
     }
 
-    struct Prologuer final
+    struct Prologuer
     {
+        const CriticalSectionLocker locker_;
+
         Prologuer()
         {
             waitReady();
@@ -98,7 +60,13 @@ private:
                 FLASH->KEYR = 0x45670123UL;
                 FLASH->KEYR = 0xCDEF89ABUL;
             }
-            FLASH->SR |= FLASH_SR_EOP | FLASH_SR_WRPRTERR | FLASH_SR_PGAERR;
+            FLASH->SR |= FLASH_SR_EOP | FLASH_SR_WRPRTERR |
+#ifdef FLASH_SR_PGERR
+                FLASH_SR_PGERR
+#else
+                FLASH_SR_PGAERR | FLASH_SR_PGPERR | FLASH_SR_PGSERR
+#endif
+                ;
             FLASH->CR = 0;
         }
 
@@ -106,38 +74,121 @@ private:
         {
             FLASH->CR = FLASH_CR_LOCK;  // Reset the FPEC configuration and lock
         }
-
-        Prologuer(const Prologuer&) = delete;
-        Prologuer(Prologuer&&)      = delete;
-        Prologuer& operator=(const Prologuer&) = delete;
-        Prologuer& operator=(Prologuer&&) = delete;
-
-    private:
-        [[maybe_unused]] volatile const CriticalSectionLocker locker_;
     };
 
-    static std::optional<std::uint8_t> mapAddressToSectorNumber(const std::size_t where)
+    /**
+     * This function maps an arbitrary address onto a flash sector number.
+     * It need not be implemented for MCU which do not require sector numbers for operations on flash.
+     * Returns negative if there's no match.
+     */
+
+public:
+    /**
+     * Source and destination must be aligned at two bytes.
+     */
+    bool write(const void* const what,
+               const std::size_t how_much)
     {
-        assert(where >= 0x0800'E400U);
-        if (where < 0x0800'0000U)
+        if (((reinterpret_cast<std::size_t>(address_)) % 2 != 0) ||
+            ((reinterpret_cast<std::size_t>(what)) % 2 != 0) ||
+            (reinterpret_cast<const void *>(address_) == nullptr) || (what == nullptr))
         {
-            return {};
+            assert(false);
+            return false;
         }
-        if (where > 0x0803'FFFFU)
+
+        const unsigned num_halfwords = (how_much + 1U) / 2U;
+
+        volatile std::uint16_t* flashptr16 = reinterpret_cast<std::uint16_t*>(address_);
+        const std::uint16_t* ramptr16 = static_cast<const std::uint16_t*>(what);
+
         {
-            return {};
+            Prologuer prologuer;
+
+#ifdef FLASH_CR_PSIZE_0
+            FLASH->CR = FLASH_CR_PG | FLASH_CR_PSIZE_0;
+#else
+            FLASH->CR = FLASH_CR_PG;
+#endif
+
+            for (unsigned i = 0; i < num_halfwords; i++)
+            {
+                *flashptr16++ = *ramptr16++;
+                waitReady();
+            }
+
+            waitReady();
+            FLASH->CR = 0;
         }
-        return (where - 0x0800'0000U) / 2048;
+
+        return std::memcmp(what, reinterpret_cast<const void *>(address_), how_much) == 0;
     }
 
-    static void eraseSector(const std::uint8_t sector_index)
+    /**
+     * Erases the specified region, possibly more if the region does not exactly match with the page/sector boundaries.
+     */
+    bool erase(const void* const where,
+               const std::size_t how_much)
     {
-        Prologuer prologuer;
-        FLASH->CR |= FLASH_CR_PER_Msk;
-        FLASH->AR = static_cast<std::uint32_t>(sector_index);
-        FLASH->CR |= FLASH_CR_STRT;
-        waitReady();
-        FLASH->CR = 0;
+#if defined(FLASH_CR_PER)
+        for (std::size_t blank_check_pos = reinterpret_cast<std::size_t>(where);
+            blank_check_pos < (reinterpret_cast<std::size_t>(where) + how_much);
+            blank_check_pos++)
+        {
+            if (*reinterpret_cast<const std::uint8_t*>(blank_check_pos) != 0xFF)
+            {
+
+                // Erase operation
+                {
+                    Prologuer prologuer;
+                    FLASH->CR = FLASH_CR_PER;
+                    FLASH->AR = blank_check_pos;
+                    FLASH->CR = FLASH_CR_PER | FLASH_CR_STRT;
+                    waitReady();
+                    FLASH->CR = 0;
+                }
+
+                // Immediate blank check
+                if (*reinterpret_cast<const std::uint8_t*>(blank_check_pos) != 0xFF)
+                {
+                    // Interrupt immediately, otherwise we'll be stuck here erasing each byte unsuccessfully
+                    return false;
+                }
+
+            }
+        }
+#else
+        constexpr unsigned SmallestSectorSize = 1024;
+
+        int sector_number = -1;
+
+        for (std::size_t location = reinterpret_cast<std::size_t>(where);
+             location < (reinterpret_cast<std::size_t>(where) + how_much);
+             location += SmallestSectorSize)
+        {
+            const int new_sector_number = mapAddressToSectorNumber(location);
+            if (new_sector_number < 0)
+            {
+                return false;
+            }
+            if (new_sector_number == sector_number)
+            {
+                continue;
+            }
+            sector_number = new_sector_number;
+            DEBUG_LOG("Erasing at 0x%08x, sector %d\n", unsigned(location), sector_number);
+
+            Prologuer prologuer;
+            FLASH->CR = FLASH_CR_SER | (sector_number << 3);
+            FLASH->CR |= FLASH_CR_STRT;
+            waitReady();
+            FLASH->CR = 0;
+        }
+#endif
+
+        return std::all_of(reinterpret_cast<const std::uint8_t*>(where),
+                           reinterpret_cast<const std::uint8_t*>(where) + how_much,
+                           [](std::uint8_t x) { return x == 0xFF; });
     }
 
     std::size_t  address_;

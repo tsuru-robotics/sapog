@@ -41,7 +41,8 @@ public:
             writer_->skip(adj_offset - writer_->getAddress());
         }
         assert(adj_offset == writer_->getAddress());
-        if (writer_->append(data, adj_size))
+        writer_->erase(reinterpret_cast<const void*>(writer_->getAddress()), adj_size);
+        if (writer_->write(data, adj_size))
         {
             return adj_size;
         }
