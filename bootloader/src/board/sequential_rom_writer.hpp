@@ -118,10 +118,16 @@ private:
 
     static std::optional<std::uint8_t> mapAddressToSectorNumber(const std::size_t where)
     {
-        // clang-format off
-        if (where < 0x0800'0000U) { return {}; }
-        if (where > 0x0803'FFFFU) { return {}; }
-        return (where - 0x0800'0000U) / 2048U;
+        assert(where >= 0x0800'E400U);
+        if (where < 0x0800'0000U)
+        {
+            return {};
+        }
+        if (where > 0x0803'FFFFU)
+        {
+            return {};
+        }
+        return (where - 0x0800'0000U) / 2048;
     }
 
     static void eraseSector(const std::uint8_t sector_index)

@@ -84,7 +84,7 @@ BUILD_CHIBIOS_SHELL = 1
 
 SERIAL_CLI_PORT_NUMBER = 1
 
-BOOTLOADER_SIZE = 58368
+BOOTLOADER_SIZE = 59392 # Including 256 bytes for DeviceSignatureStorage
 
 # This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
 # therefore, the minor version is not specified here.
