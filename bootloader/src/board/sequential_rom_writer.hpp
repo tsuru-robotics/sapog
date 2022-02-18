@@ -28,7 +28,7 @@ public:
     [[nodiscard]] auto getAddress() const { return address_; }
 
     void skip(const std::size_t how_much) { address_ += how_much; }
-
+    void advance_address(const std::size_t how_much) { address_ += how_much; }
 private:
 
     static void waitReady()
@@ -76,12 +76,6 @@ private:
         }
     };
 
-    /**
-     * This function maps an arbitrary address onto a flash sector number.
-     * It need not be implemented for MCU which do not require sector numbers for operations on flash.
-     * Returns negative if there's no match.
-     */
-
 public:
     /**
      * Source and destination must be aligned at two bytes.
@@ -105,12 +99,7 @@ public:
         {
             Prologuer prologuer;
 
-#ifdef FLASH_CR_PSIZE_0
-            FLASH->CR = FLASH_CR_PG | FLASH_CR_PSIZE_0;
-#else
             FLASH->CR = FLASH_CR_PG;
-#endif
-
             for (unsigned i = 0; i < num_halfwords; i++)
             {
                 *flashptr16++ = *ramptr16++;

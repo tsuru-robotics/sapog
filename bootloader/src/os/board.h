@@ -95,7 +95,6 @@
 #define VAL_GPIOECRH            0x00000000
 #define VAL_GPIOEODR            0x00000000
 
-#define FLASH_CR_PSIZE_0 16
 #define FLASH_SR_PGAERR (1 << 3)
 
 #if !defined(_FROM_ASM_)

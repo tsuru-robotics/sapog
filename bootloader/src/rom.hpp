@@ -26,25 +26,32 @@ public:
         {
             return {};
         }
-        auto adj_offset = offset;
+        volatile auto adj_offset = offset;
         auto adj_size   = size;
         if (!adjustOffsetAndSize(adj_offset, adj_size))
         {
+            chSysHalt("It is not good!");
             return {};
         }
         if (adj_offset < writer_->getAddress())
         {
+            chSysHalt("It is not good!");
             return {};
         }
         if (adj_offset > writer_->getAddress())
         {
+            chSysHalt("It is not good!");
             writer_->skip(adj_offset - writer_->getAddress());
         }
         assert(adj_offset == writer_->getAddress());
         writer_->erase(reinterpret_cast<const void*>(writer_->getAddress()), adj_size);
         if (writer_->write(data, adj_size))
         {
+            writer_->advance_address(adj_size);
             return adj_size;
+        } else
+        {
+            chSysHalt("It is not good!");
         }
         return {};
     }
@@ -56,6 +63,7 @@ public:
         auto adj_size   = size;
         if (adjustOffsetAndSize(adj_offset, adj_size))
         {
+
             std::memcpy(out_data, reinterpret_cast<const void*>(adj_offset), adj_size);  // NOLINT
             return adj_size;
         }
@@ -63,9 +71,9 @@ public:
     }
 
 private:
-    bool adjustOffsetAndSize(std::size_t& offset, std::size_t& size) const
+    bool adjustOffsetAndSize(volatile std::size_t& offset, std::size_t& size) const
     {
-        offset += base_;
+        offset += base_; // To make this a device specific address
         if (offset >= end_)
         {
             return false;
@@ -77,7 +85,7 @@ private:
         return true;
     }
 
-    const std::size_t base_;
+    volatile const std::size_t base_;
     const std::size_t end_ = FLASH_BASE + board::getFlashSize();
 
     std::optional<board::SequentialROMWriter> writer_;

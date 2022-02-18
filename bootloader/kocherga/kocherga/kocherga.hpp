@@ -1158,6 +1158,7 @@ private:
         presentation_.setNodeHealth(detail::dsdl::Heartbeat::Health::Nominal);
     }
 
+
     void handleFileReadResult(const std::optional<detail::dsdl::File::ReadResponse> response) override
     {
         if (!response)
