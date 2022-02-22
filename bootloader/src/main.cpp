@@ -79,7 +79,7 @@ int main()
     {
         boot_delay = sapog_bootloader::BootDelayAfterWatchdogTimedOut;
     }
-    static sapog_bootloader::ROMBackend rom_backend(APPLICATION_OFFSET);
+    static sapog_bootloader::ROMBackend rom_backend(APPLICATION_WITH_SIGNATURE_OFFSET);
     // Delaying to wait for print to work, which doesn't help actually
     static kocherga::Bootloader boot(rom_backend, system_info, board::getFlashSize(), bool(args), boot_delay, true);
     static const auto poll = []() {

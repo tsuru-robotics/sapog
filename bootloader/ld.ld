@@ -1,7 +1,6 @@
 /**
  * Copyright (c) 2016  Zubax Robotics  <info@zubax.com>
  */
-
 MEMORY
 {
     /*
@@ -29,18 +28,23 @@ MEMORY
     ram   : org = 0x20000000, len = 65265 /* 64K - 263 - 8 for AppShared */
 }
 
-
 __ram_start__          = ORIGIN(ram);
 __ram_size__           = LENGTH(ram);
 __ram_end__            = __ram_start__ + __ram_size__;
 
-ENTRY(Reset_Handler)
+ENTRY(Reset_Handler);
 
-PROVIDE(DeviceSignatureStorage = 0x0800E700);
-PROVIDE(AppSharedStruct = 0x2000FEF0);
+
+/*
+   The DeviceSignature is not actually used at this moment.
+   If it was used then it would erase the application if the signature was missing or invalid.
+*/
+PROVIDE(DeviceSignatureStorage = "DeviceSignatureStorage_start_address");
+PROVIDE(AppSharedStruct = 0x2000FEF0); /* I honestly don't remember how I got this address. It's supposed to be at the very end of RAM 0x20010000 - 256 */
 
 SECTIONS
 {
+
     . = 0;
     _text = .;
 

@@ -26,7 +26,7 @@ __process_stack_size__  = 0x0800;
 
 MEMORY
 {
-    flash : org = 0x0800E800, len = 202752 /* 223k 32K for bootloader, 1K for configs */
+    firmware_flash : org = 0x0800E800, len = 256k  /* 223k 32K for bootloader, 1K for configs */
     ram   : org = 0x20000000, len = 65265 /* 64K - 263 - 8 for AppShared */
 }
 
@@ -37,7 +37,7 @@ __ram_end__            = __ram_start__ + __ram_size__;
 
 ENTRY(Reset_Handler)
 
-PROVIDE(DeviceSignatureStorage = ORIGIN(flash) - 256);
+PROVIDE(DeviceSignatureStorage = ORIGIN(firmware_flash) - 256);
 PROVIDE(AppSharedStruct = 0x2000FEF0);
 
 SECTIONS
@@ -51,7 +51,7 @@ SECTIONS
         . = ALIGN(8);
         KEEP(*(.app_descriptor));
         . = ALIGN(8);
-    } > flash
+    } > firmware_flash
 
     constructors : ALIGN(4) SUBALIGN(4)
     {
@@ -59,7 +59,7 @@ SECTIONS
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE(__init_array_end = .);
-    } > flash
+    } > firmware_flash
 
     destructors : ALIGN(4) SUBALIGN(4)
     {
@@ -67,7 +67,7 @@ SECTIONS
         KEEP(*(.fini_array))
         KEEP(*(SORT(.fini_array.*)))
         PROVIDE(__fini_array_end = .);
-    } > flash
+    } > firmware_flash
 
     /*
      * This padding section must be inserted before every section with greater alignment.
@@ -86,7 +86,7 @@ SECTIONS
         . += 1;            /* This increment prevents moving location counter backwards if no alignment is needed */
         . = ALIGN(16) - 1;
         BYTE(0xFF)         /* Without this, the linker will ignore alignment */
-    } > flash
+    } > firmware_flash
 
     .text : ALIGN(16) SUBALIGN(16)
     {
@@ -100,34 +100,34 @@ SECTIONS
         *(.glue_7t)
         *(.glue_7)
         *(.gcc*)
-    } > flash
+    } > firmware_flash
 
     .ARM.extab : ALIGN(16) SUBALIGN(16)
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > flash
+    } > firmware_flash
 
     .ARM.exidx : ALIGN(16) SUBALIGN(16)
     {
         PROVIDE(__exidx_start = .);
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         PROVIDE(__exidx_end = .);
-     } > flash
+     } > firmware_flash
 
     .eh_frame_hdr : ALIGN(16) SUBALIGN(16)
     {
         *(.eh_frame_hdr)
-    } > flash
+    } > firmware_flash
 
     .eh_frame : ONLY_IF_RO
     {
         *(.eh_frame)
-    } > flash
+    } > firmware_flash
 
     .textalign : ONLY_IF_RO
     {
         . = ALIGN(8);
-    } > flash
+    } > firmware_flash
 
     . = ALIGN(4);
     _etext = .;
@@ -161,7 +161,7 @@ SECTIONS
         *(.ramtext)
         . = ALIGN(4);
         PROVIDE(_data_end = .);
-    } > ram AT > flash
+    } > ram AT > firmware_flash
 
     .bss : ALIGN(4)
     {

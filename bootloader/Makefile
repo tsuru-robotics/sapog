@@ -10,8 +10,9 @@ CSRC   = $(shell find src -name '*.c'   | sort) bxcan/bxcan.c
 
 UINCDIR = src src/os kocherga/kocherga bxcan
 
-UDEFS = -DHW_VERSION_MAJOR=$(HW_VERSION_MAJOR)           \
-        -DAPPLICATION_OFFSET=59392                       \
+UDEFS = -DHW_VERSION_MAJOR=$(HW_VERSION_MAJOR)               \
+        -DAPPLICATION_OFFSET=59392                           \
+        -DAPPLICATION_WITH_SIGNATURE_OFFSET=59136            \
         -DBXCAN_MAX_IFACE_INDEX=0
 
 # ChibiOS
@@ -31,7 +32,7 @@ USE_CPPOPT += -Wconversion -Wno-error=conversion -Wsign-promo -Wframe-larger-tha
 
 USE_LTO := no
 
-LDSCRIPT = ld.ld
+LDSCRIPT = linker.tmp.ld
 
 UDEFS += -DCORTEX_ENABLE_WFI_IDLE=1
 

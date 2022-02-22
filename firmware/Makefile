@@ -86,6 +86,7 @@ SERIAL_CLI_PORT_NUMBER = 1
 
 BOOTLOADER_SIZE = 59392 # Including 256 bytes for DeviceSignatureStorage
 
+
 # This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
 # therefore, the minor version is not specified here.
 FW_VERSION_MAJOR_MINOR_VCS_HASH := $(FW_VERSION_MAJOR).$(FW_VERSION_MINOR).$(GIT_HASH)
@@ -96,7 +97,11 @@ DDEFS += -DCORTEX_VTOR_INIT=$(BOOTLOADER_SIZE)            \
          -DBXCAN_MAX_IFACE_INDEX=1                        \
          -DBXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK=72000000
 
-LDSCRIPT= linker.ld
+COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../../bootloader/linker.tmp.ld
+
+COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../linker.tmp.ld
+
+LDSCRIPT=$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 
 USE_LTO = yes
 # Warning: GCC 4.9 with O3 and LTO breaks the code mysteriously! GCC 5.x segfaults during linking. Why GCC, why!?
@@ -111,6 +116,8 @@ CPPWARN = $(CWARN)
 COMPOUND_IMAGE_FILE := $(PROJECT)-$(HW_VERSION_MAJOR)-$(FW_VERSION_MAJOR_MINOR_VCS_HASH).compound.bin
 BOOTLOADER_DIR := $(abspath $(SAPOG_BASE)/../bootloader)
 BOOTLOADER_IMAGE := $(BOOTLOADER_DIR)/build/bootloader.bin
+
+
 
 # This rule hook is defined in the ChibiOS build system
 POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
@@ -138,6 +145,21 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 
 	# Removing temporary files
 	cd build && rm -f $(PROJECT).bin $(PROJECT).elf *.hex *.tmp.bin
+
+$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH):
+	@rm -f $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@echo \n\n>> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@cat $(SAPOG_SRC_DIR)/../linker.ld >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@echo "Created a combined linker file for the firmware"
+
+	@rm -f $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@echo \n\n>> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@cat $(SAPOG_SRC_DIR)/../../bootloader/ld.ld >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@echo "Created a combined linker file for the bootloader"
 
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
