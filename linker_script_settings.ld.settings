@@ -1,3 +1,4 @@
+/* SETTINGS START FROM linker_script_settings.ld.settings */
 "flash_start_address" = 0x8000000;
 "flash_page_size" = 2K;
 "bootloader_length_in_pages" = 29;
@@ -5,5 +6,7 @@
 /* The app also starts on this page right after the 256 bytes */
 "DeviceSignatureStorage_page" = bootloader_length_in_pages + 1;
 "DeviceSignatureStorage_start_address" = flash_start_address + DeviceSignatureStorage_page * flash_page_size;
-"DeviceSignatureSize" = 256;
-"Application_start_address" = flash_start_address + DeviceSignatureStorage_start_address + DeviceSignatureSize;
+"DeviceSignatureStorage_size" = 256;
+/* Addresses of important locations */
+"Application_start_address" = flash_start_address + DeviceSignatureStorage_start_address + DeviceSignatureStorage_size;
+/* SETTINGS END */

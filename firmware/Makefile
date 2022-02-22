@@ -103,7 +103,7 @@ COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../linker.tmp.ld
 
 LDSCRIPT=$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 
-USE_LTO = yes
+USE_LTO = no
 # Warning: GCC 4.9 with O3 and LTO breaks the code mysteriously! GCC 5.x segfaults during linking. Why GCC, why!?
 RELEASE_OPT = -O3 -fomit-frame-pointer -DNDEBUG=1 -D"CANARD_ASSERT(x)" -fno-strict-aliasing
 DEBUG_OPT = -Og -g3 -DDISABLE_WATCHDOG=1 -fno-strict-aliasing #-DNDEBUG=1 -D"CANARD_ASSERT(x)" -D"O1HEAP_ASSERT(x)"
@@ -164,10 +164,25 @@ $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH):
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
 
-dsdl:
+clean_previous_zip:
+	rm -f master.zip*
+
+clean_previous_unpacked_folder:
+	rm -rf public_regulated_data_types-master
+
+public_regulated_data_types-master: clean_previous_zip clean_previous_unpacked_folder
+	@wget https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip -q && echo "Downloaded master.zip"
+	@unzip -n master.zip > /dev/null && echo "Unpacked master.zip into the firmware folder"
+
+public_regulated_data_types: public_regulated_data_types-master
+	mkdir -p public_regulated_data_types
+	mv -v public_regulated_data_types-master/** public_regulated_data_types/
+
+generated/nunavut_out: public_regulated_data_types
+	@echo "Compiling C DSDL for UAVCAN, first for the reg folder, which includes uavcan"
 	nnvg public_regulated_data_types/reg -e h -O generated/nunavut_out -I public_regulated_data_types/uavcan
+	@echo "Compiling C DSDL for UAVCAN, first for the uavcan folder, which includes reg"
 	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
 
-
-
+dsdl: generated/nunavut_out;
 include zubax_chibios/rules_stm32f105_107.mk
