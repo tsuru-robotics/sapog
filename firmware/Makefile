@@ -117,8 +117,6 @@ COMPOUND_IMAGE_FILE := $(PROJECT)-$(HW_VERSION_MAJOR)-$(FW_VERSION_MAJOR_MINOR_V
 BOOTLOADER_DIR := $(abspath $(SAPOG_BASE)/../bootloader)
 BOOTLOADER_IMAGE := $(BOOTLOADER_DIR)/build/bootloader.bin
 
-
-
 # This rule hook is defined in the ChibiOS build system
 POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	# Building the bootloader
@@ -146,43 +144,48 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	# Removing temporary files
 	cd build && rm -f $(PROJECT).bin $(PROJECT).elf *.hex *.tmp.bin
 
-$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH):
+$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH): ../linker_script_settings.ld.settings
 	@rm -f $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@echo \n\n>> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
+	@echo "\n\n">> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 	@cat $(SAPOG_SRC_DIR)/../linker.ld >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 	@echo "Created a combined linker file for the firmware"
 
 	@rm -f $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@echo \n\n>> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
+	@echo "\n\n">> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@cat $(SAPOG_SRC_DIR)/../../bootloader/ld.ld >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@echo "Created a combined linker file for the bootloader"
 
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
 
+# DSDL related rules
+
 clean_previous_zip:
 	rm -f master.zip*
 
 clean_previous_unpacked_folder:
 	rm -rf public_regulated_data_types-master
-
-public_regulated_data_types-master: clean_previous_zip clean_previous_unpacked_folder
+public_regulated_data_types-master:
 	@wget https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip -q && echo "Downloaded master.zip"
 	@unzip -n master.zip > /dev/null && echo "Unpacked master.zip into the firmware folder"
+	@rm -f master.zip*
 
 public_regulated_data_types: public_regulated_data_types-master
 	mkdir -p public_regulated_data_types
 	mv -v public_regulated_data_types-master/** public_regulated_data_types/
+	rm -rf public_regulated_data_types-master
 
+FORCE: ;
 generated/nunavut_out: public_regulated_data_types
 	@echo "Compiling C DSDL for UAVCAN, first for the reg folder, which includes uavcan"
 	nnvg public_regulated_data_types/reg -e h -O generated/nunavut_out -I public_regulated_data_types/uavcan
 	@echo "Compiling C DSDL for UAVCAN, first for the uavcan folder, which includes reg"
 	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
 
-dsdl: generated/nunavut_out;
+dsdl: clean_previous_zip clean_previous_unpacked_folder generated/nunavut_out;
+
 include zubax_chibios/rules_stm32f105_107.mk

@@ -13,7 +13,7 @@ MEMORY
      *  32512      32768        256     Digital signature
      *  32768                           Application
      */
-    flash : org = 0x08000000, len = 59136  /* 32512 32K for the bootloader minus 256 for the signature */
+    bootloader_flash : org = 0x08000000, len = 59136  /* 32512 32K for the bootloader minus 256 for the signature */
 
     /*
      * We use both SRAM1 and SRAM2 as a single contiguous memory region.
@@ -55,7 +55,7 @@ SECTIONS
         . = ALIGN(8);
         KEEP(*(.app_descriptor));
         . = ALIGN(8);
-    } > flash
+    } > bootloader_flash
 
     constructors : ALIGN(4) SUBALIGN(4)
     {
@@ -64,7 +64,7 @@ SECTIONS
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE(__init_array_end = .);
-    } > flash
+    } > bootloader_flash
 
     destructors : ALIGN(4) SUBALIGN(4)
     {
@@ -73,7 +73,7 @@ SECTIONS
         KEEP(*(.fini_array))
         KEEP(*(SORT(.fini_array.*)))
         PROVIDE(__fini_array_end = .);
-    } > flash
+    } > bootloader_flash
 
     .text : ALIGN(4) SUBALIGN(4)
     {
@@ -92,36 +92,36 @@ SECTIONS
          * avoid gaps that contain undefined bytes (see the padding sections for details).
          */
         . = ALIGN(8);
-    } > flash
+    } > bootloader_flash
 
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > flash
+    } > bootloader_flash
 
     .ARM.exidx :
     {
         PROVIDE(__exidx_start = .);
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         PROVIDE(__exidx_end = .);
-     } > flash
+     } > bootloader_flash
 
     .eh_frame_hdr :
     {
         *(.eh_frame_hdr)
-    } > flash
+    } > bootloader_flash
 
     .eh_frame : ONLY_IF_RO
     {
         *(.eh_frame)
-    } > flash
+    } > bootloader_flash
 
     .textalign : ONLY_IF_RO
     {
         FILL(0xDEADC0DE);
         BYTE(0xFF);
         . = ALIGN(64);
-    } > flash
+    } > bootloader_flash
 
     . = ALIGN(4);
     _etext = .;
@@ -156,7 +156,7 @@ SECTIONS
         *(.ramtext)
         . = ALIGN(4);
         PROVIDE(_data_end = .);
-    } > ram AT > flash
+    } > ram AT > bootloader_flash
 
     .bss : ALIGN(4)
     {

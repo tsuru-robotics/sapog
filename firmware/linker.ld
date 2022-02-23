@@ -26,7 +26,7 @@ __process_stack_size__  = 0x0800;
 
 MEMORY
 {
-    firmware_flash : org = "Application_start_address", len = 256k  /* org 0x0800E800 223k 32K for bootloader, 1K for configs */
+    firmware_flash : org = "Application_start_address", len = 256k - bootloader_size_B  /* org 0x0800E800 223k 32K for bootloader, 1K for configs */
     ram   : org = 0x20000000, len = 65265 /* 64K - 263 - 8 for AppShared */
 }
 
