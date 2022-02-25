@@ -10,6 +10,7 @@
 const extern std::uint8_t DeviceSignatureStorage[];  // NOLINT std::array<>
 extern std::uint8_t       AppSharedStruct[];         // NOLINT std::array<>
 
+
 const PALConfig pal_default_config = {
   {VAL_GPIOAODR, VAL_GPIOACRL, VAL_GPIOACRH},
   {VAL_GPIOBODR, VAL_GPIOBCRL, VAL_GPIOBCRH},

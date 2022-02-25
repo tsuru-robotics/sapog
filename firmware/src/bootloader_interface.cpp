@@ -33,6 +33,7 @@
  ****************************************************************************/
 
 #include <cstdint>
+#include <array>
 
 namespace uavcan_node
 {
@@ -40,15 +41,31 @@ namespace uavcan_node
  * This is the Brickproof Bootloader's app descriptor.
  * Details: https://github.com/PX4/Firmware/tree/nuttx_next/src/drivers/bootloaders/src/uavcan
  */
-static const volatile struct __attribute__((packed))
+alignas(8) struct AppDescriptor
 {
-    std::uint8_t signature[8] = {'A', 'P', 'D', 'e', 's', 'c', '0', '0'};
-    std::uint64_t image_crc = 0;
-    std::uint32_t image_size = 0;
-    std::uint32_t vcs_commit = GIT_HASH;
-    std::uint8_t major_version = FW_VERSION_MAJOR;
-    std::uint8_t minor_version = FW_VERSION_MINOR;
-    std::uint8_t reserved[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-} _app_descriptor __attribute__((section(".app_descriptor")));
+    struct Flags
+    {
+        static constexpr std::uint16_t ReleaseBuild = 1U;
+        static constexpr std::uint16_t DirtyBuild = 2U;
+    };
+
+    [[maybe_unused]] std::uint64_t magic = 0x5E44'1514'6FC0'C4C7ULL;  ///< Identification and byte order detection.
+    [[maybe_unused]] std::array<std::uint8_t, 8> signature{{'A', 'P', 'D', 'e', 's', 'c', '0', '0'}};
+
+    std::uint64_t image_crc = 0;  ///< CRC-64-WE of the firmware padded to 8 bytes computed with this field =0.
+    [[maybe_unused]] std::uint32_t image_size = 0;  ///< Size of the application image in bytes padded to 8.
+
+    /// Deprecated in favor of the larger, 64-bit VCS commit field. Eventually it may be reused for other purposes.
+    [[maybe_unused]] std::uint32_t _legacy_vcs_revision_id = static_cast<std::uint32_t>(VCS_REVISION_ID >> 32U);
+
+    std::uint8_t version[2] = {FW_VERSION_MAJOR, FW_VERSION_MINOR};  // NOLINT std::array<>
+    std::uint8_t flags = Flags::ReleaseBuild | (DIRTY_BUILD ? Flags::DirtyBuild : 0U);
+    [[maybe_unused]] std::uint8_t _reserved_a{};
+
+    std::uint32_t build_timestamp_utc = BUILD_TIMESTAMP_UTC;  ///< Wraps every ~136 years. Unwrap when reading.
+    std::uint64_t vcs_revision_id = VCS_REVISION_ID;
+
+    [[maybe_unused]] std::array<std::byte, 16> _reserved_b{};
+} const volatile _app_descriptor __attribute__((used, section(".app_descriptor")));
 
 }

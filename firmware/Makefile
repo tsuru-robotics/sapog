@@ -73,8 +73,15 @@ UDEFS += -DCONFIG_PARAM_MAX_NAME_LENGTH=92
 #
 
 GIT_HASH := $(shell git rev-parse --short HEAD)
+DDEFS += -DBUILD_TIMESTAMP_UTC=$(shell date --utc +%s)
 UDEFS += -DGIT_HASH=0x$(GIT_HASH)
+UDEFS += -DVCS_REVISION_ID=0x$(shell git rev-parse --short=16 HEAD)
 
+ifeq ($(git diff) $(git status -s), "")
+    DDEFS += -DDIRTY_BUILD=0
+else
+    DDEFS += -DDIRTY_BUILD=1
+endif
 #
 # OS
 #
@@ -130,10 +137,13 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	cd build && dd if=$(BOOTLOADER_IMAGE) of=padded_bootloader.tmp.bin conv=notrunc
 	cd build && cat padded_bootloader.tmp.bin $(PROJECT).bin >$(COMPOUND_IMAGE_FILE)
 
+	cd build && $(BOOTLOADER_DIR)/../tools/kocherga_image.py --verbose $(PROJECT).bin\
+															 --side-patch $(PROJECT).elf    \
+															 --side-patch $(COMPOUND_IMAGE_FILE)
 	# Generating the signed image for the bootloader
-	cd build && ../zubax_chibios/tools/make_boot_descriptor.py $(PROJECT).bin $(PROJECT) $(HW_VERSION_MAJOR)       \
-	                                                           --also-patch-descriptor-in=$(PROJECT).elf           \
-	                                                           --also-patch-descriptor-in=$(COMPOUND_IMAGE_FILE)
+	#cd build && ../zubax_chibios/tools/make_boot_descriptor.py $(PROJECT).bin $(PROJECT) $(HW_VERSION_MAJOR)       \
+	#                                                           --also-patch-descriptor-in=$(PROJECT).elf           \
+	#                                                           --also-patch-descriptor-in=$(COMPOUND_IMAGE_FILE)
 
 	# Injecting the bootloader into the final ELF; note that we're using unpadded bootloader to preserve signature
 	cd build && $(TOOLCHAIN_PREFIX)-objcopy --add-section bootloader=$(BOOTLOADER_IMAGE)   \
@@ -179,7 +189,6 @@ public_regulated_data_types: public_regulated_data_types-master
 	mv -v public_regulated_data_types-master/** public_regulated_data_types/
 	rm -rf public_regulated_data_types-master
 
-FORCE: ;
 generated/nunavut_out: public_regulated_data_types
 	@echo "Compiling C DSDL for UAVCAN, first for the reg folder, which includes uavcan"
 	nnvg public_regulated_data_types/reg -e h -O generated/nunavut_out -I public_regulated_data_types/uavcan

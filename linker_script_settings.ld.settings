@@ -10,3 +10,4 @@
 /* Addresses of important locations */
 "Application_start_address" = DeviceSignatureStorage_start_address + DeviceSignatureStorage_size;
 /* SETTINGS END */
+/* You can use arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_" to read the values of these when they end up in the ELF file as symbols*/
