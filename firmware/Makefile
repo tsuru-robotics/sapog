@@ -137,7 +137,7 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	cd build && dd if=$(BOOTLOADER_IMAGE) of=padded_bootloader.tmp.bin conv=notrunc
 	cd build && cat padded_bootloader.tmp.bin $(PROJECT).bin >$(COMPOUND_IMAGE_FILE)
 
-	cd build && $(BOOTLOADER_DIR)/../tools/kocherga_image.py --verbose $(PROJECT).bin\
+	cd build && $(BOOTLOADER_DIR)/../tools/kocherga_image.py $(PROJECT).bin\
 															 --side-patch $(PROJECT).elf    \
 															 --side-patch $(COMPOUND_IMAGE_FILE)
 	# Generating the signed image for the bootloader

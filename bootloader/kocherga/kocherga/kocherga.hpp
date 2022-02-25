@@ -309,19 +309,25 @@ public:
 
     /// Returns the AppInfo if the app is found and its integrity is intact. Otherwise, returns an empty option.
     /// If the allow_legacy parameter is set, legacy app descriptors will be accepted, too.
-    [[nodiscard]] auto identifyApplication(const bool allow_legacy = false) const -> std::optional<AppInfo>
+    [[nodiscard]] auto identifyApplication(const volatile bool allow_legacy = false) const -> std::optional<AppInfo>
     {
         for (std::size_t offset = 0; offset < max_app_size_; offset += AppDescriptor::MagicSize)
         {
             AppDescriptor desc{};
             if (sizeof(desc) == backend_.read(offset, reinterpret_cast<std::byte*>(&desc), sizeof(desc)))
             {
-                const bool match = desc.isValid(max_app_size_) || (allow_legacy && desc.isValidLegacy(max_app_size_));
-                if (match && validateImageCRC(offset + AppDescriptor::CRCOffset,
-                                              static_cast<std::size_t>(desc.getAppInfo().image_size),
-                                              desc.getAppInfo().image_crc))
+                const volatile bool matches_new_appdesc = desc.isValid(max_app_size_);
+                const volatile bool matches_old_appdesc = desc.isValidLegacy(max_app_size_);
+                const volatile bool match = matches_new_appdesc || (allow_legacy && matches_old_appdesc);
+                if (match)
                 {
-                    return desc.getAppInfo();
+                    const volatile bool is_crc_valid = validateImageCRC(offset + AppDescriptor::CRCOffset,
+                                              static_cast<std::size_t>(desc.getAppInfo().image_size),
+                                              desc.getAppInfo().image_crc);
+                    if(is_crc_valid)
+                    {
+                        return desc.getAppInfo();
+                    }
                 }
             }
             else

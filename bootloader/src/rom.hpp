@@ -63,7 +63,6 @@ public:
         auto adj_size   = size;
         if (adjustOffsetAndSize(adj_offset, adj_size))
         {
-
             std::memcpy(out_data, reinterpret_cast<const void*>(adj_offset), adj_size);  // NOLINT
             return adj_size;
         }

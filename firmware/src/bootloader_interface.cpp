@@ -41,7 +41,7 @@ namespace uavcan_node
  * This is the Brickproof Bootloader's app descriptor.
  * Details: https://github.com/PX4/Firmware/tree/nuttx_next/src/drivers/bootloaders/src/uavcan
  */
-alignas(8) struct AppDescriptor
+alignas(16) struct AppDescriptor
 {
     struct Flags
     {
