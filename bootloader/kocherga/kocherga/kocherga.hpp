@@ -208,6 +208,11 @@ public:
         // No effect by default.
     }
 
+    virtual std::size_t getAbsoluteAddressFromOffset(const std::size_t offset) const = 0;
+
+    virtual std::size_t getBaseAddress() const = 0;
+
+    virtual void setNewBase(const std::size_t base_address) = 0;
     /// @return Number of bytes written; a value less than size indicates an overflow; empty option indicates failure.
     [[nodiscard]] virtual auto write(const std::size_t offset, const std::byte* const data, const std::size_t size)
         -> std::optional<std::size_t> = 0;
@@ -318,13 +323,14 @@ public:
             {
                 const volatile bool matches_new_appdesc = desc.isValid(max_app_size_);
                 const volatile bool matches_old_appdesc = desc.isValidLegacy(max_app_size_);
-                const volatile bool match = matches_new_appdesc || (allow_legacy && matches_old_appdesc);
+                const volatile bool match               = matches_new_appdesc || (allow_legacy && matches_old_appdesc);
                 if (match)
                 {
-                    const volatile bool is_crc_valid = validateImageCRC(offset + AppDescriptor::CRCOffset,
-                                              static_cast<std::size_t>(desc.getAppInfo().image_size),
-                                              desc.getAppInfo().image_crc);
-                    if(is_crc_valid)
+                    const volatile bool is_crc_valid =
+                        validateImageCRC(offset + AppDescriptor::CRCOffset,
+                                         static_cast<std::size_t>(desc.getAppInfo().image_size),
+                                         desc.getAppInfo().image_crc);
+                    if (is_crc_valid)
                     {
                         return desc.getAppInfo();
                     }
@@ -380,9 +386,9 @@ private:
                   "Check your compiler");
     static_assert(64 == sizeof(AppDescriptor), "Check your compiler");
 
-    [[nodiscard]] auto validateImageCRC(const std::size_t   crc_storage_offset,
-                                        const std::size_t   image_size,
-                                        const std::uint64_t image_crc) const -> bool
+    [[nodiscard]] auto validateImageCRC(const volatile std::size_t crc_storage_offset,
+                                        const volatile std::size_t          image_size,
+                                        const volatile std::uint64_t        image_crc) const -> bool
     {
         std::array<std::uint8_t, ROMBufferSize> buffer{};
         CRC64                                   crc;
@@ -408,6 +414,10 @@ private:
         offset += CRC64::Size;
         crc.update(dummy.data(), CRC64::Size);
         // Read the rest of the image in large chunks.
+        const volatile std::size_t reading_this = backend_.getBaseAddress();
+        const volatile std::size_t reading_this2 = backend_.getAbsoluteAddressFromOffset(offset);
+        (void) reading_this;
+        (void) reading_this2;
         while (offset < image_size)
         {
             const auto res = backend_.read(offset,
@@ -1163,7 +1173,6 @@ private:
         backend_.beginWrite();
         presentation_.setNodeHealth(detail::dsdl::Heartbeat::Health::Nominal);
     }
-
 
     void handleFileReadResult(const std::optional<detail::dsdl::File::ReadResponse> response) override
     {

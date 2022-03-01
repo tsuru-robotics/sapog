@@ -11,13 +11,21 @@ namespace sapog_bootloader
 class ROMBackend final : public kocherga::IROMBackend
 {
 public:
-    explicit ROMBackend(const std::size_t base_address)
-        : base_(FLASH_BASE + base_address) {
-    }
+    explicit ROMBackend(const std::size_t base_address) : base_(FLASH_BASE + base_address) {}
 
     void beginWrite() override { writer_.emplace(base_); }
 
     void endWrite() override { writer_.reset(); }
+
+    virtual std::size_t getAbsoluteAddressFromOffset(const std::size_t offset) const {
+        return base_ + offset;
+    }
+
+    virtual std::size_t getBaseAddress() const {
+        return writer_->getAddress();
+    }
+
+    virtual void setNewBase(const std::size_t base_address) { base_ = base_address; }
 
     [[nodiscard]] auto write(const std::size_t offset, const std::byte* const data, const std::size_t size)
         -> std::optional<std::size_t> override
@@ -27,7 +35,7 @@ public:
             return {};
         }
         volatile auto adj_offset = offset;
-        auto adj_size   = size;
+        auto          adj_size   = size;
         if (!adjustOffsetAndSize(adj_offset, adj_size))
         {
             chSysHalt("It is not good!");
@@ -49,7 +57,8 @@ public:
         {
             writer_->advance_address(adj_size);
             return adj_size;
-        } else
+        }
+        else
         {
             chSysHalt("It is not good!");
         }
@@ -72,7 +81,7 @@ public:
 private:
     bool adjustOffsetAndSize(volatile std::size_t& offset, std::size_t& size) const
     {
-        offset += base_; // To make this a device specific address
+        offset += base_;  // To make this a device specific address
         if (offset >= end_)
         {
             return false;
@@ -84,8 +93,8 @@ private:
         return true;
     }
 
-    volatile const std::size_t base_;
-    const std::size_t end_ = FLASH_BASE + board::getFlashSize();
+    volatile std::size_t base_;
+    const std::size_t    end_ = FLASH_BASE + board::getFlashSize();
 
     std::optional<board::SequentialROMWriter> writer_;
 };
