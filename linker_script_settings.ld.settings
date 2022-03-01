@@ -4,10 +4,11 @@
 "bootloader_size_pages" = 29;
 "bootloader_size_B" = bootloader_size_pages * flash_page_size;
 /* The app also starts on this page right after the 256 bytes */
-"DeviceSignatureStorage_page" = bootloader_size_pages + 1;
-"DeviceSignatureStorage_start_address" = flash_start_address + DeviceSignatureStorage_page * flash_page_size;
+"DeviceSignatureStorage_start_address" = flash_start_address + bootloader_size_B;
 "DeviceSignatureStorage_size" = 256;
 /* Addresses of important locations */
-"Application_start_address" = DeviceSignatureStorage_start_address + DeviceSignatureStorage_size;
+/* The Application starts on the next page after the page that the DeviceSignature happened to be on */
+/* The application needs its own page because erasing is done page by page */
+"Application_start_address" = (DeviceSignatureStorage_start_address / flash_page_size + 1) * flash_page_size;
 /* SETTINGS END */
 /* You can use arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_" to read the values of these when they end up in the ELF file as symbols*/
