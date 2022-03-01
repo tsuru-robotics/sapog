@@ -326,9 +326,11 @@ public:
                 const volatile bool match               = matches_new_appdesc || (allow_legacy && matches_old_appdesc);
                 if (match)
                 {
+                    const volatile auto app_info = desc.getAppInfo();
+                    const volatile auto image_size_debug = app_info.image_size;
                     const volatile bool is_crc_valid =
                         validateImageCRC(offset + AppDescriptor::CRCOffset,
-                                         static_cast<std::size_t>(desc.getAppInfo().image_size),
+                                         static_cast<std::size_t>(image_size_debug),
                                          desc.getAppInfo().image_crc);
                     if (is_crc_valid)
                     {
@@ -433,7 +435,8 @@ private:
                 return false;
             }
         }
-        return crc.get() == image_crc;
+        const volatile auto crc_value = crc.get();
+        return crc_value == image_crc;
     }
 
     static constexpr std::size_t ROMBufferSize = 256;
