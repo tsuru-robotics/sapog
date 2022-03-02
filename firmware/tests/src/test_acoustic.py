@@ -70,10 +70,7 @@ class TestAcoustics:
         await configure_embedded_registers(common_registers, tester_node, 22)
         arps = [[(196.00, 0.05), (246.94, 0.05), (293.66, 0.2)]]
         await command_save(tester_node, 21)
-        await command_save(tester_node, 22)
         if await restart_node(tester_node, 21) is None:
-            assert False, f"Node {21} couldn't be restarted"
-        if await restart_node(tester_node, 22) is None:
             assert False, f"Node {21} couldn't be restarted"
         await asyncio.sleep(1)
         our_allocator = make_simple_node_allocator()

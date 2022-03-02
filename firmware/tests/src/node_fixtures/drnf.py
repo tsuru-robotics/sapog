@@ -6,7 +6,7 @@ from make_registry import make_registry
 
 @pytest.fixture(scope="class")
 def prepared_node():
-    registry01 = make_registry(7)
+    registry01 = make_registry(7, use_all_interfaces=True)
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
 
 

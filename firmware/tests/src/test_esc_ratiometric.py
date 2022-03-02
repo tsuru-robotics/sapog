@@ -87,7 +87,7 @@ class SpeedController:
 class TestESC:
     @staticmethod
     @pytest.mark.asyncio
-    async def test_rpm_esc_control(prepared_double_redundant_node):
+    async def test_ratiometric_esc_control(prepared_double_redundant_node):
         tester_node = prepared_double_redundant_node
         prepared_sapogs = await get_prepared_sapogs(tester_node)
         our_allocator = None
@@ -107,12 +107,14 @@ class TestESC:
                          uavcan.register.Value_1_0(natural16=uavcan.primitive.array.Natural16_1_0([sid_gen()])), None,
                          None),
         ]
+
         sid_gen2.set(sid_gen.get())
 
         def make_device_specific_registry() -> typing.List[RegisterPair]:
             return [
                 OnlyEmbeddedDeviceRegister("control_mode_rpm",
-                                           uavcan.register.Value_1_0(bit=uavcan.primitive.array.Bit_1_0(value=[True]))),
+                                           uavcan.register.Value_1_0(
+                                               bit=uavcan.primitive.array.Bit_1_0(value=[False]))),
                 OnlyEmbeddedDeviceRegister("ttl_milliseconds",
                                            uavcan.register.Value_1_0(
                                                natural16=uavcan.primitive.array.Natural16_1_0([300]))),
@@ -169,7 +171,7 @@ class TestESC:
         await readiness_pub.publish(readiness_message)
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
         # dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
-        speed_controller = SpeedController(2)
+        speed_controller = SpeedController(len(node_info_list))
         assert len(node_info_list) >= 1, "Please restart" \
                                          " the nodes before continuing. This test was supposed" \
                                          "to allocate nodes and then keep the info about them. "
@@ -189,11 +191,14 @@ class TestESC:
                         register.actual_subscription.receive_in_background(receive_dynamics)
 
         async def run_first_motor():
-            speed_controller.change_speed(0, rpm_to_radians_per_second(200))
+            speed_controller.change_speed(1, 0.5)
 
         async def run_second_motor():
-            await asyncio.sleep(5)
-            speed_controller.change_speed(1, rpm_to_radians_per_second(200))
+            speed_controller.change_speed(1, 0.5)
+            # speed_controller.change_speed(0, 0.6)  # rpm_to_radians_per_second(200))
+            # for i2 in range(1, 100):
+            #     speed_controller.change_speed(1, i2 / 20)  # rpm_to_radians_per_second(200))
+            #     await asyncio.sleep(0.1)
 
         asyncio.create_task(run_first_motor())
         asyncio.create_task(run_second_motor())
