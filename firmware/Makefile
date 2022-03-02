@@ -72,7 +72,7 @@ UDEFS += -DCONFIG_PARAM_MAX_NAME_LENGTH=92
 # Git commit hash
 #
 
-GIT_HASH := $(shell git rev-parse --short HEAD)
+GIT_HASH := $(shell git rev-parse --short=32 HEAD)
 DDEFS += -DBUILD_TIMESTAMP_UTC=$(shell date --utc +%s)
 UDEFS += -DGIT_HASH=0x$(GIT_HASH)
 UDEFS += -DVCS_REVISION_ID=0x$(shell git rev-parse --short=16 HEAD)

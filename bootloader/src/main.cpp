@@ -53,7 +53,7 @@ constexpr std::chrono::seconds BootDelayAfterWatchdogTimedOut(20);
     kocherga::SystemInfo out{};
     out.hardware_version = board::detectHardwareVersion();
     out.unique_id = board::readUniqueID();
-    out.node_name = "io.px.sapog";
+    out.node_name = "io.px4.sapog";
     if (coa)
     {
         out.certificate_of_authenticity_len = coa->size();
