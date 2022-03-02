@@ -9,8 +9,6 @@
 #include "shell.h"
 #include "board/sys.hpp"
 
-extern "C" void console_init();
-
 namespace sapog_bootloader
 {
 namespace
@@ -149,26 +147,8 @@ int main()
         }
         {
             board::RAIITestPointToggler<1> tp_toggler;
-            next_poll_at = chThdSleepUntilWindowed(next_poll_at, next_poll_at + chTimeUS2I(100));
+            next_poll_at = chThdSleepUntilWindowed(next_poll_at, next_poll_at + chTimeUS2I(10));
         }
     } while (!fin);
     sapog_bootloader::finalize(fin.value());
-}
-
-#define COMMAND(cmd)    {#cmd, cmd_##cmd},
-static const ShellCommand _commands[] =
-    {
-        {NULL, NULL}
-    };
-
-
-static const ShellConfig _config = {(BaseSequentialStream *) &STDOUT_SD, _commands};
-
-static THD_WORKING_AREA(_wa_shell, 1024);
-
-void console_init(void)
-{
-    shellInit();
-
-    ASSERT_ALWAYS(shellCreateStatic(&_config, _wa_shell, sizeof(_wa_shell), LOWPRIO));
 }
