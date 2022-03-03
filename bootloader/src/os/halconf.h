@@ -20,7 +20,7 @@
 #define HAL_USE_QSPI                        FALSE
 #define HAL_USE_RTC                         FALSE
 #define HAL_USE_SDC                         FALSE
-#define HAL_USE_SERIAL                      TRUE
+#define HAL_USE_SERIAL                      FALSE
 #define HAL_USE_SERIAL_USB                  FALSE
 #define HAL_USE_SPI                         FALSE
 #define HAL_USE_UART                        FALSE

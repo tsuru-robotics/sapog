@@ -81,7 +81,6 @@
 #define PORT_INT_REQUIRED_STACK         512
 
 #if !defined(__ASSEMBLER__) && !defined(__cplusplus)
-extern void systemHaltHook(const char*);
 #endif
 #define CH_CFG_SYSTEM_HALT_HOOK(reason)     systemHaltHook(reason)
 

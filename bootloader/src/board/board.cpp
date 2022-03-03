@@ -91,8 +91,6 @@ ResetCause init(const RGB& initial_color)
         reset_cause = ResetCause::Watchdog;
     }
 
-    sdStart(&STDOUT_SD, nullptr);
-
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;  // CAN2 is not used.
 
     kickWatchdog();

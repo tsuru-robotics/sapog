@@ -205,9 +205,6 @@ void chSysHalt(const char *reason) {
   /* Pointing to the passed message.*/
   ch.dbg.panic_msg = reason;
 
-  /* Halt hook code, usually empty.*/
-  CH_CFG_SYSTEM_HALT_HOOK(reason);
-
   /* Harmless infinite loop.*/
   while (true) {
   }

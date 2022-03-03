@@ -152,8 +152,8 @@
 #define STM32_SERIAL_UART4_PRIORITY         12
 #define STM32_SERIAL_UART5_PRIORITY         12
 // SERIAL driver system settings.
-#define STDOUT_SD                           SD1
-#define STDIN_SD                            STDOUT_SD
+//#define STDOUT_SD                           SD1
+//#define STDIN_SD                            STDOUT_SD
 /*
  * SPI driver system settings.
  */
