@@ -44,7 +44,13 @@ void publish_esc_feedback(node::state::State &state)
             fb.heartbeat = reg_udral_service_common_Heartbeat_0_1{};
             fb.heartbeat.readiness.value = static_cast<uint8_t>(state.readiness);
             fb.heartbeat.health = uavcan_node_Health_1_0{};
-            fb.heartbeat.health.value = static_cast<uint8_t>(state.health);
+            if (board::detect_hardware_version().minor == 3 && palReadPad(GPIOA, 6))
+            {
+                fb.heartbeat.health.value = uavcan_node_Health_1_0_CAUTION;
+            } else
+            {
+                fb.heartbeat.health.value = uavcan_node_Health_1_0_NOMINAL;
+            }
             fb.demand_factor_pct = static_cast<unsigned>(motor_get_duty_cycle() * 100 + 0.5F);
             auto res = serializer.serialize(fb);
             if (res.has_value())

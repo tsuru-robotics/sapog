@@ -45,17 +45,6 @@
 #include <zubax_chibios/config/config.h>
 
 
-#define ADC_REF_VOLTAGE          3.3f
-#define ADC_RESOLUTION           12
-
-#define NUM_SAMPLES_PER_ADC      4
-
-/**
- * One ADC sample at maximum speed takes 14 cycles; max ADC clock at 72 MHz input is 12 MHz, so one ADC sample is:
- *    (1 / 12M) * 14 = 1.17 usec
- */
-#define SAMPLE_DURATION_NANOSEC  1170
-
 /**
  * ADC will be triggered at this time before the PWM mid cycle.
  */
@@ -238,20 +227,3 @@ struct motor_adc_sample motor_adc_get_last_sample(void)
     return ret;
 }
 
-float motor_adc_convert_input_voltage(int raw)
-{
-    static const float RTOP = 10.0F;
-    static const float RBOT = 1.3F;
-    static const float SCALE = (RTOP + RBOT) / RBOT;
-    const float unscaled = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
-    return unscaled * SCALE;
-}
-
-float motor_adc_convert_input_current(int raw)
-{
-    // http://www.diodes.com/datasheets/ZXCT1051.pdf
-    const float vout = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
-    const float vsense = vout / 10;
-    const float iload = vsense / _shunt_resistance;
-    return iload;
-}

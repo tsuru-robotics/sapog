@@ -5,12 +5,6 @@
  */
 #pragma once
 
-/*
- * Copyright (c) 2022 Zubax, zubax.com
- * Distributed under the MIT License, available in the file LICENSE.
- * Author: Silver Valdvee <silver.valdvee@zubax.com>
- */
-
 #include <uavcan/node/ExecuteCommand_1_1.h>
 #include <cstdio>
 #include <node/units.hpp>
@@ -20,7 +14,6 @@
 #include "node/commands/commands.hpp"
 #include "board/board.hpp"
 #include "node/interfaces/IHandler.hpp"
-#include "software_update/util.hpp"
 #include <node/stop_gap.hpp>
 #include <cstring>
 #include <string_view>

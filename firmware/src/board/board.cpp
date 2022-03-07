@@ -41,7 +41,7 @@
 #include <board/unique_id.h>
 #include <cstdio>
 #include "o1heap/o1heap.h"
-#include "software_update/util.hpp"
+#include "motor/realtime/adc.h"
 
 extern "C" void _unhandled_exception()
 {
@@ -198,6 +198,8 @@ int get_max_can_interface_index()
             return 1;
         case 2:
             return 0;
+        case 3:
+            return 1;
     }
     assert(false);
     return 0;
@@ -215,6 +217,10 @@ float get_current_shunt_resistance()
         case 2:                // Kotleta
         {
             return 1e-3F;
+        }
+        case 3:
+        {
+            return 2e-4F; // 200 micro Ohms
         }
         default:
         {
@@ -254,6 +260,64 @@ bool try_write_device_signature(const DeviceSignature &sign)
 
 extern "C"
 {
+float motor_adc_convert_input_voltage(int raw)
+{
+    static float top_resistance = 10.0F;
+    static float bottom_resistance = 1.3F;
+    switch (board::detect_hardware_version().minor)
+    {
+        case 0:                // Sapog Reference Hardware
+        case 1:                // Zubax Orel
+        case 2:                // Kotleta
+        {
+            top_resistance = 10.0F * 1000;
+            bottom_resistance = 1.3F * 1000;
+            break;
+        }
+        case 3:                // Valenok
+        {
+            top_resistance = 110.0F * 1000;
+            bottom_resistance = 3.3F * 1000;
+            break;
+        }
+        default:
+        {
+            board::die(0);
+        }
+    }
+    static const float SCALE = (top_resistance + bottom_resistance) / bottom_resistance;
+    const float unscaled = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
+    return unscaled * SCALE;
+}
+
+float motor_adc_convert_input_current(int raw)
+{
+    // http://www.diodes.com/datasheets/ZXCT1051.pdf
+    int gain = 10;
+    switch (board::detect_hardware_version().minor)
+    {
+        case 0:                // Sapog Reference Hardware
+        case 1:                // Zubax Orel
+        case 2:                // Kotleta
+        {
+            gain = 10;
+            break;
+        }
+        case 3:                // Valenok
+        {
+            gain = 20;
+            break;
+        }
+        default:
+        {
+            board::die(0);
+        }
+    }
+    const float vout = raw * (ADC_REF_VOLTAGE / (float) (1 << ADC_RESOLUTION));
+    const float vsense = vout / gain;
+    const float iload = vsense / board::get_current_shunt_resistance();
+    return iload;
+}
 
 /// Called from ChibiOS init
 void __early_init()

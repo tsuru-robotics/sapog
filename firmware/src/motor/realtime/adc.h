@@ -40,6 +40,17 @@
 extern "C" {
 #endif
 
+#define ADC_REF_VOLTAGE          3.3f
+#define ADC_RESOLUTION           12
+
+#define NUM_SAMPLES_PER_ADC      4
+
+/**
+ * One ADC sample at maximum speed takes 14 cycles; max ADC clock at 72 MHz input is 12 MHz, so one ADC sample is:
+ *    (1 / 12M) * 14 = 1.17 usec
+ */
+#define SAMPLE_DURATION_NANOSEC  1170
+
 #define MOTOR_ADC_RESOLUTION  12
 
 extern const int MOTOR_ADC_SYNC_ADVANCE_NANOSEC;

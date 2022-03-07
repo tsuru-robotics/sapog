@@ -44,11 +44,13 @@ namespace temperature_sensor
 {
 namespace
 {
-
-static constexpr unsigned SENSOR_ADDRESS = 0b1001000;
+static constexpr auto max_number_of_sensors = 3;
+std::array<std::optional<unsigned>, max_number_of_sensors> sensor_addresses;
+std::array<std::optional<std::int16_t>, max_number_of_sensors> temperatures;
 static constexpr std::int16_t KELVIN_OFFSET = 273;
+int available_temperature_sensors;
 
-std::int16_t temperature = -1;
+
 bool functional = false;
 
 std::int16_t convert_lm75b_to_kelvin(const std::array<std::uint8_t, 2> &raw)
@@ -61,15 +63,42 @@ std::int16_t convert_lm75b_to_kelvin(const std::array<std::uint8_t, 2> &raw)
     return x / 8 + KELVIN_OFFSET;
 }
 
-std::int16_t try_read()
+std::array<std::optional<std::int16_t>, max_number_of_sensors> try_read()
 {
-    const std::array<std::uint8_t, 1> tx = {0};
-    std::array<std::uint8_t, 2> rx;
-    if (board::i2c_exchange(SENSOR_ADDRESS, tx, rx) < 0)
+    std::array<std::optional<std::int16_t>, max_number_of_sensors> result{};
+    int count = 0;
+    for (auto &sensor_address: sensor_addresses)
     {
-        return -1;
+        const std::array<std::uint8_t, 1> tx = {0};
+        std::array<std::uint8_t, 2> rx;
+        if (!sensor_address.has_value() || board::i2c_exchange(sensor_address.value(), tx, rx) < 0)
+        {
+            result[count] = {};
+        }
+        result[count] = convert_lm75b_to_kelvin(rx);
+        count++;
     }
-    return convert_lm75b_to_kelvin(rx);
+    return result;
+}
+
+
+std::optional<std::int16_t> read_maximum_temperature()
+{
+    std::int16_t current_maximum = -32768;
+    for (auto &temperature: try_read())
+    {
+        if (temperature.has_value() && temperature > current_maximum)
+        {
+            current_maximum = temperature.value();
+        }
+    }
+    if (current_maximum <= 0)
+    {
+        return {};
+    } else
+    {
+        return current_maximum;
+    }
 }
 
 class : public chibios_rt::BaseStaticThread<128>
@@ -90,16 +119,18 @@ class : public chibios_rt::BaseStaticThread<128>
                 // When the motor is starting, I2C goes bananas
                 continue;
             }
-
-            const std::int16_t new_temp = try_read();
-            if (new_temp >= 0)
+            for (auto &new_temp: try_read())
             {
-                temperature = std::int16_t((std::int32_t(temperature) * 7 + new_temp + 7) / 8);
-                functional = true;
-            } else
-            {
-                functional = false;
+                if (new_temp.has_value() && new_temp.value() >= 0)
+                {
+//                    temperature = std::int16_t((std::int32_t(temperature) * 7 + new_temp.value() + 7) / 8);
+                    functional = true;
+                } else
+                {
+                    functional = false;
+                }
             }
+
         }
     }
 } thread_;
@@ -108,11 +139,40 @@ class : public chibios_rt::BaseStaticThread<128>
 
 int init()
 {
-    temperature = try_read();
-    if (temperature < 0)
+
+    switch (board::detect_hardware_version().minor)
+    {
+        case 0:
+        case 1:
+        case 2: // Sapog Reference, Sapog, Kotleta
+            sensor_addresses[0] = 0b1001000;
+            sensor_addresses[1] = {};
+            sensor_addresses[3] = {};
+            available_temperature_sensors = 1;
+            break;
+        case 3: // Valenok
+            sensor_addresses[0] = 0b1001000;
+            sensor_addresses[1] = 0b1001001;
+            sensor_addresses[3] = 0b1001011;
+            available_temperature_sensors = 3;
+            break;
+        default:
+            board::die(0);
+    }
+    temperatures = try_read();
+    int counted_functioning_temperature_sensors = 0;
+    for (auto &temperature: temperatures)
+    {
+        if (temperature.has_value())
+        {
+            counted_functioning_temperature_sensors++;
+        }
+    }
+    if (counted_functioning_temperature_sensors != available_temperature_sensors)
     {
         return -1;
     }
+    assert(counted_functioning_temperature_sensors == available_temperature_sensors);
     thread_.start(LOWPRIO);
     return 0;
 }
@@ -124,7 +184,7 @@ bool is_ok()
 
 std::int16_t get_temperature_K()
 {
-    return temperature;
+    return read_maximum_temperature().value();
 }
 
 }

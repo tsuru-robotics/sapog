@@ -51,7 +51,7 @@
 #define MAX_BEEP_DURATION_MSEC    1000
 
 #define MIN_VALID_INPUT_VOLTAGE 4.0
-#define MAX_VALID_INPUT_VOLTAGE 40.0
+#define MAX_VALID_INPUT_VOLTAGE 62.0
 
 
 unsigned comm_period_to_rpm(uint32_t comm_period);

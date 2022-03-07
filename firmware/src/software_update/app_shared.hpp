@@ -11,7 +11,6 @@
 #include <tuple>
 #include <type_traits>
 #include <cstring>
-#include "util.hpp"
 
 struct AppShared
 {

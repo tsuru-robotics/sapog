@@ -5,7 +5,6 @@
 #include "app_shared.hpp"
 #include <ch.hpp>
 #include <cstdio>
-#include "shell.h"
 #include "board/sys.hpp"
 
 namespace sapog_bootloader
@@ -93,9 +92,6 @@ int main()
 
     // ----------------------------------------------------------------------------------------------------------------
     // Fast boot is not possible -- initialize the interfaces.
-//    board::usb::init();  // USB initialization may take some time.
-//  char message[] = "Hello";
-//  streamWrite(serial_port.getChannel(), reinterpret_cast<uint8_t *>(message), 6);
 
     std::optional<kocherga::can::ICANDriver::Bitrate> can_bitrate{
         kocherga::can::ICANDriver::Bitrate{.arbitration=1000000, .data=1000000}};
@@ -106,7 +102,6 @@ int main()
         can_bitrate.emplace();
         can_bitrate->arbitration = args->can_bus_speed;
         uavcan_can_node_id = args->uavcan_node_id;
-        //uavcan_can_version = 1;
     }
     static sapog_bootloader::CANDriver<8192> can_driver;
     //
