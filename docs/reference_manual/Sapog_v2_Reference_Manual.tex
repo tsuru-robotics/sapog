@@ -1160,319 +1160,72 @@ The controller would appear to behave erratically,
 which is caused by alternating conflicting commands.
 
 \section{UAVCAN}
+\subsection{Application (not bootloader)}
+The following three tables maintain the numbers and names in the same order.
 
-\subsection{Overview}
 
-This section contains the documentation for the UAVCAN interface implemented in Sapog.
-A general overview and the specification of the UAVCAN protocol is provided on the official website at
-\mbox{\url{http://uavcan.org}}.
-
-The UAVCAN interface enables access to all features of Sapog.
-It is possible to control the motor in all operating modes via UAVCAN,
-change the configuration parameters, emit audial and visual indications,
-upgrade the firmware, and perform automated ESC enumeration.
-
-This section documents the UAVCAN interface as implemented in the firmware,
-omitting the logic specific to the bootloader, which is documented separately in the chapter
-\ref{sec:bootloader}.
-
-Sapog employs Libuavcan -- an open source implementation of the UAVCAN protocol stack in C++ distributed under
-the MIT software license.
-
-The CAN interface recovers from the bus-off state automatically once the controller has
-observed 128 occurrences of 11 consecutive recessive bits on the bus, as defined by the CAN specification.
-
-\subsection{Basic functions}
-
-\subsubsection{Node status reporting}
-
-The standard node status message \verb|uavcan.protocol.NodeStatus| is broadcasted at 1 hertz.
-The mode and health codes are summarized below.
-
-\begin{ZubaxSimpleTable}{UAVCAN node health code interpretation}{|l X|}
-Node health & Meaning  \\
-OK        & Operating normally. \\
-WARNING   & Not used. \\
-ERROR     & Not used. \\
-CRITICAL  & The controller is locked up (see section~\ref{sec:stall_detection}),
-            or the temperature sensor is malfunctioning.\\
+\begin{ZubaxSimpleTable}{Register name its type}{|l l X|}\label{cli_software_recommendations}
+	Nr & Name            & Register type\\
+	1 & uavcan.node.id        & uavcan.primitive.array.Natural16\_1\_0 \\
+	2 & uavcan.node.description & hello \\
+	3 & uavcan.sub.setpoint.id & uavcan.primitive.array.Natural16\_1\_0 \\
+	4 & uavcan.sub.readiness.id & uavcan.primitive.array.Natural16\_1\_0 \\
+	5 & uavcan.pub.feedback.id & uavcan.primitive.array.Natural16\_1\_0 \\
+	6 & uavcan.pub.status.id & uavcan.primitive.array.Natural16\_1\_0\\
+	7 & uavcan.pub.dynamics.id & uavcan.primitive.array.Natural16\_1\_0 \\
+	8 & control\_mode\_rpm & uavcan.primitive.array.Bit\_1\_0 \\
+	9 & uavcan.pub.power.id & uavcan.primitive.array.Natural16\_1\_0 \\
+	10 & ttl\_milliseconds & uavcan.primitive.array.Natural16\_1\_0\\
+	11 & id\_in\_esc\_group &  uavcan.primitive.array.Natural16\_1\_0\\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN node mode code interpretation}{|l X|}
-Node mode & Meaning  \\
-OPERATIONAL        & Operating normally. \\
-INITIALIZATION     & The firmware has just started and is not ready to begin normal operation yet. \\
-MAINTENANCE        & See the chapter~\ref{sec:bootloader} about the bootloader. \\
-SOFTWARE\_{}UPDATE & See the chapter~\ref{sec:bootloader} about the bootloader. \\
-OFFLINE            & Not applicable. \\
+\begin{ZubaxSimpleTable}{Register name mapped to its subject's type}{|l l X|}\label{register_name_mapped_to_its_subject's_type}
+	Nr & Name            & Subject's DSDL type\\
+	1 & uavcan.node.id        & not a subject id \\
+	2 & uavcan.node.description & not a subject id \\
+	3 & uavcan.sub.setpoint.id & reg.udral.service.actuator.common.sp.Vector2\_0 \\
+	4 & uavcan.sub.readiness.id & reg.udral.service.common.Readiness\_0\_1 \\
+	5 & uavcan.pub.feedback.id & reg.udral.service.actuator.common.Feedback\_0\_1 \\
+	6 & uavcan.pub.status.id & reg.udral.service.actuator.common.Status\_0\_1\\
+	7 & uavcan.pub.dynamics.id & reg.udral.physics.dynamics.rotation.PlanarTs\_0\_1 \\
+	8 & uavcan.pub.power.id & reg.udral.physics.electricity.PowerTs\_0\_1 \\
+	9 & control\_mode\_rpm & not a subject id \\
+	10 & ttl\_milliseconds & not a subject id\\
+	11 & id\_in\_esc\_group & not a subject id\\
 \end{ZubaxSimpleTable}
 
-The vendor-specific status code field is not used by Sapog.
+For more accurate DSDL descriptions please refer to the links in the following datatype links table.
 
-The node uptime is reported from the moment when the firmware is started.
-The time while the bootloader was running is not included in the reported uptime value.
-
-\subsubsection{Node identification}
-
-The service \verb|uavcan.protocol.GetNodeInfo| is responded to as follows.
-
-All fields of the nested structure \verb|uavcan.protocol.SoftwareVersion|
-are populated, which are \verb|major|, \verb|minor|, \verb|vcs_commit|, and \verb|image_crc|.
-The VCS commit field is assigned the most significant bits of the git commit hash
-of the running revision of the firmware.
-The image CRC is computed for the entire firmware image padded to 8 bytes;
-the bytes of the image that are occupied by the stored image CRC are assumed to be zero while
-the image CRC is being computed.
-
-The following fields of the nested structure \verb|uavcan.protocol.HardwareVersion|
-are always populated: \verb|major|, \verb|minor|, and \verb|unique_id|.
-The values of the fields \verb|major| and \verb|minor| are specific
-to the particular hardware model that Sapog is running on.
-Please refer to the documentation supplied with your hardware for the specific values.
-The field \verb|certificate_of_authenticity| is populated only if any certificate of authenticity
-is provided by the vendor.
-
-The field \verb|name| is set to the string \verb|io.px4.sapog|.
-
-\subsubsection{Node restarting}
-
-The service \verb|uavcan.protocol.RestartNode|, if the provided magic number is correct,
-unconditionally stops the motor and reboots the controller.
-If the provided magic number is incorrect, Sapog returns a response with the field \verb|ok|
-set to zero (false).
-
-\subsubsection{Interface statistics}
-
-The service \verb|uavcan.protocol.GetTransportStats| returns the current statistic counters
-for both supported CAN interfaces, even if the hardware uses only one of them.
-All fields of all nested structures are populated.
-
-\subsubsection{Data type information}
-
-The service \verb|uavcan.protocol.GetDataTypeInfo| provides an extensive information about the
-supported UAVCAN data types.
-No special cases apply.
-
-\subsection{Initialization}
-
-Sapog is a full plug-and-play UAVCAN node that requires no mandatory initial configuration prior to use.
-
-\subsubsection{CAN bus bit rate detection}
-
-Once started, Sapog will automatically detect the bit rate of the CAN bus it is connected to
-(if connected to any at all), and remember the detected bit rate until the next boot up.
-There is no detection timeout, which means that Sapog can be connected to a CAN bus at
-any moment after powering up, and it will configure itself immediately.
-
-It is not possible to specify the bit rate manually.
-
-Sapog requires up to approximately 4 seconds to perform the bit rate detection on a properly
-functioning CAN bus.
-If the bus is exhibiting erroneous behavior, Sapog may need a longer time to complete the bit rate
-detection procedure.
-
-The following bit rates can be detected by Sapog automatically:
-\begin{itemize}
-\item 1 Mbit/s
-\item 500 kbit/s
-\item 250 kbit/s
-\item 125 kbit/s
-\end{itemize}
-Sapog cannot be interfaced with a CAN bus that operates at a different bit rate.
-
-Note that if the bootloader (section~\ref{sec:bootloader}) was able to detect the bit rate of the CAN bus
-before starting the application,
-it will pass the detected value over to the application while booting it,
-in which case the application will immediately start using the supplied value rather than
-performing the bit rate detection again.
-
-\subsubsection{Node ID allocation}
-
-The configuration parameter \CfgRef{uavcan+node+id}, when set to a non-zero value,
-defines the node ID of the local UAVCAN node.
-
-If this parameter is set to zero, Sapog will request a dynamic UAVCAN node ID from the bus,
-which is the default behavior.
-
-Note that if the bootloader (section~\ref{sec:bootloader}) was able to obtain a dynamic UAVCAN node ID
-from the bus before starting the application,
-it will pass the detected value over to the application while booting it,
-in which case the application will use the provided node ID
-\emph{regardless of the value configured in \CfgRef{uavcan+node+id}}.
-
-Until there is a valid node ID available for the local UAVCAN node (either specified
-statically via the configuration parameter, or provided dynamically),
-no other functions of the UAVCAN interface will work.
-This implies, for example, that it is not possible to control the motor via UAVCAN
-until the local node is fully configured.
-
-\subsection{Motor control}
-
-\subsubsection{Setpoint input}
-
-Motor control is governed by means of two standard message types that Sapog subscribes to.
-The message \verb|uavcan.equipment.esc.RawCommand| puts Sapog into the open loop control mode
-(section~\ref{sec:open_loop}).
-The message \verb|uavcan.equipment.esc.RPMCommand| puts Sapog into the RPM loop control mode
-(section~\ref{sec:rpm_loop}).
-
-Both messages carry arrays of commands for multiple motors.
-Sapog selects the single command from the array at the index specified by the configuration
-parameter \CfgRef{esc+index}.
-If the specified index points out of the range of the array,
-Sapog assumes that the commanded setpoint is zero, and stops the motor.\footnote{%
-Obviously, multiple ESC can share the same ESC index setting.}
-
-Sapog does not perform any additional processing of the received command message,
-and does not prioritize between the supported types of messages
-and between different broadcasters.
-This means that the drive will not operate properly if there are multiple types of control
-messages being received, or if multiple nodes are broadcasting conflicting setpoints.
-Direct execution of all received commands without additional processing allows Sapog to achieve
-minimal response latency and high command throughput.
-
-Setpoints received via UAVCAN are assigned a fixed lifetime, which is specified by the
-configuration parameter \CfgRef{cmd+ttl+ms}.
-Read more on the concept of setpoint TTL in section~\ref{sec:setpoint_ttl}.
-
-As a safety precaution, when the motor is stopped and a non-zero open loop setpoint is received,
-Sapog will refuse to start the motor if the received non-zero open loop setpoint exceeds the
-threshold value specified by the configuration parameter \CfgRef{cmd+start+dc},
-in the duty cycle units.
-This feature helps the user to avoid starting the motor accidentally to a high power level,
-for example, due to a failure in the system that controls Sapog.
-This feature is only available for the open loop control mode.
-
-\subsubsection{Status reporting}
-
-The standard message type \verb|uavcan.equipment.esc.Status| is used to report the status of the
-motor control system.
-The message is broadcasted at 1 hertz if the motor is not running,
-and at 10 hertz if the motor is starting or running.
-All fields of the message are populated.
-
-The field \verb|error_count| carries the number of failures to detect a valid zero crossing
-point since the motor has started.
-The error counter may overflow if the motor is running without stopping for a very long time,
-although this will never happen as long as the drive is functioning correctly.
-
-The field \verb|esc_index| contains the value of the configuration parameter \CfgRef{esc+index}.
-
-\subsection{Configuration parameter management}
-
-The standard UAVCAN configuration parameter management interface is supported
-by means of the service data types defined in the namespace \verb|uavcan.protocol.param|.
-
-Note that the save action available via the service \verb|uavcan.protocol.param.ExecuteOpcode|
-is supported, but is redundant, because Sapog commits all the configuration parameters
-to the non-volatile configuration storage memory automatically after modification.
-
-When obtaining the list of all available configuration parameters using the field \verb|index|
-of the service \verb|uavcan.protocol.param.GetSet|, the ordering of the returned configuration
-parameters is undefined, but it is guaranteed to be consistent within the same firmware build.
-Updating the firmware to different versions or even different builds of the same version
-may change the ordering of the configuration parameters.
-
-\subsection{Audial and visual indication}
-
-\subsubsection{Audial indication}
-
-The standard message type \verb|uavcan.equipment.indication.BeepCommand|
-can be used to invoke the audial indication feature of Sapog
-described in section~\ref{sec:audial_indication}.
-
-\subsubsection{RGB LED control}
-
-The standard message type \verb|uavcan.equipment.indication.LightsCommand|
-can be used to control the RGB LED indicator via UAVCAN, as described in the section
-\ref{sec:visual_indication_external_control}.
-
-The configuration parameter \CfgRef{light+index} defines the UAVCAN light ID of the RGB LED.
-Light control commands will only be accepted if the value of the field \verb|light_id|
-matches the value stored in the configuration parameter \CfgRef{light+index}.
-
-\subsection{Firmware upgrade}
-
-The service \verb|uavcan.protocol.file.BeginFirmwareUpdate| reboots the device into the bootloader
-mode.
-The bootloader mode is documented in the chapter~\ref{sec:bootloader}.
-
-If the motor is running at the time of reception of this request, it is stopped unconditionally.
-
-Note that the request argument \verb|image_file_remote_path| is always ignored.
-It is therefore required to invoke this service again after the firmware has entered the bootloader
-(i.e. about $3\pm{}1$ seconds after the first invocation),
-otherwise the upgrade process will not begin.
-This requirement may be removed in the future.
-
-\subsection{Automated ESC enumeration}
-
-Sapog allows the user to configure the ESC index (parameter \CfgRef{esc+index})
-and the direction of rotation (parameter \CfgRef{ctl+dir}) intuitively,
-by manually rotating the rotors in a specific order and direction.
-This feature is only useful for multi-motor vehicles, such as multirotor UAV,
-and is entirely optional.
-The respective configuration parameters can be equally well configured manually
-by the user, instead of resorting to this more sophisticated method.
-
-The UAVCAN namespace \verb|uavcan.protocol.enumeration| contains the data type definitions that
-this feature is based upon.
-
-When invoking the automated enumeration sequence, the field \verb|parameter_name|
-of the service type \verb|uavcan.protocol.enumeration.Begin| should be left empty
-(which means ``parameter name auto-detect'' according to the UAVCAN specification).
-
-The user indication input is provided by means of turning the rotor manually in the normal
-direction of rotation.
-Sapog will memorize the direction of rotation and reflect it in the corresponding configuration
-parameter.
-
-The enumeration request will return the error \verb|ERROR_INVALID_MODE| if the motor is not stopped.
-
-The user can benefit from this feature only if it is adequately supported by the
-controlling hardware installed on the vehicle (e.g. autopilot).
-Therefore, the full description of this feature falls outside of the scope of this
-manual.
-For reference, the automated ESC enumeration procedure performed with a PX4-based autopilot
-is demonstrated on the following video: \url{https://youtu.be/4nSa8tvpbgQ}.
-
-\subsection{Data type summary}
-
-\begin{ZubaxSimpleTable}{UAVCAN broadcast messages}{|l l l X|}
-    Data type name                                         & Frequency, Hz & Tr. priority & Note \\
-    \texttt{uavcan.protocol.NodeStatus}                    & 1          & 16 (medium)  & \\
-    \texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Aperiodic  & 30 (low)     & Only during the
-                                                                                         initialization or while
-                                                                                         in the bootloader. \\
-    \texttt{uavcan.protocol.enumeration.Indication}        & Aperiodic & 16 (medium)   & Only during ESC
-                                                                                         enumeration. \\
-    \texttt{uavcan.equipment.esc.Status}                   & 1 or 10   & 16 (medium)   & 1 Hz while idle,
-                                                                                         10 Hz otherwise. \\
-    \texttt{uavcan.protocol.debug.LogMessage}              & Aperiodic & 31 (lowest)   & \\
+\begin{ZubaxSimpleTable}{Register name, usecase}{|l l X|}\label{register_name_and_usecase}
+	Nr & Name            & Use\\
+	1 & uavcan.node.id        & Node id \\
+	2 & uavcan.node.description & Describing the node \\
+	3 & uavcan.sub.setpoint.id & The dynamic subject id that Sapog will listen on to set its ESC setpoint \\
+	4 & uavcan.sub.readiness.id & The dynamic subject id that Sapog will listen on to set/keep its ESC readiness\\
+	5 & uavcan.pub.feedback.id & This high-rate feedback is published once immediately after a setpoint is applied. \\
+	6 & uavcan.pub.status.id & Auxiliary actuator status information published at a low rate asynchronously, usually at 1 Hz. It is mostly intended for diagnostics and logging purposes.\\
+	7 & uavcan.pub.dynamics.id & Torque is timestamped. \\
+	8 & control\_mode\_rpm & Whether to use RPM mode (if true) or to use ratiometric control 0 to 1 decimal power. \\
+	9 & uavcan.pub.power.id & DC or AC line timestamped electric power quantities. \\
+	10 & ttl\_milliseconds & Allowed time in milliseconds for the ESC to run after receiving a setpoint. \\
+	11 & id\_in\_esc\_group & The id of this ESC in the group of ESCs that it belongs to. The group of the ESC is determined by the subject id of setpoints.\\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN subscribed messages}{|l X|}
-    Data type name                                         & Note \\
-    \texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Only during the initialization or while
-                                                             in the bootloader. \\
-    \texttt{uavcan.equipment.esc.RawCommand}               & Open loop setpoint. \\
-    \texttt{uavcan.equipment.esc.RPMCommand}               & RPM control loop setpoint. \\
-    \texttt{uavcan.equipment.indication.BeepCommand}       & Ignored if the motor is running. \\
-    \texttt{uavcan.equipment.indication.LightsCommand}     & Overrides the RGB LED state indication. \\
+\begin{ZubaxSimpleTable}{Datatype links}{|l l X|}\label{datatype_links}
+	Nr & Name            & Link\\
+	1 & uavcan.node.id        & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/node/ID.1.0.uavcan} \\
+	2 & uavcan.node.description & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/String.1.0.uavcan} \\
+	3 & uavcan.sub.setpoint.id & \url{https://github.com/UAVCAN/public_regulated_data_types/tree/master/reg/udral/service/actuator/common/sp} \\
+	4 & uavcan.sub.readiness.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/service/common/Readiness.0.1.uavcan}\\
+	5 & uavcan.pub.feedback.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/service/actuator/common/Feedback.0.1.uavcan}\\
+	6 & uavcan.pub.status.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/service/actuator/common/Status.0.1.uavcan}\\
+	7 & uavcan.pub.dynamics.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/physics/dynamics/rotation/PlanarTs.0.1.uavcan} \\
+	8 & control\_mode\_rpm & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/array/Bit.1.0.uavcan} \\
+	9 & uavcan.pub.power.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/physics/electricity/PowerTs.0.1.uavcan} \\
+	10 & ttl\_milliseconds & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan} \\
+	11 & id\_in\_esc\_group & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan}\\
 \end{ZubaxSimpleTable}
-
-\begin{ZubaxSimpleTable}{UAVCAN provided services}{|l X|}
-    Data type name                                         & Note \\
-    \texttt{uavcan.protocol.GetNodeInfo}                   & \\
-    \texttt{uavcan.protocol.GetDataTypeInfo}               & \\
-    \texttt{uavcan.protocol.GetTransportStats}             & \\
-    \texttt{uavcan.protocol.RestartNode}                   & \\
-    \texttt{uavcan.protocol.enumeration.Begin}             & Returns an error if the motor is running. \\
-    \texttt{uavcan.protocol.file.BeginFirmwareUpdate}      & Stops the motor and reboots into the bootloader. \\
-    \texttt{uavcan.protocol.param.ExecuteOpcode}           & \\
-    \texttt{uavcan.protocol.param.GetSet}                  & \\
-\end{ZubaxSimpleTable}
-
+\subsection{Bootloader (not application)}
 \section{CLI}
 
 \subsection{Overview}

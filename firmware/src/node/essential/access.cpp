@@ -26,6 +26,16 @@ std::string_view find_type_name(std::string_view request_name)
 RegisterCriteria
 handle_possible_imaginary_register_access(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
 {
+    if (request_name == "uavcan.node.description")
+    {
+        std::string_view description_string = "Just a sapog";
+        uavcan_register_Value_1_0_select_string_(&out_value);
+        uavcan_primitive_String_1_0 return_value{};
+        return_value.value.count = description_string.size();
+        memcpy(&return_value.value.elements, description_string.data(), return_value.value.count);
+        out_value._string = return_value;
+        return RegisterCriteria{._mutable=false, .persistent = true};
+    }
     bool endsWithType = request_name.size() >= 5 &&
                         request_name.at(request_name.size() - 1) == 'e' &&
                         request_name.at(request_name.size() - 2) == 'p' &&
