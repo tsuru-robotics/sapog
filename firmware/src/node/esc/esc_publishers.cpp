@@ -13,7 +13,6 @@
 #include "node/transmit.hpp"
 #include "board/board.hpp"
 #include "node/node_config_macros/node_config.hpp"
-#include "motor/motor.hpp"
 
 UAVCAN_L6_NUNAVUT_C_MESSAGE(reg_udral_service_common_Heartbeat,
                             0, 1);

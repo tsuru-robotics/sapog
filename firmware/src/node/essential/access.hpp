@@ -18,7 +18,12 @@
 
 #pragma once
 
-std::string_view find_type_name(std::string_view request_name);
+/*!
+ * Mapping for requested_register_name -> register output type. Every register name has a corresponding register type.
+ * @param requested_register_name A string, the name of a register that is used to look for a mapping.
+ * @return Name of the register type as a string to be returned.
+ */
+std::string_view find_type_name(std::string_view requested_register_name);
 
 struct RegisterCriteria
 {

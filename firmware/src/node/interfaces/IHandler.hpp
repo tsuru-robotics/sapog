@@ -7,6 +7,11 @@
 
 #include "src/node/state/state.hpp"
 
+/*!
+ * ILoopMethod is an interface that is used by handlers that are being called in the main loop of this firmware.
+ * These handlers handle different loops. Each loop has its own delay for when it runs. The delays of the loops can be
+ * modified.
+ */
 class ILoopMethod
 {
 public:

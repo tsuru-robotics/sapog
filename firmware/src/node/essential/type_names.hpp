@@ -8,6 +8,9 @@
 
 #include "node/register_values/type_name_association.hpp"
 
+/*!
+ * Provides a mapping between the name of a register concatenated with .type and its type.
+ */
 type_name_association types_names[] = {
     {"uavcan.sub.note_response.type", "reg.udral.physics.acoustics.Note.0.1"},
     {"uavcan.sub.readiness.type",     "reg.udral.service.common.Readiness.0.1"},

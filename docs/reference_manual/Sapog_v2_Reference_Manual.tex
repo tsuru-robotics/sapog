@@ -1161,13 +1161,13 @@ which is caused by alternating conflicting commands.
 
 \section{UAVCAN}
 \subsection{Application (not bootloader)}
-The following three tables maintain the numbers and names in the same order.
+The following three tables maintain the numbers and names of registers in the same order.
 
 
-\begin{ZubaxSimpleTable}{Register name its type}{|l l X|}\label{cli_software_recommendations}
+\begin{ZubaxSimpleTable}{Register name its type}{|l l | X|}\label{cli_software_recommendations}
 	Nr & Name            & Register type\\
 	1 & uavcan.node.id        & uavcan.primitive.array.Natural16\_1\_0 \\
-	2 & uavcan.node.description & hello \\
+	2 & uavcan.node.description & uavcan.primitive.String\_1\_0 \\
 	3 & uavcan.sub.setpoint.id & uavcan.primitive.array.Natural16\_1\_0 \\
 	4 & uavcan.sub.readiness.id & uavcan.primitive.array.Natural16\_1\_0 \\
 	5 & uavcan.pub.feedback.id & uavcan.primitive.array.Natural16\_1\_0 \\
@@ -1179,7 +1179,7 @@ The following three tables maintain the numbers and names in the same order.
 	11 & id\_in\_esc\_group &  uavcan.primitive.array.Natural16\_1\_0\\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{Register name mapped to its subject's type}{|l l X|}\label{register_name_mapped_to_its_subject's_type}
+\begin{ZubaxSimpleTable}{Register name mapped to its subject's type}{|l l | X|}\label{register_name_mapped_to_its_subject's_type}
 	Nr & Name            & Subject's DSDL type\\
 	1 & uavcan.node.id        & not a subject id \\
 	2 & uavcan.node.description & not a subject id \\
@@ -1188,30 +1188,30 @@ The following three tables maintain the numbers and names in the same order.
 	5 & uavcan.pub.feedback.id & reg.udral.service.actuator.common.Feedback\_0\_1 \\
 	6 & uavcan.pub.status.id & reg.udral.service.actuator.common.Status\_0\_1\\
 	7 & uavcan.pub.dynamics.id & reg.udral.physics.dynamics.rotation.PlanarTs\_0\_1 \\
-	8 & uavcan.pub.power.id & reg.udral.physics.electricity.PowerTs\_0\_1 \\
-	9 & control\_mode\_rpm & not a subject id \\
+	8 & control\_mode\_rpm & not a subject id \\
+	9 & uavcan.pub.power.id & reg.udral.physics.electricity.PowerTs\_0\_1 \\
 	10 & ttl\_milliseconds & not a subject id\\
 	11 & id\_in\_esc\_group & not a subject id\\
 \end{ZubaxSimpleTable}
 
 For more accurate DSDL descriptions please refer to the links in the following datatype links table.
 
-\begin{ZubaxSimpleTable}{Register name, usecase}{|l l X|}\label{register_name_and_usecase}
+\begin{ZubaxSimpleTable}{Register name, use case}{|l l | X|}\label{register_name_and_usecase}
 	Nr & Name            & Use\\
 	1 & uavcan.node.id        & Node id \\
-	2 & uavcan.node.description & Describing the node \\
+	2 & uavcan.node.description & Describing the node. A UTF8-encoded string of text. Since the string is represented as a dynamic array of bytes, it is not null-terminated. Like Pascal string.\\
 	3 & uavcan.sub.setpoint.id & The dynamic subject id that Sapog will listen on to set its ESC setpoint \\
 	4 & uavcan.sub.readiness.id & The dynamic subject id that Sapog will listen on to set/keep its ESC readiness\\
 	5 & uavcan.pub.feedback.id & This high-rate feedback is published once immediately after a setpoint is applied. \\
 	6 & uavcan.pub.status.id & Auxiliary actuator status information published at a low rate asynchronously, usually at 1 Hz. It is mostly intended for diagnostics and logging purposes.\\
 	7 & uavcan.pub.dynamics.id & Torque is timestamped. \\
-	8 & control\_mode\_rpm & Whether to use RPM mode (if true) or to use ratiometric control 0 to 1 decimal power. \\
+	8 & control\_mode\_rpm & Whether to use RPM mode (if true) or to use ratio-metric control 0 to 1 decimal power. \\
 	9 & uavcan.pub.power.id & DC or AC line timestamped electric power quantities. \\
 	10 & ttl\_milliseconds & Allowed time in milliseconds for the ESC to run after receiving a setpoint. \\
 	11 & id\_in\_esc\_group & The id of this ESC in the group of ESCs that it belongs to. The group of the ESC is determined by the subject id of setpoints.\\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{Datatype links}{|l l X|}\label{datatype_links}
+\begin{ZubaxSimpleTable}{Datatype links}{|l l | X|}\label{datatype_links}
 	Nr & Name            & Link\\
 	1 & uavcan.node.id        & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/node/ID.1.0.uavcan} \\
 	2 & uavcan.node.description & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/String.1.0.uavcan} \\
@@ -1225,6 +1225,16 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	10 & ttl\_milliseconds & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan} \\
 	11 & id\_in\_esc\_group & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan}\\
 \end{ZubaxSimpleTable}
+
+\begin{ZubaxSimpleTable}{Application status indication via RGB LED}{|l l|X|}
+	State            &                         & Meaning \\
+	Solid red        & \ShowSolidColor{red}    & Error.\\
+	Solid dim green      & \ShowSolidColor{green}  & Running normally after node ID allocation
+	This state is very transient. \\
+	Solid cyan    & \ShowSolidColor{cyan} & UAVCAN dynamic node ID allocation started. \\
+	Off              & \ShowSolidColor{black}  & The application is being started. \\
+\end{ZubaxSimpleTable}
+
 \subsection{Bootloader (not application)}
 \section{CLI}
 
@@ -1987,7 +1997,7 @@ Beware that the CoA can be written only once.
 
 This section contains the schematic of the reference hardware design that can be used as a basis for custom hardware
 designs compatible with Sapog.
-The design files and additional information can be gathered from the Github repository at
+The design files and additional information can be gathered from the GitHub repository at
 \url{https://github.com/PX4/Hardware}.
 
 Note that the EEPROM memory chip is not currently used by the firmware,

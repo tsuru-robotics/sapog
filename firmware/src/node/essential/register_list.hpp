@@ -46,6 +46,13 @@ struct RegisterListHandlerType : IHandler
     void operator()(node::state::State &state, CanardRxTransfer *transfer);
 } uavcan_register_List_1_0_handler;
 
+/*!
+ * A handler for requests of type uavcan_register_List_Request_1_0. Only one name of register is returned per request.
+ * The request also contains the requested index which will be used to find the name of the register from the array.
+ * The array that contains these register names needs to be manually kept up to date whenever registers are added.
+ * @param state State of the firmware.
+ * @param transfer The transfer which contains the request, which was received.
+ */
 void RegisterListHandlerType::operator()(node::state::State &state, CanardRxTransfer *transfer)
 {
     auto request =

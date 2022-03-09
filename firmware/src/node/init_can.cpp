@@ -12,8 +12,6 @@
 #include "node/register_values/register_variables.hpp"
 #include "node_config_macros/node_config.hpp"
 #include "node/register_values/parameters.hpp"
-#include "node/node_config_macros/node_config.hpp"
-#include "board/board.hpp"
 
 static void *canardAllocate(CanardInstance *const ins, const size_t amount)
 {

@@ -75,39 +75,3 @@ struct : IHandler
         }
     }
 } setpoint_handler;
-
-
-struct : IHandler
-{
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
-    {
-        (void) state;
-        (void) transfer;
-        return;
-    }
-} sub_esc_duty_cycle_handler;
-
-struct : IHandler
-{
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
-    {
-        (void) state;
-        (void) transfer;
-        return;
-    }
-} sub_esc_power_handler;
-
-struct : IHandler
-{
-    void operator()(node::state::State &state, CanardRxTransfer *transfer)
-    {
-        reg_udral_physics_electricity_PowerTs_0_1 power_ts{};
-        size_t temp_payload_size{transfer->payload_size};
-        auto result = reg_udral_physics_electricity_PowerTs_0_1_deserialize_(&power_ts,
-                                                                             (const uint8_t *) transfer->payload,
-                                                                             &temp_payload_size);
-        (void) state;
-        (void) result;
-        return;
-    }
-} reg_udral_physics_electricity_PowerTs_0_1_handler;

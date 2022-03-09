@@ -5,7 +5,6 @@
  */
 #include "loop.hpp"
 #include "node/time.h"
-#include <utility>
 
 bool Loop::is_time_to_execute(CanardMicrosecond current_time) const
 {

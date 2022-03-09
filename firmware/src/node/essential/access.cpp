@@ -1,7 +1,8 @@
-//
-// Created by silver on 14.12.21.
-//
-
+/*
+ * Copyright (c) 2022 Zubax, zubax.com
+ * Distributed under the MIT License, available in the file LICENSE.
+ * Author: Silver Valdvee <silver.valdvee@zubax.com>
+ */
 #include <cstddef>
 #include <array>
 #include <string_view>
@@ -10,12 +11,13 @@
 #include "access.hpp"
 #include "board/board.hpp"
 
-std::string_view find_type_name(std::string_view request_name)
+
+std::string_view find_type_name(std::string_view requested_register_name)
 {
     std::string_view found_type_name{};
     for (auto &iter: types_names)
     {
-        if (iter.name == request_name)
+        if (iter.name == requested_register_name)
         {
             found_type_name = iter.type_name;
         }
@@ -23,12 +25,23 @@ std::string_view find_type_name(std::string_view request_name)
     return found_type_name;
 }
 
+/*!
+ * An imaginary register is a register which is not persistent and not mutable.
+ * It is set with each build of the firmware. This is due to the limitations of the implementation of
+ * configuration storage in Sapog. Only certain data-types can be stored in Flash memory.
+ * @param request_name The request name comes in from this parameter and is used to choose the out_value.
+ * @param out_value Contains the value of register that will be sent back to caller.
+ * @return RegisterCriteria carries information about mutability and persistence of the register.
+ */
 RegisterCriteria
 handle_possible_imaginary_register_access(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
 {
     if (request_name == "uavcan.node.description")
     {
-        std::string_view description_string = "Just a sapog";
+        std::string_view description_string = "Sapog is an advanced open source sensorless PMSM/\n"
+                                              "BLDC motor controller firmware designed for use in\n"
+                                              "propulsion systems of electric unmanned aircraft and\n"
+                                              "watercraft.";
         uavcan_register_Value_1_0_select_string_(&out_value);
         uavcan_primitive_String_1_0 return_value{};
         return_value.value.count = description_string.size();
@@ -63,7 +76,7 @@ handle_possible_imaginary_register_access(std::string_view request_name, uavcan_
         {
             uavcan_register_Value_1_0_select_string_(&out_value);
             uavcan_primitive_String_1_0 return_value{};
-            constexpr std::string_view natural16_string = "uavcan.primitive.scalar.Natural16.1.0\0";
+            constexpr std::string_view natural16_string = "uavcan.primitive.scalar.Natural16.1.0";
             return_value.value.count = natural16_string.size();
             std::copy(natural16_string.begin(), natural16_string.end(), std::begin(return_value.value.elements));
             out_value._string = return_value;
@@ -78,17 +91,26 @@ handle_possible_imaginary_register_access(std::string_view request_name, uavcan_
     return RegisterCriteria{};
 }
 
-RegisterCriteria handle_real_register_access(std::string_view request_name, uavcan_register_Value_1_0 &out_value,
+/*!
+ * A real register is one for which the value is stored on the Flash in a configuration block. These are mutable and
+ * persistent but cannot contain strings or arrays.
+ * @param requested_register_name
+ * @param out_value
+ * @param param
+ * @return
+ */
+RegisterCriteria handle_real_register_access(std::string_view requested_register_name,
+                                             uavcan_register_Value_1_0 &out_value,
                                              ConfigParam &param)
 {
     bool endsWithId =
-        request_name.size() >= 3 && request_name.at(request_name.size() - 1) == 'd' &&
-        request_name.at(request_name.size() - 2) == 'i' &&
-        request_name.at(request_name.size() - 3) == '.';
-    float value = configGet(request_name.data());
+        requested_register_name.size() >= 3 && requested_register_name.at(requested_register_name.size() - 1) == 'd' &&
+        requested_register_name.at(requested_register_name.size() - 2) == 'i' &&
+        requested_register_name.at(requested_register_name.size() - 3) == '.';
+    float value = configGet(requested_register_name.data());
     std::optional<node::conf::wrapper::converter_type> converter = node::conf::wrapper::find_converter(
-        request_name.data());
-    std::string_view request_name_sw(request_name.data());
+        requested_register_name.data());
+    std::string_view request_name_sw(requested_register_name.data());
     if (converter.has_value())
     {
         auto converter_response = converter.value()(value, out_value);
@@ -133,6 +155,13 @@ RegisterCriteria handle_real_register_access(std::string_view request_name, uavc
     return RegisterCriteria{};
 }
 
+/*!
+ * Check if the physical/real register exists on the device using configGetDescr. If it doesn't check for imaginary
+ * registers with that name. If it does exist then handle the real register access.
+ * @param request_name
+ * @param out_value Contains the value of register that will be sent back to caller.
+ * @return RegisterCriteria carries information about mutability and persistence of the register.
+ */
 RegisterCriteria get_response_value(std::string_view request_name, uavcan_register_Value_1_0 &out_value)
 {
     ConfigParam param{};
@@ -147,6 +176,13 @@ RegisterCriteria get_response_value(std::string_view request_name, uavcan_regist
     }
 }
 
+/*!
+ *
+ * @param state The global state of this firmware
+ * @param request_name Name of the register that is being accessed
+ * @param transfer The transfer which contains sender information and the Access_Request.
+ * @return Returns false if it is unable to respond and true if it is able.
+ */
 bool respond_to_access(node::state::State &state, std::basic_string_view<char> request_name,
                        const CanardRxTransfer *const transfer)
 {
@@ -160,6 +196,7 @@ bool respond_to_access(node::state::State &state, std::basic_string_view<char> r
     uint8_t serialized[uavcan_register_Access_Response_1_0_SERIALIZATION_BUFFER_SIZE_BYTES_]{};
     size_t serialized_size = sizeof(serialized);
     int8_t error = uavcan_register_Access_Response_1_0_serialize_(&response, &serialized[0], &serialized_size);
+    // Failure to serialize
     assert(error >= 0);
     if (error < 0)
     {

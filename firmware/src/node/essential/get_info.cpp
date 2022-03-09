@@ -6,6 +6,10 @@
 
 #include "get_info.hpp"
 
+/*!
+ *
+ * @return Returns the response which will be serialized and sent.
+ */
 uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 {
     uavcan_node_GetInfo_Response_1_0 resp{};

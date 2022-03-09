@@ -9,6 +9,7 @@
 #include <node/units.hpp>
 #include "src/node/uavcan_thread.hpp"
 #include <node/time.h>
+#include <cstdio>
 #include "port_list.hpp"
 #include "board/board.hpp"
 #include "node/node_config_macros/node_config.hpp"
@@ -82,5 +83,11 @@ void publish_port_list(CanardInstance &canard, node::state::State &state)
                                                              serialized);
             (void) number_of_frames_enqueued;
         }
+    } else
+    {
+        printf(
+            "There was a problem serializing the port list message,"
+            " please have a look at the 512 byte buffer, maybe that needs to be bigger\n");
+
     }
 }

@@ -43,6 +43,7 @@ AnySubscription registered_ports[] =
                                              &sub_readiness_handler, CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC)
     };
 
+// A pointer can be considered an iterator
 std::pair<AnySubscription *, AnySubscription *> get_subscription_iterators()
 {
     return {
