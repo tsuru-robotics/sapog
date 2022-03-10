@@ -64,7 +64,7 @@ os::watchdog::Timer init()
     led_ctl.set(board::LEDColor::PALE_WHITE);
 
     // Temperature sensor
-    int res = temperature_sensor::init();
+    int res = 1; //temperature_sensor::init();
     if (res < 0)
     {
         os::lowsyslog("Failed to init temperature sensor\n");
@@ -200,7 +200,7 @@ int main()
     {
         wdt.reset();
 
-        if (motor_is_blocked() || !temperature_sensor::is_ok())
+        /*if (motor_is_blocked() || !temperature_sensor::is_ok())
         {
             led_ctl.set(board::LEDColor::YELLOW);
             if (!node::state::state.overheating)
@@ -217,7 +217,7 @@ int main()
         } else
         {
             led_ctl.set(board::LEDColor::DARK_GREEN);
-        }
+        }*/
 
         //bg_config_manager.poll();
         chThdSleepMilliseconds(500);

@@ -19,7 +19,8 @@
 #include <string_view>
 #include "software_update/app_shared.hpp"
 
-extern std::uint8_t AppSharedStruct[];         // NOLINT std::array<>
+extern std::uint8_t AppSharedStruct[];
+
 std::uint8_t *getAppSharedStructLocation()
 {
     return &AppSharedStruct[0];
@@ -38,7 +39,6 @@ struct : IHandler
         if (request.has_value())
         {
             uavcan_node_ExecuteCommand_Response_1_1 response{};
-//            printf("Commanded: %d\n", request.value().command);
             switch (request.value().command)
             {
                 case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_RESTART:

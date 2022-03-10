@@ -21,7 +21,10 @@
 #include "node/esc/esc_publishers.hpp"
 #include "node/loops/loop.hpp"
 
-
+/*!
+ * These handlers handle different loops. Each loop has its own delay for when it runs. The delays of the loops can be
+ * modified.
+ */
 namespace node::loops
 {
 

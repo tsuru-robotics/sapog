@@ -61,6 +61,9 @@ struct PlugAndPlay
     PNPStatus status = PNPStatus::Subscribing;
     bool anonymous = true;
 };
+/*!
+ * The subject ids that are used by the controller and loaded at device startup from configuration are stored here
+ */
 struct PublishPorts
 {
     uint16_t esc_status;

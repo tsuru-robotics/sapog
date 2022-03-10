@@ -1164,9 +1164,9 @@ which is caused by alternating conflicting commands.
 The following three tables maintain the numbers and names of registers in the same order.
 
 
-\begin{ZubaxSimpleTable}{Register name its type}{|l l | X|}\label{cli_software_recommendations}
+\begin{ZubaxSimpleTable}{Register name and its type}{|l l | X|}\label{cli_software_recommendations}
 	Nr & Name            & Register type\\
-	1 & uavcan.node.id        & uavcan.primitive.array.Natural16\_1\_0 \\
+	1 & uavcan.node.id        & uavcan.node.ID \\
 	2 & uavcan.node.description & uavcan.primitive.String\_1\_0 \\
 	3 & uavcan.sub.setpoint.id & uavcan.primitive.array.Natural16\_1\_0 \\
 	4 & uavcan.sub.readiness.id & uavcan.primitive.array.Natural16\_1\_0 \\
@@ -1198,7 +1198,7 @@ For more accurate DSDL descriptions please refer to the links in the following d
 
 \begin{ZubaxSimpleTable}{Register name, use case}{|l l | X|}\label{register_name_and_usecase}
 	Nr & Name            & Use\\
-	1 & uavcan.node.id        & Node id \\
+	1 & uavcan.node.id        & Defines a node-ID. The maximum valid value is dependent on the underlying transport layer. Values lower than 128 are always valid for all transports. Refer to the specification for more info. \\
 	2 & uavcan.node.description & Describing the node. A UTF8-encoded string of text. Since the string is represented as a dynamic array of bytes, it is not null-terminated. Like Pascal string.\\
 	3 & uavcan.sub.setpoint.id & The dynamic subject id that Sapog will listen on to set its ESC setpoint \\
 	4 & uavcan.sub.readiness.id & The dynamic subject id that Sapog will listen on to set/keep its ESC readiness\\
@@ -1234,6 +1234,14 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	Solid cyan    & \ShowSolidColor{cyan} & UAVCAN dynamic node ID allocation started. \\
 	Off              & \ShowSolidColor{black}  & The application is being started. \\
 \end{ZubaxSimpleTable}
+
+\begin{ZubaxSimpleTable}{The different commands that are accepted on the ExecuteCommand.1.1 subject}{|l X|}
+	Command & Explanation \\
+	uavcan\_node\_ExecuteCommand\_Request\_1\_1\_COMMAND\_RESTART & Restarts the board\\
+	uavcan\_node\_ExecuteCommand\_Request\_1\_1\_COMMAND\_STORE\_PERSISTENT\_STATES & Stores configuration\\
+	uavcan\_node\_ExecuteCommand\_Request\_1\_1\_COMMAND\_BEGIN\_SOFTWARE\_UPDATE & Starts a software update.\\
+\end{ZubaxSimpleTable}
+These commands are described in \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/node/435.ExecuteCommand.1.1.uavcan}
 
 \subsection{Bootloader (not application)}
 \section{CLI}
