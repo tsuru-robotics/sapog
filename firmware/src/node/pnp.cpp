@@ -180,7 +180,6 @@ static bool receive_plug_and_play_response(State &state)
     std::optional<CanardRxTransfer> transfer = receive_transfer(state).first;
     if (transfer.has_value())
     {
-
         if (transfer.value().metadata.port_id == uavcan_pnp_NodeIDAllocationData_1_0_FIXED_PORT_ID_)
         {
             uavcan_pnp_NodeIDAllocationData_1_0 msg{};
@@ -212,7 +211,7 @@ static bool save_node_id(State &state)
     data.value.elements[0] = state.canard.node_id;
     data.value.count = 1;
     data2.integer64 = data;
-    printf("writing %d to node_id\n", state.canard.node_id);
+    printf("Writing %d to node_id\n", state.canard.node_id);
     uavcan_register_Value_1_0_select_integer64_(&data2);
     return ::config::registers::getInstance().registerWrite("uavcan.node.id", &data2);
 }

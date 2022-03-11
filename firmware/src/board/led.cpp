@@ -156,8 +156,8 @@ void LEDOverlay::set_hex_rgb(std::uint32_t hex_rgb)
             {
                 position = i;
                 layers[i] = this;
-//				os::lowsyslog("LED: 0x%08x registered at pos %d\n",
-//				            reinterpret_cast<unsigned>(this), position);
+                os::lowsyslog("LED: 0x%08x registered at pos %d\n",
+                              reinterpret_cast<unsigned>(this), position);
                 break;
             }
         }

@@ -13,6 +13,8 @@ import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
 import pyuavcan.application.file
 
+# These are necessary pytest fixtures
+# IDE doesn't know that they are used because they are being passed as parameters
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node

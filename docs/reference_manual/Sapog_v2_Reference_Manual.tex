@@ -24,7 +24,7 @@
 \frontmatter
 
 \begin{titlepage}
-\section*{Overview}
+\section*{Overview}\label{sec:overview}
 
 Sapog is an advanced open source sensorless PMSM/\allowbreak{}BLDC motor controller firmware designed for
 use in propulsion systems of electric unmanned aircraft and watercraft.
@@ -1148,18 +1148,34 @@ Sapog is equipped with multiple communication interfaces.
 Not all communication interfaces can be disabled,
 and therefore, more than one interface can be active at the same time.
 
-It is easy to see that this arrangement may lead to issues if more than one
-interface is used to command the controller.
-Sapog does not attempt to resolve such ambiguity, simply accepting every command
-without regard to what interface it was received from.
-This trait should be kept in mind when using multiple interfaces concurrently.
-For example, a common cause of confusion is encountered when Sapog is connected to a
-UAVCAN bus which commands a zero setpoint periodically,
-and some other interface at the same time is commanding to start the motor.
-The controller would appear to behave erratically,
-which is caused by alternating conflicting commands.
-
 \section{UAVCAN}
+\subsection{Configuration for use}
+For use with UAVCAN v1, a person needs to configure the ESC into the final system in which it will be used. This will require communicating with the UAVCAN v1 node via CAN. Through the CAN communication, some registers need to be set.
+
+\begin{ZubaxSimpleTable}{Quick definitions / abbreviations}{|l l | X|}\label{definitions_uavcan}
+	Nr & We say & We mean \\
+	1 & Commander & The node which is going to be sending the ESC commands and listening to its status on different messages. \\
+	2 & Subject id & This is a number allocated to a topic. This and all the rest is further explained in the UAVCAN specification. Specifically this is explained in section "Subjects and services", 2.1.1.2 on page 5/143 as of 11.03.2022.\newline\newline \url{https://uavcan.org/specification/UAVCAN_Specification_v1.0-beta.pdf}\\
+	3 & Configurator / Integrator & The person who takes the steps needed to make the UAVCAN v1 ESC ready for use with the specific UAVCAN network that this ESC is being connected into. The need for this procedure is explained in the UAVCAN specification but can be summarized as trying to avoid conflicts of subject id's. Different manufacturers who are independently producing UAVCAN v1 compatible devices don't need to fix subject-ids for different messages, thus avoiding conflicts.\\
+	4 & Dynamic subject id. & A subject-id that does not have a fixed port number. The port number that will be used for communication needs to be the same on both communicating devices and this is achieved through a configuration procedure carried out by the configurator.
+	
+\end{ZubaxSimpleTable}
+
+\begin{ZubaxSimpleTable}{Register name and its type}{|l | X|}\label{cli_software_recommendations}
+	Name            & Register \\
+	uavcan.node.id        & This needs to be set when the device has the cyan color showing on its led, before any communication to the node can happen, the node needs a node-id. \\
+	uavcan.sub.setpoint.id & The integrator needs to set registers in the commander's register "uavcan.\textbf{pub}.setpoint.id" and in this ESC's register named "uavcan.\textbf{sub}.setpoint.id" to the same subject-id. Then the devices know that they are talking of the same setpoint message that a configurator has set a port for.\\
+	uavcan.sub.readiness.id &  The integrator needs to set registers in the commander's register "uavcan.\textbf{pub}.readiness.id" and in this ESC's register named "uavcan.\textbf{sub}.readiness.id" to the same subject-id. Then the devices know that they are talking of the same readiness message that a configurator has set a port for.\\
+	uavcan.pub.feedback.id & The node, which is going to be receiving the ESC feedback messages, needs to have the same register set with the same dynamic subject id number as the number that is going to be set in the registers of this ESC.\\
+	uavcan.pub.status.id & The node, which is going to be receiving the ESC status messages, needs to have the same register set with the same dynamic subject id number as the number that is going to be set in the registers of this ESC.\\
+	uavcan.pub.dynamics.id & The node, which is going to be receiving the ESC dynamics messages, needs to have the same register set with the same dynamic subject id number as the number that is going to be set in the registers of this ESC.\\
+	control\_mode\_rpm &  This register will have the default value of TRUE, which means that RPM control mode will be used and all messages sent to the dynamic port id defined in register uavcan.sub.setpoint.id will have the numbers of its array correspond to RPM values.\newline\newline
+	When the value is set to FALSE then a ratiometric control-mode is used and values in the array will be interpreted as a decimal range of min to max power.\\
+	uavcan.pub.power.id &  \\
+	ttl\_milliseconds & \\
+	id\_in\_esc\_group & This index and the uavcan.sub.setpoint.id will determine the selected ESC for a controller that is trying to command ESCs on the CAN network.
+\end{ZubaxSimpleTable}
+
 \subsection{Application (not bootloader)}
 The following three tables maintain the numbers and names of registers in the same order.
 
@@ -1176,7 +1192,7 @@ The following three tables maintain the numbers and names of registers in the sa
 	8 & control\_mode\_rpm & uavcan.primitive.array.Bit\_1\_0 \\
 	9 & uavcan.pub.power.id & uavcan.primitive.array.Natural16\_1\_0 \\
 	10 & ttl\_milliseconds & uavcan.primitive.array.Natural16\_1\_0\\
-	11 & id\_in\_esc\_group &  uavcan.primitive.array.Natural16\_1\_0\\
+	11 & id\_in\_esc\_group &  uavcan.primitive.array.Natural16\_1\_0
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{Register name mapped to its subject's type}{|l l | X|}\label{register_name_mapped_to_its_subject's_type}
@@ -1191,7 +1207,7 @@ The following three tables maintain the numbers and names of registers in the sa
 	8 & control\_mode\_rpm & not a subject id \\
 	9 & uavcan.pub.power.id & reg.udral.physics.electricity.PowerTs\_0\_1 \\
 	10 & ttl\_milliseconds & not a subject id\\
-	11 & id\_in\_esc\_group & not a subject id\\
+	11 & id\_in\_esc\_group & not a subject id
 \end{ZubaxSimpleTable}
 
 For more accurate DSDL descriptions please refer to the links in the following datatype links table.
@@ -1208,8 +1224,10 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	8 & control\_mode\_rpm & Whether to use RPM mode (if true) or to use ratio-metric control 0 to 1 decimal power. \\
 	9 & uavcan.pub.power.id & DC or AC line timestamped electric power quantities. \\
 	10 & ttl\_milliseconds & Allowed time in milliseconds for the ESC to run after receiving a setpoint. \\
-	11 & id\_in\_esc\_group & The id of this ESC in the group of ESCs that it belongs to. The group of the ESC is determined by the subject id of setpoints.\\
+	11 & id\_in\_esc\_group & The id of this ESC in the group of ESCs that it belongs to. The group of the ESC is determined by the subject id of setpoints.
 \end{ZubaxSimpleTable}
+
+If any of the following datatype links become unavailable due to a changed folder structure or name of the branch used, please use this link to access the repository and navigate to the correct folder or use search, \url{https://github.com/UAVCAN/public_regulated_data_types/}
 
 \begin{ZubaxSimpleTable}{Datatype links}{|l l | X|}\label{datatype_links}
 	Nr & Name            & Link\\
@@ -1221,9 +1239,9 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	6 & uavcan.pub.status.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/service/actuator/common/Status.0.1.uavcan}\\
 	7 & uavcan.pub.dynamics.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/physics/dynamics/rotation/PlanarTs.0.1.uavcan} \\
 	8 & control\_mode\_rpm & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/array/Bit.1.0.uavcan} \\
-	9 & uavcan.pub.power.id & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/reg/udral/physics/electricity/PowerTs.0.1.uavcan} \\
+	9 & uavcan.pub.power.id &  \\
 	10 & ttl\_milliseconds & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan} \\
-	11 & id\_in\_esc\_group & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan}\\
+	11 & id\_in\_esc\_group & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan}
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{Application status indication via RGB LED}{|l l|X|}
@@ -1232,7 +1250,7 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	Solid dim green      & \ShowSolidColor{green}  & Running normally after node ID allocation
 	This state is very transient. \\
 	Solid cyan    & \ShowSolidColor{cyan} & UAVCAN dynamic node ID allocation started. \\
-	Off              & \ShowSolidColor{black}  & The application is being started. \\
+	Off              & \ShowSolidColor{black}  & The application is being started. 
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{The different commands that are accepted on the ExecuteCommand.1.1 subject}{|l X|}
@@ -1902,7 +1920,7 @@ The reader is assumed to have read the previous parts of the reference manual.
 
 Further help can be gained via \url{https://forum.zubax.com}.
 
-\section{Basic configuration}
+\section{Basic configuration}\label{sec:basic-configuration}
 
 \subsection{Number of rotor magnetic poles}
 

@@ -33,12 +33,7 @@
  ****************************************************************************/
 
 #include <ch.h>
-#include <hal.h>
-#include <cassert>
-#include <cerrno>
 #include <cmath>
-#include <cstdint>
-#include <unistd.h>
 #include <board/board.hpp>
 #include <board/led.hpp>
 #include <console.hpp>
@@ -49,6 +44,8 @@
 #include <sys/unistd.h>
 #include "node/uavcan_thread.hpp"
 #include <stdio.h>
+
+#define TEMPERATURE_SENSORS_MISSING
 
 namespace
 {
@@ -64,12 +61,20 @@ os::watchdog::Timer init()
     led_ctl.set(board::LEDColor::PALE_WHITE);
 
     // Temperature sensor
-    int res = 1; //temperature_sensor::init();
+    int res =
+#ifndef TEMPERATURE_SENSORS_MISSING
+        temperature_sensor::init();
+#else
+        1
+#endif
+    ; //
+#ifndef TEMPERATURE_SENSORS_MISSING
     if (res < 0)
     {
         os::lowsyslog("Failed to init temperature sensor\n");
         board::die(res);
     }
+#endif
 
     // Motor control (must be initialized earlier than communicaton interfaces)
     res = motor_init(board::get_current_shunt_resistance());
@@ -94,7 +99,7 @@ os::watchdog::Timer init()
     }
 
     // Initializing console after delay to ensure that CLI is flushed
-    usleep(300000); // 0.3 seconds
+    chThdSleepMilliseconds(300);
     console_init();
 
     return wdt;
@@ -102,8 +107,13 @@ os::watchdog::Timer init()
 
 [[maybe_unused]] void do_startup_beep()
 {
+    // Valenok should not do the startup beep, it is dangerous, apparently.
+    if (board::detect_hardware_version().minor == 3)
+    {
+        return;
+    }
     motor_beep(1000, 100);
-    ::usleep(200 * 1000);
+    chThdSleepMilliseconds(200);
     motor_beep(1000, 100);
 }
 
@@ -200,24 +210,17 @@ int main()
     {
         wdt.reset();
 
-        /*if (motor_is_blocked() || !temperature_sensor::is_ok())
+        if (motor_is_blocked()
+#ifndef TEMPERATURE_SENSORS_MISSING
+            || !temperature_sensor::is_ok()
+#endif
+            )
         {
             led_ctl.set(board::LEDColor::YELLOW);
-            if (!node::state::state.overheating)
-            {
-                node::state::state.overheating = true;
-                if (temperature_sensor::is_ok())
-                {
-                    printf("Temperature sensor is okay but motor is blocked!\n");
-                } else
-                {
-                    printf("Temperature sensor is not okay and motor is not blocked.\n");
-                }
-            }
         } else
         {
             led_ctl.set(board::LEDColor::DARK_GREEN);
-        }*/
+        }
 
         //bg_config_manager.poll();
         chThdSleepMilliseconds(500);

@@ -107,7 +107,7 @@ static int test_sensors(void)
         return 1;
     }
 
-//    printf("Motor: Raw input voltage %i, raw input current %i\n", sample.input_voltage, sample.input_current);
+    printf("Motor: Raw input voltage %i, raw input current %i\n", sample.input_voltage, sample.input_current);
     return 0;
 }
 
@@ -150,7 +150,7 @@ static int test_power_stage(void)
         // It is not possible to check against the high threshold directly
         // because its value will depend on the supply voltage
 
-//		printf("Motor: Selftest phase %i: low %i, high %i\n", phase, low, high);
+        printf("Motor: Selftest phase %i: low %i, high %i\n", phase, low, high);
     }
 
     /*
@@ -213,8 +213,8 @@ static int test_cross_phase_conductivity(void)
         if (!valid)
         {
             num_detects++;
-//            printf("Motor: Phase %i cross conductivity: %i %i %i\n", phase,
-//                   sample.phase_values[0], sample.phase_values[1], sample.phase_values[2]);
+            printf("Motor: Phase %i cross conductivity: %i %i %i\n", phase,
+                   sample.phase_values[0], sample.phase_values[1], sample.phase_values[2]);
         }
     }
 
@@ -222,7 +222,7 @@ static int test_cross_phase_conductivity(void)
 
     if (num_detects == MOTOR_NUM_PHASES)
     {
-//        printf("Motor: All phases are shorted, assuming the motor is connected\n");
+        printf("Motor: All phases are shorted, assuming the motor is connected\n");
         num_detects = 0;
     }
 
@@ -239,7 +239,7 @@ int motor_rtctl_test_hardware(void)
     motor_pwm_set_freewheeling();
     usleep(INITIAL_DELAY_MS * 1000);
 
-//    printf("Motor: Power stage test...\n");
+    printf("Motor: Power stage test...\n");
     {
         int res = test_power_stage();
         if (res != 0)
@@ -248,7 +248,7 @@ int motor_rtctl_test_hardware(void)
         }
     }
 
-//    printf("Motor: Cross phase test...\n");
+    printf("Motor: Cross phase test...\n");
     {
         int res = test_cross_phase_conductivity();
         if (res != 0)
@@ -257,7 +257,7 @@ int motor_rtctl_test_hardware(void)
         }
     }
 
-//    printf("Motor: Sensors test...\n");
+    printf("Motor: Sensors test...\n");
     {
         int res = test_sensors();
         if (res != 0)

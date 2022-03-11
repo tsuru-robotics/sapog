@@ -274,7 +274,7 @@ static void handle_unexpected_stop(void)
     motor_rtctl_print_debug_info();
 
     // Wait some more before the possibly immediately following restart to serve other threads
-    usleep(10000);
+    chThdSleepMilliseconds(10);
 }
 
 static void update_control_non_running(void)

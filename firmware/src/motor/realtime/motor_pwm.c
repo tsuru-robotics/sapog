@@ -91,8 +91,8 @@ static int init_constants(unsigned frequency, const float pwm_dead_time_ns)
     const int effective_steps = pwm_steps / 2;
     const float true_frequency = PWM_TIMER_FREQUENCY / (float) pwm_steps;
     const unsigned adc_period_usec = motor_adc_sampling_period_hnsec() / HNSEC_PER_USEC;
-//	printf("Motor: PWM freq: %f; Effective steps: %i; ADC period: %u usec\n",
-//		true_frequency, effective_steps, adc_period_usec);
+    printf("Motor: PWM freq: %f; Effective steps: %i; ADC period: %u usec\n",
+           true_frequency, effective_steps, adc_period_usec);
 
     /*
      * PWM min - Limited by MOTOR_ADC_SAMPLE_WINDOW_NANOSEC
@@ -107,7 +107,7 @@ static int init_constants(unsigned frequency, const float pwm_dead_time_ns)
     _pwm_min = (uint16_t) pwm_min_ticks_float;
     if (_pwm_min > _pwm_half_top)
     {
-//        printf("Motor: Forcing PWM min = half = %u\n", (unsigned) _pwm_half_top);
+        printf("Motor: Forcing PWM min = half = %u\n", (unsigned) _pwm_half_top);
         _pwm_min = _pwm_half_top;
     }
 
@@ -145,17 +145,17 @@ static int init_constants(unsigned frequency, const float pwm_dead_time_ns)
             _adc_blanking_ticks = 1;
         }
 
-//        printf("Motor: ADC blanking reduced from %u to %u ticks due to PWM frequency being too high\n",
-//               (unsigned) old_blanking,
-//               (unsigned) _adc_blanking_ticks);
+        printf("Motor: ADC blanking reduced from %u to %u ticks due to PWM frequency being too high\n",
+               (unsigned) old_blanking,
+               (unsigned) _adc_blanking_ticks);
     }
 
-//    printf("Motor: PWM range [%u; %u], ADC: advance %u ticks, blanking %u ticks, sample %u ticks\n",
-//           (unsigned) _pwm_min,
-//           (unsigned) _pwm_top,
-//           (unsigned) _adc_advance_ticks,
-//           (unsigned) _adc_blanking_ticks,
-//           (unsigned) _adc_sample_duration_ticks);
+    printf("Motor: PWM range [%u; %u], ADC: advance %u ticks, blanking %u ticks, sample %u ticks\n",
+           (unsigned) _pwm_min,
+           (unsigned) _pwm_top,
+           (unsigned) _adc_advance_ticks,
+           (unsigned) _adc_blanking_ticks,
+           (unsigned) _adc_sample_duration_ticks);
     return 0;
 }
 
@@ -225,7 +225,7 @@ static void init_timers(const float pwm_dead_time)
         assert(0);
         dead_time_ticks = 127;
     }
-//    printf("Motor: PWM dead time %u ticks\n", (unsigned) dead_time_ticks);
+    printf("Motor: PWM dead time %u ticks\n", (unsigned) dead_time_ticks);
 
     TIM1->BDTR = TIM_BDTR_AOE | TIM_BDTR_MOE | dead_time_ticks;
 

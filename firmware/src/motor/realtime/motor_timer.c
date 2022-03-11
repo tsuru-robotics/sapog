@@ -214,7 +214,7 @@ void motor_timer_init(void)
     _nanosec_per_tick = INT_1E9 / (TIMEVT_INPUT_CLOCK / prescaler);
     ASSERT_ALWAYS(_nanosec_per_tick < 1000);      // Make sure it is sane
 
-//	printf("Motor: Timer resolution: %u nanosec\n", (unsigned)_nanosec_per_tick);
+    printf("Motor: Timer resolution: %u nanosec\n", (unsigned) _nanosec_per_tick);
 
     // Enable IRQ
     nvicEnableVector(TIMEVT_IRQn, MOTOR_IRQ_PRIORITY_MASK);

@@ -274,9 +274,9 @@ static void configure(void)
 
     _params.adc_sampling_period = motor_adc_sampling_period_hnsec();
 
-//    printf("Motor: RTCTL config: Max comm period: %u usec, BEMF window denom: %i\n",
-//           (unsigned) (_params.comm_period_max / HNSEC_PER_USEC),
-//           _params.motor_bemf_window_len_denom);
+    printf("Motor: RTCTL config: Max comm period: %u usec, BEMF window denom: %i\n",
+           (unsigned) (_params.comm_period_max / HNSEC_PER_USEC),
+           _params.motor_bemf_window_len_denom);
 }
 
 // --- Hard real time code below ---
