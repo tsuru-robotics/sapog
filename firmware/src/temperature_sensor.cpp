@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <limits>
 #include <algorithm>
+#include <cstdio>
 
 namespace temperature_sensor
 {
@@ -71,11 +72,25 @@ std::array<std::optional<std::int16_t>, max_number_of_sensors> try_read()
     {
         const std::array<std::uint8_t, 1> tx = {0};
         std::array<std::uint8_t, 2> rx;
-        if (!sensor_address.has_value() || board::i2c_exchange(sensor_address.value(), tx, rx) < 0)
+        if (sensor_address.has_value())
+        {
+            int retry_count = 0;
+            while (retry_count < 3)
+            {
+                if (board::i2c_exchange(sensor_address.value(), tx, rx) == 0)
+                {
+                    result[count] = convert_lm75b_to_kelvin(rx);
+                    break;
+                } else
+                {
+                    retry_count++;
+                }
+            }
+
+        } else
         {
             result[count] = {};
         }
-        result[count] = convert_lm75b_to_kelvin(rx);
         count++;
     }
     return result;
@@ -139,7 +154,7 @@ class : public chibios_rt::BaseStaticThread<128>
 
 int init()
 {
-
+    printf("\nHardware minor version: %d\n", board::detect_hardware_version().minor);
     switch (board::detect_hardware_version().minor)
     {
         case 0:
@@ -147,13 +162,14 @@ int init()
         case 2: // Sapog Reference, Sapog, Kotleta
             sensor_addresses[0] = 0b1001000;
             sensor_addresses[1] = {};
-            sensor_addresses[3] = {};
+            sensor_addresses[2] = {};
             available_temperature_sensors = 1;
+            printf("Kotleta detected.\n");
             break;
         case 3: // Valenok
             sensor_addresses[0] = 0b1001000;
             sensor_addresses[1] = 0b1001001;
-            sensor_addresses[3] = 0b1001011;
+            sensor_addresses[2] = 0b1001011;
             available_temperature_sensors = 3;
             break;
         default:
@@ -184,7 +200,7 @@ bool is_ok()
 
 std::int16_t get_temperature_K()
 {
-    return read_maximum_temperature().value();
+    return read_maximum_temperature().value_or(0);
 }
 
 }
