@@ -162,13 +162,13 @@ int init()
         case 2: // Sapog Reference, Sapog, Kotleta
             sensor_addresses[0] = 0b1001000;
             sensor_addresses[1] = {};
-            sensor_addresses[3] = {};
+            sensor_addresses[2] = {};
             available_temperature_sensors = 1;
             break;
         case 3: // Valenok
             sensor_addresses[0] = 0b1001000;
             sensor_addresses[1] = 0b1001001;
-            sensor_addresses[3] = 0b1001011;
+            sensor_addresses[2] = 0b1001011;
             available_temperature_sensors = 3;
             break;
         default:

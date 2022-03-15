@@ -33,7 +33,7 @@ USE_LTO := no
 
 LDSCRIPT = linker.tmp.ld
 
-UDEFS += -DCORTEX_ENABLE_WFI_IDLE=1
+#UDEFS += -DCORTEX_ENABLE_WFI_IDLE=1
 
 USE_LINK_GC         = yes
 USE_THUMB           = yes
@@ -88,7 +88,7 @@ USE_CPPOPT += -std=c++17 -fno-rtti -fno-exceptions -fno-threadsafe-statics -Wno-
 
 USE_OPT += -nodefaultlibs -lc -lgcc -lm
 
-USE_OPT += -Og
+USE_OPT += -Os
 
 RELEASE ?= 0
 ifneq ($(RELEASE),0)
@@ -98,7 +98,7 @@ ifneq ($(RELEASE),0)
 else
     DDEFS   += -DDEBUG_BUILD=1
     DADEFS  += -DDEBUG_BUILD=1
-    USE_OPT += -g3
+    USE_OPT += -g0
 endif
 
 TOOLCHAIN_PREFIX ?= arm-none-eabi

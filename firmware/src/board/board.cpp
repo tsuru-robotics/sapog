@@ -129,12 +129,12 @@ os::watchdog::Timer init(unsigned watchdog_timeout_ms)
     }
     // Heap init
     // Banner
-    const auto hw_version = detect_hardware_version();
-    os::lowsyslog("%s %u.%u %u.%u / %d %s\n",
-                  NODE_NAME,
-                  hw_version.major, hw_version.minor,
-                  FW_VERSION_MAJOR, FW_VERSION_MINOR, config_init_res,
-                  os::watchdog::wasLastResetTriggeredByWatchdog() ? "WDTRESET" : "OK");
+//    const auto hw_version = detect_hardware_version();
+//    os::lowsyslog("%s %u.%u %u.%u / %d %s\n",
+//                  NODE_NAME,
+//                  hw_version.major, hw_version.minor,
+//                  FW_VERSION_MAJOR, FW_VERSION_MINOR, config_init_res,
+//                  os::watchdog::wasLastResetTriggeredByWatchdog() ? "WDTRESET" : "OK");
     o1_heap_instance = o1heapInit(&::board::__heap_base__,
                                   reinterpret_cast<std::size_t>(&__heap_end__) -
                                   reinterpret_cast<std::size_t>(&__heap_base__),  // NOLINT
