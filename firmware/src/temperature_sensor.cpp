@@ -66,6 +66,7 @@ std::int16_t convert_lm75b_to_kelvin(const std::array<std::uint8_t, 2> &raw)
 
 std::array<std::optional<std::int16_t>, max_number_of_sensors> try_read()
 {
+
     std::array<std::optional<std::int16_t>, max_number_of_sensors> result{};
     int count = 0;
     for (auto &sensor_address: sensor_addresses)
@@ -79,10 +80,12 @@ std::array<std::optional<std::int16_t>, max_number_of_sensors> try_read()
             {
                 if (board::i2c_exchange(sensor_address.value(), tx, rx) == 0)
                 {
+                    functional = true;
                     result[count] = convert_lm75b_to_kelvin(rx);
                     break;
                 } else
                 {
+                    functional = false;
                     retry_count++;
                 }
             }
