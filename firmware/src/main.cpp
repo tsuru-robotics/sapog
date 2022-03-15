@@ -45,7 +45,7 @@
 #include "node/uavcan_thread.hpp"
 #include <stdio.h>
 
-#define TEMPERATURE_SENSORS_MISSING
+//#define TEMPERATURE_SENSORS_MISSING
 
 namespace
 {
@@ -65,7 +65,7 @@ os::watchdog::Timer init()
 #ifndef TEMPERATURE_SENSORS_MISSING
         temperature_sensor::init();
 #else
-        1
+    1
 #endif
     ; //
 #ifndef TEMPERATURE_SENSORS_MISSING
@@ -211,7 +211,7 @@ int main()
         wdt.reset();
 
         if (motor_is_blocked()
-#ifndef TEMPERATURE_SENSORS_MISSING
+            #ifndef TEMPERATURE_SENSORS_MISSING
             || !temperature_sensor::is_ok()
 #endif
             )

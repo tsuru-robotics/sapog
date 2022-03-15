@@ -77,6 +77,8 @@ inline int i2c_exchange(std::uint8_t address,
     return i2c_exchange(address, tx.data(), TxSize, rx.data(), RxSize);
 }
 
+void i2c_reset();
+
 __attribute__((noreturn))
 void die(int error);
 

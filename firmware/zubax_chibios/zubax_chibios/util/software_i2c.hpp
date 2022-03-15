@@ -50,11 +50,11 @@ private:
 
     class I2CPin
     {
-        GPIO_TypeDef* const port_;
+        GPIO_TypeDef *const port_;
         const unsigned pin_;
 
     public:
-        I2CPin(GPIO_TypeDef* gpio_port, unsigned gpio_pin) :
+        I2CPin(GPIO_TypeDef *gpio_port, unsigned gpio_pin) :
             port_(gpio_port), pin_(gpio_pin)
         {
         }
@@ -64,9 +64,14 @@ private:
             set();       // Returning to default state
         }
 
-        void set()       { palSetPad(port_, pin_); }
-        void clear()     { palClearPad(port_, pin_); }
-        bool get() const { return palReadPad(port_, pin_); }
+        void set()
+        { palSetPad(port_, pin_); }
+
+        void clear()
+        { palClearPad(port_, pin_); }
+
+        bool get() const
+        { return palReadPad(port_, pin_); }
     };
 
     I2CPin scl_;
@@ -99,8 +104,7 @@ private:
         if (bit)
         {
             sda_.set();
-        }
-        else
+        } else
         {
             sda_.clear();
         }
@@ -119,7 +123,8 @@ private:
         return Result::OK;
     }
 
-    Result readBit(bool& out_bit)
+
+    Result readBit(bool &out_bit)
     {
         sda_.set();
         delay();
@@ -135,15 +140,15 @@ private:
     }
 
 public:
-    Master(GPIO_TypeDef* scl_port, unsigned scl_pin,
-           GPIO_TypeDef* sda_port, unsigned sda_pin,
+    Master(GPIO_TypeDef *scl_port, unsigned scl_pin,
+           GPIO_TypeDef *sda_port, unsigned sda_pin,
            unsigned arg_clock_stretch_timeout_usec = DefaultClockStretchTimeoutUSec,
            unsigned arg_delay_usec = DefaultCycleDelayUSec) :
         scl_(scl_port, scl_pin),
         sda_(sda_port, sda_pin),
         clock_stretch_timeout_usec_(arg_clock_stretch_timeout_usec),
         delay_usec_(arg_delay_usec)
-    { }
+    {}
 
     /**
      * Destructor ensures that the bus is correctly stopped, and GPIO pins are correctly set to the high level.
@@ -152,8 +157,29 @@ public:
     {
         if (started_)
         {
-            (void)stop();
+            (void) stop();
         }
+    }
+
+    /// Modulates a bus reset sequence.
+    /// The reset sequence allows the master to bring the bus into a known state.
+    /// Its use is advised by some EEPROM memory chip vendors, for example, like ROHM BR24G128.
+    void reset()
+    {
+        static constexpr std::uint8_t MaxClockCycles = 30;
+        static constexpr std::uint8_t AllowStopIfSDAHighAfterThisManyClockCycles = 14;
+        for (std::uint8_t i = 0; i < MaxClockCycles; i++)
+        {
+            bool the_bit = false;
+            (void) readBit(the_bit);
+            if ((i > AllowStopIfSDAHighAfterThisManyClockCycles) && the_bit)
+            {
+                break;
+            }
+        }
+        delay();
+        started_ = true;
+        (void) stop();
     }
 
     /**
@@ -182,7 +208,8 @@ public:
         return Result::OK;
     }
 
-    bool isStarted() const { return started_; }
+    bool isStarted() const
+    { return started_; }
 
     /**
      * Stops the bus.
@@ -241,7 +268,7 @@ public:
         return writeByte(address);
     }
 
-    Result readByte(std::uint8_t& out_byte, bool ack)
+    Result readByte(std::uint8_t &out_byte, bool ack)
     {
         assert(started_);
         out_byte = 0;
@@ -264,19 +291,22 @@ public:
      * It will automatically generate start and stop sequences.
      */
     Result exchange(std::uint8_t address,
-                    const void* tx_data, const std::uint16_t tx_size,
-                          void* rx_data, const std::uint16_t rx_size)
+                    const void *tx_data, const std::uint16_t tx_size,
+                    void *rx_data, const std::uint16_t rx_size)
     {
         // This will ensure that the bus is correctly stopped at exit
         struct RAIIStopper
         {
-            Master& owner_;
-            RAIIStopper(Master& master) : owner_(master) { }
+            Master &owner_;
+
+            RAIIStopper(Master &master) : owner_(master)
+            {}
+
             ~RAIIStopper()
             {
                 if (owner_.isStarted())
                 {
-                    (void)owner_.stop();
+                    (void) owner_.stop();
                 }
             }
         } const volatile stopper(*this);
@@ -296,7 +326,7 @@ public:
                 return res;
             }
 
-            const std::uint8_t* p = reinterpret_cast<const std::uint8_t*>(tx_data);
+            const std::uint8_t *p = reinterpret_cast<const std::uint8_t *>(tx_data);
 
             for (unsigned i = 0; i < tx_size; i++)
             {
@@ -323,10 +353,10 @@ public:
                 return res;
             }
 
-            std::uint8_t* p = reinterpret_cast<std::uint8_t*>(rx_data);
+            std::uint8_t *p = reinterpret_cast<std::uint8_t *>(rx_data);
             std::uint16_t left = rx_size;
 
-            while (left --> 0)
+            while (left-- > 0)
             {
                 res = readByte(*p++, left > 0);
                 if (res != Result::OK)
@@ -347,8 +377,8 @@ public:
      */
     template<unsigned TxSize, unsigned RxSize>
     Result exchange(std::uint8_t address,
-                    const std::array<uint8_t, TxSize>& tx,
-                          std::array<uint8_t, RxSize>& rx)
+                    const std::array<uint8_t, TxSize> &tx,
+                    std::array<uint8_t, RxSize> &rx)
     {
         return exchange(address, tx.data(), TxSize, rx.data(), RxSize);
     }

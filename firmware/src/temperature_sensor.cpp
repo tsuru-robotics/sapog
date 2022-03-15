@@ -71,11 +71,26 @@ std::array<std::optional<std::int16_t>, max_number_of_sensors> try_read()
     {
         const std::array<std::uint8_t, 1> tx = {0};
         std::array<std::uint8_t, 2> rx;
-        if (!sensor_address.has_value() || board::i2c_exchange(sensor_address.value(), tx, rx) < 0)
+        if (sensor_address.has_value())
+        {
+            int retry_count = 0;
+            while (retry_count < 3)
+            {
+                if (board::i2c_exchange(sensor_address.value(), tx, rx) == 0)
+                {
+                    result[count] = convert_lm75b_to_kelvin(rx);
+                    break;
+                } else
+                {
+                    board::i2c_reset();
+                    retry_count++;
+                }
+            }
+
+        } else
         {
             result[count] = {};
         }
-        result[count] = convert_lm75b_to_kelvin(rx);
         count++;
     }
     return result;
@@ -184,7 +199,7 @@ bool is_ok()
 
 std::int16_t get_temperature_K()
 {
-    return read_maximum_temperature().value();
+    return read_maximum_temperature().value_or(0);
 }
 
 }
