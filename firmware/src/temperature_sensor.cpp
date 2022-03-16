@@ -198,6 +198,14 @@ int init()
 
 bool is_ok()
 {
+    auto temp = read_maximum_temperature();
+    if (temp.has_value())
+    {
+        printf("Temperature (celsius): %d\n", temp.value() - 273);
+    } else
+    {
+        printf("No temperature was available.");
+    }
     return functional;
 }
 

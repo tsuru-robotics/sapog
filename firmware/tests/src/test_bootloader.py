@@ -1,3 +1,5 @@
+import logging
+
 import sys
 
 import pytest
@@ -28,6 +30,10 @@ def create_invalid_firmware():
         broken_fw.write(open("/dev/random", "rb").read(2000))
     assert os.path.exists(Path.cwd() / "invalid_image_for_bootloader_test.bin"), "Creating invalid image failed."
     return str(broken_fw_path)
+
+
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+_logger = logging.getLogger(__name__)
 
 
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
@@ -146,6 +152,7 @@ async def assert_repair_device_firmware(command_client):
 
 @pytest.mark.asyncio
 async def test_bootloader(prepared_double_redundant_node):
+    _logger.info("Hello")
     tester_node = prepared_double_redundant_node
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
@@ -168,9 +175,9 @@ async def test_bootloader(prepared_double_redundant_node):
         if node_info.node_id == 2:
             continue
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
-
+        file_server_root_path = "/"  # Path.cwd()
         # Launch the file server.
-        file_server = pyuavcan.application.file.FileServer(tester_node, [Path.cwd()])
+        file_server = pyuavcan.application.file.FileServer(tester_node, [file_server_root_path])
 
         await assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)
 

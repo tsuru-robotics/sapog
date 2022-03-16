@@ -31,6 +31,9 @@ from pyuavcan.transport import _tracer, Trace, Tracer, TransferTrace
 from pyuavcan.application.node_tracker import Entry
 from pyuavcan.util import import_submodules, iter_descendants
 
+from make_registry import make_registry
+from datetime import datetime
+
 
 def make_handler_for_getinfo_update():
     def handle_getinfo_handler_format(node_id: int, previous_entry: Optional[Entry], next_entry: Optional[Entry]):
@@ -126,12 +129,12 @@ def fill_ids():
 
 
 ignore_subjects = [
-    7510  # port_list
-    , 7509  # heartbeat
-    , 8166  # allocation
-    , 430  # getinfo
-    , 140
-    , 139
+    # 7510  # port_list
+    # , 7509  # heartbeat
+    # , 8166  # allocation
+    # , 430  # getinfo
+    # , 140
+    # , 139
 ]
 
 
@@ -161,7 +164,7 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                     if deserialized_trace is None:
                         return
                     if log_to_print:
-                        print(deserialized_trace)
+                        print(datetime.now().strftime("%H:%M:%S:%f") + deserialized_trace)
                     if log_to_file:
                         log_file.write(deserialized_trace + "\n")
 
@@ -192,11 +195,8 @@ async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool
 
 
 async def run_debugger_node(with_debugging=False):
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
-    registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
-    registry01["uavcan.can.mtu"] = 8
     debugger_node_id = 2
-    registry01["uavcan.node.id"] = debugger_node_id
+    registry01: register.Registry = make_registry(2, use_all_interfaces=True)
     while True:
         try:
             with make_node(NodeInfo(name="com.zubax.sapog.tests.debugger"), registry01) as node:

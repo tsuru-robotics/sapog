@@ -1226,16 +1226,28 @@ For more accurate DSDL descriptions please refer to the links in the following d
 	11 & id\_in\_esc\_group & \url{https://github.com/UAVCAN/public_regulated_data_types/blob/master/uavcan/primitive/scalar/Natural16.1.0.uavcan}\\
 \end{ZubaxSimpleTable}
 
+\definecolor{palewhite}{RGB}{230, 230, 230} 
+
 \begin{ZubaxSimpleTable}{Application status indication via RGB LED}{|l l|X|}
 	State            &                         & Meaning \\
 	Solid red        & \ShowSolidColor{red}    & Error.\\
 	Solid dim green      & \ShowSolidColor{green}  & Running normally after node ID allocation
 	This state is very transient. \\
 	Solid cyan    & \ShowSolidColor{cyan} & UAVCAN dynamic node ID allocation started. \\
+	Yellow              & \ShowSolidColor{yellow}  & Motor is blocked or communication with the temperature sensor(s) was disturbed \\
+	White              & \ShowSolidColor{palewhite}  & Temperature sensor and motor self test. \\
 	Off              & \ShowSolidColor{black}  & The application is being started. \\
 \end{ZubaxSimpleTable}
 
 \subsection{Bootloader (not application)}
+
+\begin{ZubaxSimpleTable}{Bootloader status indication via RGB LED}{|l l|X|}
+	State            &                         & Meaning \\
+	Solid red        & \ShowSolidColor{red}    & Error.\\
+	Solid bright green      & \ShowSolidColor{green}  & Boot delay or boot canceled. \\
+	Blue    & \ShowSolidColor{blue} & Application update in progress \\
+	Yellow              & \ShowSolidColor{yellow}  & No application to boot \\
+\end{ZubaxSimpleTable}
 \section{CLI}
 
 \subsection{Overview}

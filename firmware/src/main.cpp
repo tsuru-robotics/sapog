@@ -184,7 +184,7 @@ int main()
     auto wdt = init();
     chThdSetPriority(NORMALPRIO);
 
-    //do_startup_beep();
+//    do_startup_beep();
 
     motor_confirm_initialization();
     printf("\n\n\n\nBooted\n");
@@ -203,16 +203,12 @@ int main()
         if (motor_is_blocked() || !temperature_sensor::is_ok())
         {
             led_ctl.set(board::LEDColor::YELLOW);
-            if (!node::state::state.overheating)
+            if (temperature_sensor::is_ok())
             {
-                node::state::state.overheating = true;
-                if (temperature_sensor::is_ok())
-                {
-                    printf("Temperature sensor is okay but motor is blocked!\n");
-                } else
-                {
-                    printf("Temperature sensor is not okay and motor is not blocked.\n");
-                }
+                printf("Temperature sensor is okay but motor is blocked!\n");
+            } else
+            {
+                printf("Temperature sensor is not okay and motor is not blocked.\n");
             }
         } else
         {
