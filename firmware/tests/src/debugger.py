@@ -164,7 +164,7 @@ def make_capture_handler(tracer: Tracer, ids: typing.Dict[int, FixedPortObject],
                     if deserialized_trace is None:
                         return
                     if log_to_print:
-                        print(datetime.now().strftime("%H:%M:%S:%f") + deserialized_trace)
+                        print(f"{datetime.now().strftime('%H:%M:%S:%f')} {deserialized_trace}")
                     if log_to_file:
                         log_file.write(deserialized_trace + "\n")
 

@@ -3,12 +3,15 @@
 # Distributed under the MIT License, available in the file LICENSE.
 # Author: Silver Valdvee <silver.valdvee@zubax.com>
 #
+import logging
 import typing
 
 import pyuavcan
 
 from uavcan import register
 from util.get_available_interfaces import get_available_slcan_interfaces
+
+_logger = logging.getLogger(__name__)
 
 
 def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_interfaces: bool = False):
@@ -17,6 +20,7 @@ def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_inter
         registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
     else:
         registry01["uavcan.can.iface"] = " ".join(interfaces)
+    _logger.info(f"Using these interfaces for node.id={node_id} uavcan.can.iface={registry01['uavcan.can.iface']}")
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = node_id
     return registry01

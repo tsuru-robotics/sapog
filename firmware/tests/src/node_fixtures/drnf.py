@@ -14,3 +14,8 @@ def prepared_node():
 def prepared_double_redundant_node():
     registry01 = make_registry(7, use_all_interfaces=True)
     return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
+
+
+def get_prepared_double_redundant_node():
+    registry01 = make_registry(7, use_all_interfaces=True)
+    return make_node(NodeInfo(name="com.zubax.sapog.tests.tester"), registry01)
