@@ -2,7 +2,6 @@ import logging
 
 import sys
 
-import pytest
 import asyncio
 import os
 from pathlib import Path
@@ -15,7 +14,7 @@ import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
 import pyuavcan.application.file_server
 
-from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
+from node_fixtures.drnf import get_prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node
 
@@ -29,46 +28,64 @@ def create_invalid_firmware():
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(open("/dev/random", "rb").read(2000))
     assert os.path.exists(Path.cwd() / "invalid_image_for_bootloader_test.bin"), "Creating invalid image failed."
-    return str(broken_fw_path.name)
+    return str(broken_fw_path)
 
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(logging.NOTSET)
 
 
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
     # Warning status needs to appear due to the overwriting with an incorrect image
     # if the read response is not received then this heartbeat cannot have the right value
     print("assert_does_bootloader_have_warning_heartbeat() beginning")
-    deadline = asyncio.get_running_loop().time() + 30.0
+    deadline = asyncio.get_running_loop().time() + 4.0
     count_key_not_found = 0
+    was_heartbeat_found = False
+    did_not_reach_software_update = False
     while True:
+        await asyncio.sleep(1.0)
+        current_time = asyncio.get_running_loop().time()
         try:
-            if not deadline > asyncio.get_running_loop().time():
-                pytest.fail(
-                    "Didn't find bootloader's heartbeat in time or the heartbeat mode value was wrong (supposed to be warning).")
-            await asyncio.sleep(1.0)
+            if current_time > deadline:
+                if did_not_reach_software_update:
+                    _logger.error("Did not get into the software update mode.")
+                if was_heartbeat_found:
+                    _logger.error("Heartbeat mode value was wrong, mode is supposed to be WARNING).")
+                    break
+                else:
+                    _logger.error("Didn't find bootloader's heartbeat in time.")
+                    break
+
             _logger.info(node_info.node_id)
-            entry = tracker.registry[node_info.node_id]
-            print(tracker.registry)
-            assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"
-            print(f"Bootloader has a health state of {entry.heartbeat.mode.value}")
-            if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
-                print(
-                    "Bootloader reported critical error, this means that it finished "
-                    "installing the firmware and discovered that it is invalid"
-                )
-                break
+            entry = tracker.registry.get(node_info.node_id, None)
+            if entry:
+                was_heartbeat_found = True
+                if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
+                    _logger.info(
+                        "Bootloader reported critical error, this means that it finished "
+                        "installing the firmware and discovered that it is invalid"
+                    )
+                    break
+                if entry.heartbeat.mode.value != uavcan.node.Mode_1.SOFTWARE_UPDATE:
+                    did_not_reach_software_update = True
+                    _logger.info("Software update mode was expected but not set.")
+                print(tracker.registry)
+                print(f"Bootloader has a health state of {entry.heartbeat.mode.value}")
+            else:
+                continue
         except KeyError:
             count_key_not_found += 1
             if count_key_not_found % 20 == 0:
-                print(f"Bootloader's heartbeat was not found for {count_key_not_found} consecutive tries.")
+                _logger.error(f"Bootloader's heartbeat was not found for {count_key_not_found} consecutive tries.")
             elif count_key_not_found > 100:
                 continue
             else:
                 continue
     _logger.info("Invalid firmware installation finished")
     await asyncio.sleep(3.0)
-    entry = tracker.registry[node_info.node_id]
+    entry = tracker.registry.get(node_info.node_id, None)
+    assert entry
     _logger.info("Current state (should be in the bootloader and WARNING): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE
     assert entry.heartbeat.health.value == uavcan.node.Health_1.WARNING
@@ -86,7 +103,8 @@ async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
             break
     _logger.info("Bootloader execution finished")
     await asyncio.sleep(10.0)
-    entry = tracker.registry[node_info.node_id]
+    entry = tracker.registry.get(node_info.node_id, None)
+    assert entry
     _logger.info("Current state (the application should be running normally): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.OPERATIONAL
     assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
@@ -138,12 +156,12 @@ async def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, no
 
 
 async def assert_repair_device_firmware(command_client):
-    valid_firmare_path = get_valid_firmware_path()
-    assert valid_firmare_path, "Valid firmware doesn't exist in the folder, maybe it is not built yet."
+    valid_firmware_path = get_valid_firmware_path()
+    assert valid_firmware_path, "Valid firmware doesn't exist in the folder, maybe it is not built yet."
     # REPAIR THE DEVICE BY REPLACING THE FIRMWARE WITH A VALID ONE.
     req = uavcan.node.ExecuteCommand_1.Request(
         command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
-        parameter=valid_firmare_path,
+        parameter=valid_firmware_path,
     )
     print("Asking the bootloader to reinstall the valid firmware: %s", req)
     while True:
@@ -155,21 +173,20 @@ async def assert_repair_device_firmware(command_client):
     assert response.status == response.STATUS_SUCCESS
 
 
-@pytest.mark.asyncio
-async def test_bootloader(prepared_double_redundant_node):
+async def bootloader_test():
     _logger.info("Bootloader test started")
-    tester_node = prepared_double_redundant_node
+    tester_node = get_prepared_double_redundant_node()
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
     # Gathering heartbeats from any online nodes
     await asyncio.sleep(1)
-    prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
+    prepared_sapogs = await get_prepared_sapogs(tester_node)
     # Removing the debugger node
     # If no heartbeats were detected then the allocator is run
 
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
-        node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
+        node_info_list = await our_allocator(node_to_use=tester_node, continuous=True,
                                              time_budget_seconds=2)
     else:
         node_info_list = prepared_sapogs
@@ -181,13 +198,17 @@ async def test_bootloader(prepared_double_redundant_node):
         if node_info.node_id == 2:
             continue
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
-        file_server_root_path = Path.cwd().absolute()
+        file_server_root_path = "/"  # Path.cwd()
         # Launch the file server.
-        file_server = pyuavcan.application.file_server.FileServer(tester_node, [file_server_root_path])
+        file_server = pyuavcan.application.file_server.FileServer(tester_node, [file_server_root_path], logger=_logger)
         _logger.debug("File server started")
-        [logging.getLogger(name).setLevel(logging.NOTSET) for name in logging.root.manager.loggerDict]
+
         await assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)
 
         await assert_repair_device_firmware(command_client)
 
         await assert_does_bootloader_have_healthy_heartbeat(tracker, node_info)
+
+
+if __name__ == "__main__":
+    asyncio.run(bootloader_test())
