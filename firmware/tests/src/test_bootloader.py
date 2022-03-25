@@ -43,36 +43,6 @@ _logger = logging.getLogger(__name__)
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
     # Warning status needs to appear due to the overwriting with an incorrect image
     # if the read response is not received then this heartbeat cannot have the right value
-    print("assert_does_bootloader_have_warning_heartbeat() beginning")
-    deadline = asyncio.get_running_loop().time() + 30.0
-    count_key_not_found = 0
-    while True:
-        try:
-            if not deadline > asyncio.get_running_loop().time():
-                pytest.fail(
-                    "Didn't find bootloader's heartbeat in time or the heartbeat mode value was wrong (supposed to be warning).")
-            await asyncio.sleep(1.0)
-            _logger.info(node_info.node_id)
-            entry = tracker.registry[node_info.node_id]
-            print(tracker.registry)
-            assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE, "Bootloader is not running"
-            print(f"Bootloader has a health state of {entry.heartbeat.mode.value}")
-            if entry.heartbeat.health.value == uavcan.node.Health_1.WARNING:
-                print(
-                    "Bootloader reported critical error, this means that it finished "
-                    "installing the firmware and discovered that it is invalid"
-                )
-                break
-        except KeyError:
-            count_key_not_found += 1
-            if count_key_not_found % 20 == 0:
-                print(f"Bootloader's heartbeat was not found for {count_key_not_found} consecutive tries.")
-            elif count_key_not_found > 100:
-                continue
-            else:
-                continue
-    _logger.info("Invalid firmware installation finished")
-    await asyncio.sleep(3.0)
     entry = tracker.registry[node_info.node_id]
     _logger.info("Current state (should be in the bootloader and WARNING): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE
@@ -113,7 +83,7 @@ async def assert_send_empty_parameter_install_request(tester_node, node_info, co
     assert resp.status == resp.STATUS_BAD_PARAMETER, "Status should have been STATUS_BAD_PARAMETER"
 
 
-async def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker):
+async def assert_started_installing_invalid_firmware(tester_node, node_info, command_client, tracker):
     broken_fw_path = create_invalid_firmware()
     req = uavcan.node.ExecuteCommand_1.Request(
         command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
@@ -140,7 +110,6 @@ async def assert_installing_invalid_firmware_doesnt_brick_device(tester_node, no
     assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
     assert response.status == response.STATUS_SUCCESS, "Execute command response was not a success"
     print("Device restarted, good; waiting for the bootloader to finish...")
-    await assert_does_bootloader_have_warning_heartbeat(tracker, node_info)
 
 
 async def assert_request_repair_device_firmware(command_client):
@@ -161,15 +130,29 @@ async def assert_request_repair_device_firmware(command_client):
     assert response.status == response.STATUS_SUCCESS
 
 
+async def wait_until_installation_is_started_and_finished(tracker, node_info, max_wait_time=120):
+    deadline = asyncio.get_running_loop().time() + max_wait_time
+    # Waiting for the firmware update to begin
+    while node_info.node_id not in tracker.registry or tracker.registry[
+        node_info.node_id].heartbeat.mode.value != uavcan.node.Mode_1.SOFTWARE_UPDATE:
+        await asyncio.sleep(0.1)
+        assert deadline > asyncio.get_running_loop().time()
+    # Waiting for the firmware update to end
+    while node_info.node_id in tracker.registry and tracker.registry[
+        node_info.node_id].heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE:
+        await asyncio.sleep(1.0)
+        assert deadline > asyncio.get_running_loop().time()
+
+
 @pytest.mark.asyncio
 async def test_bootloader(prepared_double_redundant_node):
-    _logger.info("Bootloader test started")
+    _logger.info("Bootloader test started, it has 4 steps.")
     tester_node = prepared_double_redundant_node
     tester_node.start()
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
     # Gathering heartbeats from any online nodes
-    await asyncio.sleep(1)
+    await asyncio.sleep(1.1)
 
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     # Removing the debugger node
@@ -186,17 +169,26 @@ async def test_bootloader(prepared_double_redundant_node):
     for index, node_info in enumerate(node_info_list):
         command_client = tester_node.make_client(uavcan.node.ExecuteCommand_1_1, node_info.node_id)
         command_client.response_timeout = 1.0
-        if node_info.node_id == 2:
+        is_target_node_a_debugger = node_info.node_id == 2
+        if is_target_node_a_debugger:
             continue
+        _logger.info("Step 1, sending a command to update firmware with the parameter empty, this should fail.")
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
         file_server_root_path = Path.cwd().parent.parent.absolute()
-        # Launch the file server.
+        _logger.info(f"Created a file server in the background, the root path is {file_server_root_path}")
         file_server = pyuavcan.application.file_server.FileServer(tester_node, [file_server_root_path])
 
         _logger.debug("File server started")
         # [logging.getLogger(name).setLevel(logging.NOTSET) for name in logging.root.manager.loggerDict]
-        # await assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)
-
+        _logger.info("Step 2, Installing invalid firmware and making sure that the device doesn't get bricked.")
+        _logger.info("The device should instead be emitting a warning heartbeat.")
+        await assert_started_installing_invalid_firmware(tester_node, node_info, command_client, tracker)
+        await wait_until_installation_is_started_and_finished(tracker, node_info)
+        _logger.info("Invalid firmware installation finished")
+        await assert_does_bootloader_have_warning_heartbeat(tracker, node_info)
+        _logger.info("Step 3, Installing correct firmware to repair the device")
         await assert_request_repair_device_firmware(command_client)
-        await asyncio.sleep(100)
-        # await assert_does_bootloader_have_healthy_heartbeat(tracker, node_info)
+        await wait_until_installation_is_started_and_finished(tracker, node_info)
+        await assert_does_bootloader_have_healthy_heartbeat(tracker, node_info)
+        _logger.info("Correct firmware installation finished")
+        _logger.info("Bootloader test passed")
