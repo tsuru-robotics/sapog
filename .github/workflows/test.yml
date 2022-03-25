@@ -13,7 +13,7 @@ jobs:
       - name: installing dependencies
         run: |
           python -m pip install -U nunavut yakut pytest pytest-asyncio
-          sudo apt install -y libjack-jackd2-dev libasound2-dev
+          sudo apt install -y libjack-jackd2-dev libasound2-dev unzip
       - name: Building Sapog
         run: |
           source /home/groom/.profile
