@@ -15,16 +15,16 @@ jobs:
           python -m pip install -U nunavut yakut pytest pytest-asyncio
           sudo apt install -y libjack-jackd2-dev libasound2-dev unzip
           echo -n "/home/groom/sapog-stuff/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin:/home/groom/sapog-stuff/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/arm-none-eabi/bin:" >> $GITHUB_PATH
-      - name: Validate the configuration (copy paste go brr)
+      - name: Validate the configuration
         run: |
-	        echo "USER: $USER"
-	        echo "CWD: $(pwd); GitHub workspace: ${{github.workspace}}"
-	        echo "GITHUB_PATH: $GITHUB_PATH"
-	        echo "PATH: $PATH"
-	        setup_slcan --help
-	        arm-none-eabi-gcc --version
-	        python --version
-	        nnvg --version
+          echo "USER: $USER"
+          echo "CWD: $(pwd); GitHub workspace: ${{github.workspace}}"
+          echo "GITHUB_PATH: $GITHUB_PATH"
+          echo "PATH: $PATH"
+          setup_slcan --help
+          arm-none-eabi-gcc --version
+          python --version
+          nnvg --version
       - name: Building Sapog
         run: |
           source /home/groom/.profile
