@@ -2,10 +2,12 @@ import asyncio
 import logging
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 import pyuavcan
 import pyuavcan.application.node_tracker
+import sys
 
 import uavcan
 from my_simple_test_allocator import make_simple_node_allocator
@@ -76,16 +78,19 @@ async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
 async def run_yakut_file_server():
     my_env = os.environ.copy()
     # my_env["PATH"] = "/usr/sbin:/sbin:" + my_env["PATH"]
-    my_env["UAVCAN__CAN__MTU"] = 8
-    my_env["UAVCAN__NODE__ID"] = 126
+    my_env["UAVCAN__CAN__MTU"] = "8"
+    my_env["UAVCAN__NODE__ID"] = "126"
     my_env["UAVCAN__CAN__IFACE"] = "socketcan:slcan0"
     yakut_path = "/home/silver/.local/bin/yakut"
-    completed_process = subprocess.run([f"{yakut_path}", "-v", "file-server", "+U", ".."])
-    _logger.info(f"The returncode of this yakut file-server was : {completed_process.returncode}")
-    _logger.info("stdout:")
-    _logger.info(completed_process.stdout)
-    _logger.info("stderr:")
-    _logger.info(completed_process.stderr)
+    namespaces_path = Path.cwd().parent.parent / 'deps' / 'namespaces'
+    my_env["PYTHONPATH"] = f"{namespaces_path}:{my_env['PYTHONPATH']}"
+    _logger.info("Starting yakut fileserver")
+    process = subprocess.Popen(
+        ["pwd"],
+        # [f"{yakut_path}", "--path", namespaces_path, "file-server", "+U", f"{Path.cwd().parent.absolute()}"],
+        env=my_env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    for line in iter(process.stdout.readline, b''):  # replace '' with b'' for Python 3
+        sys.stdout.write(line)
 
 
 @pytest.mark.asyncio
@@ -93,7 +98,8 @@ async def test_bootloader(prepared_double_redundant_node):
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
-        node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
+        node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node,
+                                             continuous=True,
                                              time_budget_seconds=2)
     else:
         node_info_list = prepared_sapogs
