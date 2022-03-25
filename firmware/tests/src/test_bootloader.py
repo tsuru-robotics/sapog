@@ -17,7 +17,7 @@ import pyuavcan.application.file_server
 
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
-from utils import get_prepared_sapogs, restart_node
+from utils import get_prepared_sapogs, restart_node, command_save
 
 valid_path = str(Path("build") / next((Path.cwd().parent.parent / "build").glob("io.px4.sapog*.app.release.dirty.bin"),
                                       None).name)
@@ -30,10 +30,10 @@ def get_valid_firmware_path():
 
 
 def create_invalid_firmware():
-    broken_fw_path = (Path.cwd() / "invalid_image_for_bootloader_test.bin").absolute()
+    broken_fw_path = (Path.cwd().parent.parent / "build" / "invalid_image_for_bootloader_test.bin").absolute()
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(open("/dev/random", "rb").read(2000))
-    assert os.path.exists(Path.cwd() / "invalid_image_for_bootloader_test.bin"), "Creating invalid image failed."
+    assert os.path.exists(broken_fw_path), "Creating invalid image failed."
     return str(Path("build") / broken_fw_path.name)
 
 
@@ -47,7 +47,7 @@ async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
     _logger.info("Current state (should be in the bootloader and WARNING): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE
     assert entry.heartbeat.health.value == uavcan.node.Health_1.WARNING
-    assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
+    assert entry.info.name.tobytes().decode() == "io.px4.sapog"
 
 
 async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
@@ -65,7 +65,7 @@ async def assert_does_bootloader_have_healthy_heartbeat(tracker, node_info):
     _logger.info("Current state (the application should be running normally): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.OPERATIONAL
     assert entry.heartbeat.health.value == uavcan.node.Health_1.NOMINAL
-    assert entry.info.name.tobytes().decode() == "com.zubax.sapog"
+    assert entry.info.name.tobytes().decode() == "io.px4.sapog"
 
 
 async def assert_send_empty_parameter_install_request(tester_node, node_info, command_client):
@@ -132,14 +132,15 @@ async def assert_request_repair_device_firmware(command_client):
 
 async def wait_until_installation_is_started_and_finished(tracker, node_info, max_wait_time=120):
     deadline = asyncio.get_running_loop().time() + max_wait_time
-    # Waiting for the firmware update to begin
+    _logger.info("Waiting for the firmware update to begin")
     while node_info.node_id not in tracker.registry or tracker.registry[
         node_info.node_id].heartbeat.mode.value != uavcan.node.Mode_1.SOFTWARE_UPDATE:
         await asyncio.sleep(0.1)
         assert deadline > asyncio.get_running_loop().time()
-    # Waiting for the firmware update to end
+    _logger.info("Waiting for the firmware update to end")
     while node_info.node_id in tracker.registry and tracker.registry[
-        node_info.node_id].heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE:
+        node_info.node_id].heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE \
+            and tracker.registry[node_info.node_id].heartbeat.health.value != uavcan.node.Health_1.WARNING:
         await asyncio.sleep(1.0)
         assert deadline > asyncio.get_running_loop().time()
 
@@ -151,17 +152,13 @@ async def test_bootloader(prepared_double_redundant_node):
     tester_node.start()
     tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
-    # Gathering heartbeats from any online nodes
-    await asyncio.sleep(1.1)
-
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
-    # Removing the debugger node
-    # If no heartbeats were detected then the allocator is run
-
     if len(prepared_sapogs) == 0:
         our_allocator = make_simple_node_allocator()
         node_info_list = await our_allocator(node_to_use=prepared_double_redundant_node, continuous=True,
                                              time_budget_seconds=2)
+        for index, node_info in enumerate(node_info_list):
+            await command_save(tester_node, node_info.node_id)
     else:
         node_info_list = prepared_sapogs
     if len(node_info_list) == 0:
