@@ -16,8 +16,8 @@ jobs:
           sudo apt install -y libjack-jackd2-dev libasound2-dev
       - name: Building Sapog
         run: |
-          source /home/zubaxpc/.profile
-          source /home/zubaxpc/.bashrc
+          source /home/groom/.profile
+          source /home/groom/.bashrc
           echo $PATH
           echo $USER
           python firmware/tests/src/builder.py build
