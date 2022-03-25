@@ -3,6 +3,8 @@ on: push
 jobs:
   runtests:
     runs-on: [ self-hosted ]
+    env:
+      PATH: $PATH:/home/groom/sapog-stuff/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin:/home/groom/sapog-stuff/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/arm-none-eabi/bin
     if:
       contains(github.event.head_commit.message, '#groom')
     steps:
