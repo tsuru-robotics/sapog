@@ -97,7 +97,6 @@ async def assert_started_installing_invalid_firmware(tester_node, node_info, com
     )
     # INSTALL INVALID FIRMWARE AND ENSURE THE DEVICE IS NOT BRICKED.
 
-    await asyncio.sleep(20)  # This has to be enough time for the upload to complete as well
     _logger.info("Requesting the device to install an invalid firmware image: %s", req)
 
     while True:
@@ -184,7 +183,7 @@ async def test_bootloader(prepared_double_redundant_node):
         _logger.debug("File server started")
         # [logging.getLogger(name).setLevel(logging.NOTSET) for name in logging.root.manager.loggerDict]
         _logger.info("Step 2, Installing invalid firmware and making sure that the device doesn't get bricked.")
-        _logger.info("The device should instead be emitting a warning heartbeat.")
+        _logger.info("The device should be emitting a warning heartbeat.")
         await assert_started_installing_invalid_firmware(tester_node, node_info, command_client, tracker)
         await wait_until_installation_is_started_and_finished(tracker, node_info)
         _logger.info("Invalid firmware installation finished")
