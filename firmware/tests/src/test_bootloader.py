@@ -22,18 +22,14 @@ from utils import get_prepared_sapogs, restart_node, command_save
 _logger = logging.getLogger(__name__)
 
 current_working_directory = Path.cwd()
-_logger.debug(f"Current working directory: {current_working_directory.absolute()}")
+_logger.info(f"Current working directory: {current_working_directory.absolute()}")
 build_directory = current_working_directory.parent.parent / "build"
-_logger.debug(f"Files in build directory ({build_directory.absolute()})")
-for root, dirs, files in os.walk(build_directory, topdown=False):
-    for name in files:
-        _logger.debug(f"file: {name}")
-    for name in dirs:
-        _logger.debug(f"directory: {name}")
+_logger.info(f"Files in build directory ({build_directory.absolute()})")
+_logger.info([str(x) for x in list(build_directory.glob("*"))])
 valid_path = str(Path("build") / next(
     (build_directory).glob("io.px4.sapog*.app.release.dirty.bin"),
     None).name)
-_logger.debug(valid_path)
+_logger.info(valid_path)
 
 
 def get_valid_firmware_path():
@@ -182,7 +178,7 @@ async def test_bootloader(prepared_double_redundant_node):
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
         file_server_root_path = Path.cwd().parent.parent.absolute()
         _logger.info(f"Created a file server in the background, the root path is {file_server_root_path}")
-        file_server = pyuavcan.application.file_server.FileServer(tester_node, [file_server_root_path])
+        file_server = pyuavcan.application.file.FileServer(tester_node, [file_server_root_path])
 
         _logger.debug("File server started")
         # [logging.getLogger(name).setLevel(logging.NOTSET) for name in logging.root.manager.loggerDict]
