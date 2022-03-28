@@ -37,6 +37,8 @@ def get_valid_firmware_path():
 
 
 def create_invalid_firmware():
+    """Invalid firmware is needed to make sure the bootloader remains even if an invalid application image is installed
+    """
     broken_fw_path = (build_directory / "invalid_image_for_bootloader_test.bin").absolute()
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(open("/dev/random", "rb").read(2000))
