@@ -22,7 +22,7 @@ from utils import get_prepared_sapogs, restart_node, command_save
 _logger = logging.getLogger(__name__)
 
 current_working_directory = Path.cwd()
-_logger.debug("Current working directory: " + current_working_directory.absolute())
+_logger.debug(f"Current working directory: {current_working_directory.absolute()}")
 build_directory = current_working_directory.parent.parent / "build"
 _logger.debug(f"Files in build directory ({build_directory.absolute()})")
 for root, dirs, files in os.walk(build_directory, topdown=False):
