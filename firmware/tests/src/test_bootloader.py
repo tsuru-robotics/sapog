@@ -24,7 +24,7 @@ _logger.info(f"Current file {__file__}")
 
 current_working_directory = Path(__file__).parent
 _logger.info(f"Current working directory: {current_working_directory.absolute()}")
-build_directory = current_working_directory.parent.parent / "build"
+build_directory = (current_working_directory.parent.parent / "build").resolve()
 _logger.info(f"Files in build directory ({build_directory.absolute()})")
 _logger.info([str(x) for x in list(build_directory.glob("*"))])
 valid_path = str(Path("build") / next(
@@ -104,17 +104,17 @@ async def assert_started_installing_invalid_firmware(tester_node, node_info, com
         if restart_response:
             break
     assert restart_response, "The device did not restart"
-    await asyncio.sleep(5)
     while True:
         _logger.info("Sending a request to update to broken firmware")
         response = await command_client.call(req)
         if response:
+            _logger.info("Got a response on restarting.")
             break
     assert response, "The device did not respond to the Execute command request."
     response = response[0]
     assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
     assert response.status == response.STATUS_SUCCESS, "Execute command response was not a success"
-    print("Device restarted, good; waiting for the bootloader to finish...")
+    _logger.info("Device restarted, good; waiting for the bootloader to finish...")
 
 
 async def assert_request_repair_device_firmware(command_client):
