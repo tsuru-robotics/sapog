@@ -13,7 +13,7 @@ import uavcan.primitive.array
 
 import pyuavcan
 from pyuavcan.application import Node, make_node, NodeInfo
-import pyuavcan.application.file_server
+import pyuavcan.application.file
 
 from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
