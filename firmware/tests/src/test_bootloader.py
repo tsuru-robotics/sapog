@@ -19,8 +19,18 @@ from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node, command_save
 
-valid_path = str(Path("build") / next((Path.cwd().parent.parent / "build").glob("io.px4.sapog*.app.release.dirty.bin"),
-                                      None).name)
+current_working_directory = Path.cwd()
+print("Current working directory: " + current_working_directory.absolute())
+build_directory = current_working_directory.parent.parent / "build"
+print(f"Files in build directory ({build_directory.absolute()})")
+for root, dirs, files in os.walk(build_directory, topdown=False):
+    for name in files:
+        print(f"file: {name}")
+    for name in dirs:
+        print(f"directory: {name}")
+valid_path = str(Path("build") / next(
+    (build_directory).glob("io.px4.sapog*.app.release.dirty.bin"),
+    None).name)
 print(valid_path)
 
 
