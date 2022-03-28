@@ -42,7 +42,7 @@ jobs:
       - name: Powering on sapog
         run: groom_power.py -v 15 && sleep 2.5 # boot time
       - name: Flashing Sapog
-        run: arm-none-eabi-gdb /home/groom/sapog-runner/_work/sapog/sapog/firmware/build/compound.elf -ex "target extended-remote $(realpath /dev/serial/by-id/usb-Black*-if00)" -ex "mon swdp_scan" -ex "attach 1" -ex "load" -ex "kill" -ex "quit" -nh --batch
+        run: arm-none-eabi-gdb /home/groom/sapog-runner/_work/sapog/sapog/firmware/build/compound.elf -ex "target extended-remote $(realpath /dev/serial/by-id/usb-Black*-if00)" -ex "mon swdp_scan" -ex "attach 1" -ex "load" -ex "kill" -ex "quit" -nh --batch && sleep 4
       - name: Running bootloader tests
         run: PYTHONPATH=$PYTHONPATH:/home/groom/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces/ python -m pytest /home/groom/sapog-runner/_work/sapog/sapog/firmware/tests/src/test_bootloader.py
       - name: Running register tests
