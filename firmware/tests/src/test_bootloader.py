@@ -20,25 +20,24 @@ from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node, command_save
 
 _logger = logging.getLogger(__name__)
+_logger.info(f"Current file {__file__}")
 
-current_working_directory = Path.cwd()
+current_working_directory = Path(__file__).parent
 _logger.info(f"Current working directory: {current_working_directory.absolute()}")
 build_directory = current_working_directory.parent.parent / "build"
 _logger.info(f"Files in build directory ({build_directory.absolute()})")
 _logger.info([str(x) for x in list(build_directory.glob("*"))])
 valid_path = str(Path("build") / next(
-    (build_directory).glob("io.px4.sapog*.app.release.dirty.bin"),
-    None).name)
+    build_directory.glob("io.px4.sapog*.app.*.bin")).name)
 _logger.info(valid_path)
 
 
 def get_valid_firmware_path():
-    return str(Path("build") / next((Path.cwd().parent.parent / "build").glob("io.px4.sapog*.app.release.dirty.bin"),
-                                    None).name)
+    return valid_path
 
 
 def create_invalid_firmware():
-    broken_fw_path = (Path.cwd().parent.parent / "build" / "invalid_image_for_bootloader_test.bin").absolute()
+    broken_fw_path = (build_directory / "invalid_image_for_bootloader_test.bin").absolute()
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(open("/dev/random", "rb").read(2000))
     assert os.path.exists(broken_fw_path), "Creating invalid image failed."
