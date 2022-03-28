@@ -19,19 +19,21 @@ from node_fixtures.drnf import prepared_node, prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
 from utils import get_prepared_sapogs, restart_node, command_save
 
+_logger = logging.getLogger(__name__)
+
 current_working_directory = Path.cwd()
-print("Current working directory: " + current_working_directory.absolute())
+_logger.debug("Current working directory: " + current_working_directory.absolute())
 build_directory = current_working_directory.parent.parent / "build"
-print(f"Files in build directory ({build_directory.absolute()})")
+_logger.debug(f"Files in build directory ({build_directory.absolute()})")
 for root, dirs, files in os.walk(build_directory, topdown=False):
     for name in files:
-        print(f"file: {name}")
+        _logger.debug(f"file: {name}")
     for name in dirs:
-        print(f"directory: {name}")
+        _logger.debug(f"directory: {name}")
 valid_path = str(Path("build") / next(
     (build_directory).glob("io.px4.sapog*.app.release.dirty.bin"),
     None).name)
-print(valid_path)
+_logger.debug(valid_path)
 
 
 def get_valid_firmware_path():
@@ -45,9 +47,6 @@ def create_invalid_firmware():
         broken_fw.write(open("/dev/random", "rb").read(2000))
     assert os.path.exists(broken_fw_path), "Creating invalid image failed."
     return str(Path("build") / broken_fw_path.name)
-
-
-_logger = logging.getLogger(__name__)
 
 
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
