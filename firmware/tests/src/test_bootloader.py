@@ -39,9 +39,14 @@ def get_valid_firmware_path():
 def create_invalid_firmware():
     """Invalid firmware is needed to make sure the bootloader remains even if an invalid application image is installed
     """
+    _logger.info("Creating invalid firmware")
     broken_fw_path = (build_directory / "invalid_image_for_bootloader_test.bin").absolute()
+    _logger.info(f"This path was established for the broken firmware: {broken_fw_path}")
+    random_bytes = open("/dev/random", "rb").read(2000)
+    _logger.info("Got the needed random bytes")
     with open(broken_fw_path, "wb") as broken_fw:
-        broken_fw.write(open("/dev/random", "rb").read(2000))
+        broken_fw.write(random_bytes)
+    _logger.info(f"Created the invalid image")
     assert os.path.exists(broken_fw_path), "Creating invalid image failed."
     return str(Path("build") / broken_fw_path.name)
 
@@ -90,6 +95,7 @@ async def assert_send_empty_parameter_install_request(tester_node, node_info, co
 
 
 async def assert_started_installing_invalid_firmware(tester_node, node_info, command_client, tracker):
+    _logger.info("will now create invalid firmware")
     broken_fw_path = create_invalid_firmware()
     req = uavcan.node.ExecuteCommand_1.Request(
         command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
