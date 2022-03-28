@@ -33,8 +33,9 @@ jobs:
           echo $USER
           python firmware/tests/src/builder.py build
           cd firmware
+          export DISTCC_POTENTIAL_HOSTS='192.168.1.16'
           make dsdl
-          make -j4
+          make -j15 CC="distcc arm-none-eabi-gcc"
       - name: Creating and enabling all can interfaces
         run: set -- $(realpath /dev/serial/by-id/usb-Zubax*Babel*-if00) && for ((i=1;i<=$#;i++)); do sudo slcand -o -s8 -t hw -S 3000000 "${!i}" "slcan$((i-1))" && sudo ifconfig "slcan$((i-1))" txqueuelen 100 && sudo ifconfig "slcan$((i-1))" up; done
       - name: Building Python DSDL
