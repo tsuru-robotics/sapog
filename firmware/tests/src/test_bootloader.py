@@ -37,7 +37,8 @@ def get_valid_firmware_path():
 
 
 def create_invalid_firmware():
-    """Invalid firmware is needed to make sure the bootloader remains even if an invalid application image is installed
+    """Invalid firmware is needed to make sure the bootloader remains functional
+    even if an invalid application image is installed after it in the memory.
     """
     _logger.info("Creating invalid firmware")
     broken_fw_path = (build_directory / "invalid_image_for_bootloader_test.bin").absolute()
@@ -52,8 +53,8 @@ def create_invalid_firmware():
 
 
 async def assert_does_bootloader_have_warning_heartbeat(tracker, node_info):
-    # Warning status needs to appear due to the overwriting with an incorrect image
-    # if the read response is not received then this heartbeat cannot have the right value
+    """Warning status needs to appear due to the overwriting with an incorrect image
+    if the read response is not received then this heartbeat cannot have the right value"""
     entry = tracker.registry[node_info.node_id]
     _logger.info("Current state (should be in the bootloader and WARNING): %r", entry)
     assert entry.heartbeat.mode.value == uavcan.node.Mode_1.SOFTWARE_UPDATE
