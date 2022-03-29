@@ -185,12 +185,10 @@ async def test_bootloader(prepared_double_redundant_node):
             continue
         _logger.info("Step 1, sending a command to update firmware with the parameter empty, this should fail.")
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
-        file_server_root_path = Path.cwd().parent.parent.absolute()
+        file_server_root_path = build_directory.parent.absolute()
         _logger.info(f"Created a file server in the background, the root path is {file_server_root_path}")
         file_server = pyuavcan.application.file.FileServer(tester_node, [file_server_root_path])
-
         _logger.debug("File server started")
-        # [logging.getLogger(name).setLevel(logging.NOTSET) for name in logging.root.manager.loggerDict]
         _logger.info("Step 2, Installing invalid firmware and making sure that the device doesn't get bricked.")
         _logger.info("The device should be emitting a warning heartbeat.")
         await assert_started_installing_invalid_firmware(tester_node, node_info, command_client, tracker)
