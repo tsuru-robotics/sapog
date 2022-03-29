@@ -141,6 +141,7 @@ async def assert_request_repair_device_firmware(command_client):
     assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
     _logger.info("Response received.")
     assert response.status == response.STATUS_SUCCESS
+    _logger.info("Response status was a success")
 
 
 async def wait_until_installation_is_started_and_finished(tracker, node_info, max_wait_time=120):
