@@ -132,13 +132,14 @@ async def assert_request_repair_device_firmware(command_client):
         command=uavcan.node.ExecuteCommand_1.Request.COMMAND_BEGIN_SOFTWARE_UPDATE,
         parameter=valid_firmare_path,
     )
-    print("Asking the bootloader to reinstall the valid firmware: %s", req)
+    _logger.info("Asking the bootloader to reinstall the valid firmware: %s", req)
     while True:
         response = await command_client.call(req)
         if response:
             break
     response = response[0]
     assert isinstance(response, uavcan.node.ExecuteCommand_1.Response)
+    _logger.info("Response received.")
     assert response.status == response.STATUS_SUCCESS
 
 
