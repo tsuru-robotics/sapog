@@ -42,7 +42,7 @@ def create_invalid_firmware():
     _logger.info("Creating invalid firmware")
     broken_fw_path = (build_directory / "invalid_image_for_bootloader_test.bin").absolute()
     _logger.info(f"This path was established for the broken firmware: {broken_fw_path}")
-    random_bytes = open("/dev/random", "rb").read(2000)
+    random_bytes = open("/dev/urandom", "rb").read(2000)
     _logger.info("Got the needed random bytes")
     with open(broken_fw_path, "wb") as broken_fw:
         broken_fw.write(random_bytes)
