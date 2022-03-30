@@ -198,7 +198,7 @@ class TestEscRpm:
         asyncio.create_task(run_first_motor())
         asyncio.create_task(run_second_motor())
         try:
-            for i in range(4000):
+            for i in range(16):
 
                 rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=speed_controller.speed_array)
                 await pub.publish(rpm_message)
