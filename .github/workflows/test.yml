@@ -9,7 +9,7 @@ jobs:
       - name: checking out
         uses: actions/checkout@v2
       - name: Calling the begin mechanism
-        run: groom_begin.py sapog
+        run: groom_begin sapog
       - name: installing dependencies
         run: |
           python -m pip install -U nunavut yakut pytest pytest-asyncio
@@ -41,7 +41,7 @@ jobs:
       - name: Building Python DSDL
         run: yakut compile /home/groom/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/reg /home/groom/sapog-runner/_work/sapog/sapog/firmware/public_regulated_data_types/uavcan --output /home/groom/sapog-runner/_work/sapog/sapog/firmware/tests/deps/namespaces
       - name: Powering on sapog
-        run: groom_power.py -v 15 && sleep 2.5 # boot time
+        run: groom_power -v 15 && sleep 2.5 # boot time
       - name: Flashing Sapog
         run: arm-none-eabi-gdb /home/groom/sapog-runner/_work/sapog/sapog/firmware/build/compound.elf -ex "target extended-remote $(realpath /dev/serial/by-id/usb-Black*-if00)" -ex "mon swdp_scan" -ex "attach 1" -ex "load" -ex "kill" -ex "quit" -nh --batch && sleep 4
       - name: Running bootloader tests
@@ -55,7 +55,7 @@ jobs:
       - name: Cleanup of a failure
         if: ${{ failure() }}
         run: |
-          groom_end.py sapog
+          groom_end sapog
       - name: Cleanup after sucessful tests
         run: |
-          groom_end.py sapog
+          groom_end sapog
