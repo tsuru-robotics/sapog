@@ -6,10 +6,10 @@ jobs:
     if:
       contains(github.event.head_commit.message, '#groom')
     steps:
-      - name: Calling the begin mechanism
-        run: groom_begin.py sapog
       - name: checking out
         uses: actions/checkout@v2
+      - name: Calling the begin mechanism
+        run: groom_begin.py sapog
       - name: installing dependencies
         run: |
           python -m pip install -U nunavut yakut pytest pytest-asyncio
