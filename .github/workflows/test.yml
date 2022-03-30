@@ -10,6 +10,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Calling the begin mechanism
         run: |
+          source /home/groom/.profile
+          source /home/groom/.bashrc
           echo $PATH
           echo $USER
           groom_begin sapog
