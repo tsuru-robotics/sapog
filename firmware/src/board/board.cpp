@@ -313,7 +313,7 @@ float motor_adc_convert_input_current(int raw)
         }
         case 3:                // Valenok
         {
-            gain = 20;
+            gain = 50;
             break;
         }
         default:
