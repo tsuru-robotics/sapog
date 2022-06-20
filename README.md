@@ -6,7 +6,7 @@ PX4 Sapog
 
 ## Documentation
 
-**[Sapog v2 Reference Manual](https://files.zubax.com/products/io.px4.sapog/Sapog_v2_Reference_Manual.pdf)**
+**[Sapog v3 Reference Manual](https://files.zubax.com/products/io.px4.sapog/Sapog_v3_Reference_Manual.pdf)**
 is the main piece of project documentation; make sure to read it.
 Additional documentation and related resources can be found at the
 **[Zubax Knowledge Base](https://kb.zubax.com/x/cYAh)**.
