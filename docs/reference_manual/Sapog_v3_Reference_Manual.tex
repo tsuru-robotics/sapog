@@ -24,46 +24,45 @@
 \frontmatter
 
 \begin{titlepage}
-\section*{Overview}\label{sec:overview}
-
-Sapog is an advanced open source sensorless PMSM/\allowbreak{}BLDC motor controller firmware designed for
-use in propulsion systems of electric unmanned aircraft and watercraft.
-
-The source repository and the public bug tracker are located at
-\url{https://github.com/PX4/sapog}.
-
-This document is applicable to firmware versions 2.x released before \today.
-
-This document focuses only on the firmware.
-Please refer to your product documentation for relevant information about the hardware.
-
-\section*{Applications}
-\begin{itemize}
-    \item Propeller drives of unmanned aerial vehicles.
-    \item Watercraft propulsion systems.
-    \item General purpose sensorless BLDC drives.
-\end{itemize}
-
-\BeginRightColumn
-\section*{Features}
-\begin{itemize}
-    \item Robust motor control algorithms.
-    \item Fast response (critical for multirotor aircraft).
-    \item Regenerative braking and active freewheeling.
-    \item Optional RPM control loop (RPM governor).
-    \item Current limiting.
-    \item Self diagnostics and extensive real-time status reporting.
-    \item Compatible with most BLDC motors with minimal tuning.
-    \item Highly configurable.
-    \item Automatic firmware update over the CAN bus in the field.
-    \item Supported communication interfaces:
-    \begin{itemize}
-        \item UAVCAN interface with optional dual bus redundancy.
-        \item Command line interface over UART, suitable for M2M communications.
-        \item RCPWM (analog PWM interface widely used in robotics).
-    \end{itemize}
-\end{itemize}
-
+	\section*{Overview}\label{sec:overview}
+	
+	Sapog is an advanced open source sensorless PMSM/\allowbreak{}BLDC motor controller firmware designed for
+	use in propulsion systems of electric unmanned aircraft and watercraft.
+	
+	The source repository and the public bug tracker are located at
+	\url{https://github.com/PX4/sapog}.
+	
+	This document is applicable to firmware versions 2.x released before \today.
+	
+	This document focuses only on the firmware.
+	Please refer to your product documentation for relevant information about the hardware.
+	
+	\section*{Applications}
+	\begin{itemize}
+		\item Propeller drives of unmanned aerial vehicles.
+		\item Watercraft propulsion systems.
+		\item General purpose sensorless BLDC drives.
+	\end{itemize}
+	
+	\BeginRightColumn
+	\section*{Features}
+	\begin{itemize}
+		\item Robust motor control algorithms.
+		\item Fast response (critical for multirotor aircraft).
+		\item Regenerative braking and active freewheeling.
+		\item Optional RPM control loop (RPM governor).
+		\item Current limiting.
+		\item Self diagnostics and extensive real-time status reporting.
+		\item Compatible with most BLDC motors with minimal tuning.
+		\item Highly configurable.
+		\item Automatic firmware update over the CAN bus in the field.
+		\item Supported communication interfaces:
+		\begin{itemize}
+			\item UAVCAN interface with optional dual bus redundancy.
+			\item Command line interface over UART, suitable for M2M communications.
+			\item RCPWM (analog PWM interface widely used in robotics).
+		\end{itemize}
+	\end{itemize}
 \end{titlepage}
 
 \tableofcontents
@@ -98,14 +97,14 @@ for example: $\Pi_\text{parametername}$.
 \section{Definitions}
 
 \begin{description}
-    \item[PMSM] Permanent magnet synchronous motor.
-    \item[BLDC] Brushless DC motor.
-    \item[RPM] Revolutions per minute.
-    \item[EMF] Electromotive force.
-    \item[BEMF] Back electromotive force.
-    \item[ADC] Analog to digital converter.
-    \item[VSI] Voltage source inverter.
-    \item[ESC] Electronic speed controller, synonymous to PMSM controller in the context of electric vehicles.
+	\item[PMSM] Permanent magnet synchronous motor.
+	\item[BLDC] Brushless DC motor.
+	\item[RPM] Revolutions per minute.
+	\item[EMF] Electromotive force.
+	\item[BEMF] Back electromotive force.
+	\item[ADC] Analog to digital converter.
+	\item[VSI] Voltage source inverter.
+	\item[ESC] Electronic speed controller, synonymous to PMSM controller in the context of electric vehicles.
 \end{description}
 
 \chapter{Principles of operation}
@@ -126,7 +125,7 @@ The magnitude of the induced voltage is dependent on the speed of the armature r
 of the rotor and on the magnetic flux linkage of the motor.
 The dependency can be expressed as follows:
 \begin{equation}
-E_b = \phi \omega_e
+	E_b = \phi \omega_e
 \end{equation}
 where $E_b$ $\left[\text{volt}\right]$ is the induced back electromotive force,
 $\phi$ $\left[\text{weber}\right]$ is the magnetic flux linkage of the motor,
@@ -136,45 +135,45 @@ Electrical angular velocity is a function of the mechanical angular velocity
 $\omega_m$ $\left[\frac{\text{radian}}{\text{second}}\right]$
 and the number of rotor magnetic poles $N_p$:
 \begin{equation}\label{eq:speed_electrical_mechanical}
-\omega_e = \frac{\omega_m N_p}{2}\qquad
-N_p \geq 2, N_p\text{\ is even}
+	\omega_e = \frac{\omega_m N_p}{2}\qquad
+	N_p \geq 2, N_p\text{\ is even}
 \end{equation}
 
 Both mechanical and electrical angular velocities are related to the mechanical and electrical RPM,
 respectively, as follows:
 \begin{equation}
-\text{RPM} = \frac{30 \omega }{\pi }
+	\text{RPM} = \frac{30 \omega }{\pi }
 \end{equation}
 
 The armature current $I_a$ $\left[\text{ampere}\right]$ is proportional to
 the voltage difference between the induced back EMF and
 the source voltage $E_s$ $\left[\text{volt}\right]$:
 \begin{equation}
-I_a = \frac{E_s - E_b}{R}
+	I_a = \frac{E_s - E_b}{R}
 \end{equation}
 where $R$ $\left[\text{ohm}\right]$ is the internal resistance of the stator.
 
 Torque $\tau$ $\left[\text{newton}\cdot{}\text{meter}\right]$ observed on the shaft is dependent on the
 torque-generating current, magnetic flux linkage, and the number of rotor magnetic poles as follows:
 \begin{equation}
-\tau = \frac{\sqrt{3}}{2} I_a N_p \phi
+	\tau = \frac{\sqrt{3}}{2} I_a N_p \phi
 \end{equation}
 
 Mechanical power output $P$ $\left[\text{watt}\right]$
 is the product of torque and mechanical angular velocity:
 \begin{equation}
-P = \tau \omega_m
+	P = \tau \omega_m
 \end{equation}
 
 Motor velocity constant $K_V$ $\left[\frac{\text{RPM}_m}{\text{volt}}\right]$
 is sometimes used in marketing materials and motor specifications
 instead of magnetic flux linkage.\footnote{Sometimes $K_V$ is written as KV, although
-this form is discouraged because it can be confused with kilovolt (kV).}
+	this form is discouraged because it can be confused with kilovolt (kV).}
 This is not a SI quantity, so its use is generally discouraged.
 It can be expressed via the magnetic flux linkage $\phi$
 and the number of rotor magnetic poles $N_p$ as follows:
 \begin{equation}
-K_V = \frac{20 \sqrt{3}}{\pi  N_p \phi }
+	K_V = \frac{20 \sqrt{3}}{\pi  N_p \phi }
 \end{equation}
 
 \subsection{BEMF shape}
@@ -192,10 +191,10 @@ rotor position in a specific way that results in the trapezoidal shape of the ba
 The difference is illustrated on figure~\ref{bemf_trapezoidal_vs_sinusoidal}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.6\textwidth]{bemf_trapezoidal_vs_sinusoidal}
-    \caption{Difference between trapezoidal and sinusoidal BEMF
-    \label{bemf_trapezoidal_vs_sinusoidal}}
+	\centering
+	\includegraphics[width=0.6\textwidth]{bemf_trapezoidal_vs_sinusoidal}
+	\caption{Difference between trapezoidal and sinusoidal BEMF
+		\label{bemf_trapezoidal_vs_sinusoidal}}
 \end{figure}
 
 Sapog, being a BLDC drive, drives the motor with trapezoidal modulated voltage.
@@ -213,10 +212,10 @@ The resulting periodic torque variations that occur in a BLAC motor driven by a 
 Many applications, however, can tolerate the resulting torque ripple and vibrations.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.6\textwidth]{sine_torque_deviation}
-    \caption{Torque ripple caused by mismatching forms of the back EMF and the source voltage
-    \label{sine_torque_deviation}}
+	\centering
+	\includegraphics[width=0.6\textwidth]{sine_torque_deviation}
+	\caption{Torque ripple caused by mismatching forms of the back EMF and the source voltage
+		\label{sine_torque_deviation}}
 \end{figure}
 
 \section{Motor control}
@@ -234,16 +233,16 @@ The modulated voltage sequences are shown in the commutation table below
 \BEMFL{} -- the phase is floating, induced BEMF is falling).
 
 \begin{tabu}{|l c|c c c c c c|}
-    \hline
-    \rowfont{\bfseries}
-    \multicolumn{2}{|c|}{\diagbox{Phase}{Step}}
-                                 & 0     & 1     & 2     & 3     & 4     & 5     \\\hline
-    \multirow{3}{*}{Forward} & A & $-$   &\BEMFH & $+$   & $+$   &\BEMFL & $-$   \\
-                             & B & $+$   & $+$   &\BEMFL & $-$   & $-$   &\BEMFH \\
-                             & C &\BEMFL & $-$   & $-$   &\BEMFH & $+$   & $+$   \\\hline
-    \multirow{3}{*}{Reverse} & A & $-$   &\BEMFH & $+$   & $+$   &\BEMFL & $-$   \\
-                             & B &\BEMFL & $-$   & $-$   &\BEMFH & $+$   & $+$   \\
-                             & C & $+$   & $+$   &\BEMFL & $-$   & $-$   &\BEMFH \\\hline
+	\hline
+	\rowfont{\bfseries}
+	\multicolumn{2}{|c|}{\diagbox{Phase}{Step}}
+	& 0     & 1     & 2     & 3     & 4     & 5     \\\hline
+	\multirow{3}{*}{Forward} & A & $-$   &\BEMFH & $+$   & $+$   &\BEMFL & $-$   \\
+	& B & $+$   & $+$   &\BEMFL & $-$   & $-$   &\BEMFH \\
+	& C &\BEMFL & $-$   & $-$   &\BEMFH & $+$   & $+$   \\\hline
+	\multirow{3}{*}{Reverse} & A & $-$   &\BEMFH & $+$   & $+$   &\BEMFL & $-$   \\
+	& B &\BEMFL & $-$   & $-$   &\BEMFH & $+$   & $+$   \\
+	& C & $+$   & $+$   &\BEMFL & $-$   & $-$   &\BEMFH \\\hline
 \end{tabu}
 
 The choice between forward and reverse commutation tables affects the direction of rotation of the motor,
@@ -259,19 +258,19 @@ The voltage waveforms shown on the figure were acquired from the phase voltage s
 before the ADC inputs (as shown on figure~\ref{power_stage_schematic}).
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=\textwidth]{commutation_basics}
-    \caption{Six step commutation sequence observed through phase voltages
-    \label{commutation_basics}}
-    PWM modulation is not seen because the shown voltages were acquired while the controller
-    was operating at the full duty cycle.
+	\centering
+	\includegraphics[width=\textwidth]{commutation_basics}
+	\caption{Six step commutation sequence observed through phase voltages
+		\label{commutation_basics}}
+	PWM modulation is not seen because the shown voltages were acquired while the controller
+	was operating at the full duty cycle.
 \end{figure}
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.8\textwidth]{power_stage_schematic}
-    \caption{Simplified schematic of the VSI and BEMF feedback circuits that Sapog relies on
-    \label{power_stage_schematic}}
+	\centering
+	\includegraphics[width=0.8\textwidth]{power_stage_schematic}
+	\caption{Simplified schematic of the VSI and BEMF feedback circuits that Sapog relies on
+		\label{power_stage_schematic}}
 \end{figure}
 
 From section~\ref{sec:motor_equations} we know that the magnitude of the induced BEMF is linearly
@@ -283,15 +282,15 @@ In order to avoid issues with low speed operation, Sapog provides several config
 restrict the minimum operating speed, such as the following:
 
 \begin{itemize}
-\item \CfgRef{mot+comm+per+max} - maximum commutation period, in microseconds.
-The estimated commutation period will be constrained by the controller to not exceed this value.
-\item \CfgRef{mot+rpm+min} - minimum RPM that can be demanded in the RPM governor mode.
-If the demanded RPM is lower, the setpoint will be increased by the controller.
-Reduce this parameter to make the minimum speed lower; increase it to improve stability.
-\item \CfgRef{mot+v+min} - minimum source voltage when operating in the open loop mode, in volts.
-If the demanded duty cycle amounts to a lower source voltage than this, the setpoint will be
-increased by the controller.
-Reduce this parameter to make the minimum speed lower; increase it to improve stability.
+	\item \CfgRef{mot+comm+per+max} - maximum commutation period, in microseconds.
+	The estimated commutation period will be constrained by the controller to not exceed this value.
+	\item \CfgRef{mot+rpm+min} - minimum RPM that can be demanded in the RPM governor mode.
+	If the demanded RPM is lower, the setpoint will be increased by the controller.
+	Reduce this parameter to make the minimum speed lower; increase it to improve stability.
+	\item \CfgRef{mot+v+min} - minimum source voltage when operating in the open loop mode, in volts.
+	If the demanded duty cycle amounts to a lower source voltage than this, the setpoint will be
+	increased by the controller.
+	Reduce this parameter to make the minimum speed lower; increase it to improve stability.
 \end{itemize}
 
 These parameters may need adjustment to make Sapog compatible with a specific motor.
@@ -305,7 +304,7 @@ The following equation can be used to convert between commutation period $T_\tex
 $\left[\text{second}\right]$
 and electrical angular velocity $\omega_e$ $\left[\frac{\text{radian}}{\text{second}}\right]$:
 \begin{equation}
-\omega_e = \frac{\pi}{3 T_\text{comm}}
+	\omega_e = \frac{\pi}{3 T_\text{comm}}
 \end{equation}
 
 \subsection{Source voltage modulation}
@@ -321,8 +320,8 @@ For more background, the reader is advised to refer to other sources, such as th
 
 The following configuration parameters govern the operation of the source voltage modulator:
 \begin{itemize}
-\item \CfgRef{mot+pwm+hz} - PWM carrier frequency, in hertz.
-\item \CfgRef{mot+pwm+dt+ns} - PWM switching dead time, in nanoseconds.
+	\item \CfgRef{mot+pwm+hz} - PWM carrier frequency, in hertz.
+	\item \CfgRef{mot+pwm+dt+ns} - PWM switching dead time, in nanoseconds.
 \end{itemize}
 
 \subsubsection{PWM dead time considerations}
@@ -360,9 +359,9 @@ and 29\degree{} corresponds to the maximum advance angle.
 The practical effects imposed on the drive are summarized in the following table.
 
 \begin{ZubaxCompactTable}{|c|c c c c|}
-    Advance angle & Flux linkage & Maximum torque & Maximum speed & Drive efficiency \\
-    Low           & High         & High           & Low           & High             \\
-    High          & Low          & Low            & High          & Low              \\
+	Advance angle & Flux linkage & Maximum torque & Maximum speed & Drive efficiency \\
+	Low           & High         & High           & Low           & High             \\
+	High          & Low          & Low            & High          & Low              \\
 \end{ZubaxCompactTable}
 
 Sapog can modulate a fixed advance angle, or it can be defined as a function of speed.
@@ -374,12 +373,12 @@ because it effectively reduces the magnitude of the BEMF induced in the motor.
 The field weakening feature is configured with the help of the following configuration parameters:
 
 \begin{itemize}
-\item \CfgRef{mot+tim+adv+max} - the maximum commutation advance angle, in electrical rotor position degrees.
-\item \CfgRef{mot+tim+adv+min} - the minimum commutation advance angle, same units.
-\item \CfgRef{mot+tim+cp+min} - when the current commutation period is longer than this value,
-the minimum advance angle will be used. The units are microseconds.
-\item \CfgRef{mot+tim+cp+max} - when the current commutation period is shorter than this value,
-the maximum advance angle will be used. Same units.
+	\item \CfgRef{mot+tim+adv+max} - the maximum commutation advance angle, in electrical rotor position degrees.
+	\item \CfgRef{mot+tim+adv+min} - the minimum commutation advance angle, same units.
+	\item \CfgRef{mot+tim+cp+min} - when the current commutation period is longer than this value,
+	the minimum advance angle will be used. The units are microseconds.
+	\item \CfgRef{mot+tim+cp+max} - when the current commutation period is shorter than this value,
+	the maximum advance angle will be used. Same units.
 \end{itemize}
 
 When the current commutation period is between \verb|mot_tim_cp_max| and \verb|mot_tim_cp_min|,
@@ -388,22 +387,22 @@ the advance angle will be proportionally linearly interpolated between
 The interpolation logic is demonstrated on figure~\ref{timing_advance_interpolation_plot}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.7\textwidth]{timing_advance_interpolation_plot}
-    \caption{Timing advance interpolation logic
-    \label{timing_advance_interpolation_plot}}
+	\centering
+	\includegraphics[width=0.7\textwidth]{timing_advance_interpolation_plot}
+	\caption{Timing advance interpolation logic
+		\label{timing_advance_interpolation_plot}}
 \end{figure}
 
 Sample phase voltage waveforms acquired while the controller was operating with high field
 weakening settings are shown on figure~\ref{phase_voltages_at_high_advance_angle}.
 
 \begin{figure}[hbtp]
-    \centering
-    \includegraphics[width=\textwidth]{phase_voltages_at_high_advance_angle}
-    \caption{Commutation sequence with high advance angle settings
-    \label{phase_voltages_at_high_advance_angle}}
-    It can be seen that the next commutation begins shortly after the induced BEMF
-    crosses the neutral voltage.
+	\centering
+	\includegraphics[width=\textwidth]{phase_voltages_at_high_advance_angle}
+	\caption{Commutation sequence with high advance angle settings
+		\label{phase_voltages_at_high_advance_angle}}
+	It can be seen that the next commutation begins shortly after the induced BEMF
+	crosses the neutral voltage.
 \end{figure}
 
 \subsubsection{Freewheeling considerations}
@@ -454,17 +453,17 @@ The resulting approximation is very robust and resilient to noise.
 The principle is illustrated on figure~\ref{phase_voltage_sampling}.
 
 \begin{figure}[hbtp]
-    \centering
-    \includegraphics[width=\textwidth]{phase_voltage_sampling}
-    \caption{BEMF sampling and PWM modulation
-    \label{phase_voltage_sampling}}
+	\centering
+	\includegraphics[width=\textwidth]{phase_voltage_sampling}
+	\caption{BEMF sampling and PWM modulation
+		\label{phase_voltage_sampling}}
 \end{figure}
 
 The number of BEMF samples $N_\text{samples}$ considered in the linear regression problem is defined by
 the configuration parameter \CfgRef{mot+bemf+win+den} (dimensionless) as follows:
 \begin{equation}
-N_\text{samples} =
-\frac{T_{\text{comm}} F_{\text{pwm}}}{\frac{\alpha\cdot{}\Pi_\text{bemfwinden}}{15} + \Pi_\text{bemfwinden}} + 2
+	N_\text{samples} =
+	\frac{T_{\text{comm}} F_{\text{pwm}}}{\frac{\alpha\cdot{}\Pi_\text{bemfwinden}}{15} + \Pi_\text{bemfwinden}} + 2
 \end{equation}
 where $T_{\text{comm}}$ is the current commutation period,
 $\Pi_\text{bemfwinden}$ is the value of the configuration parameter,
@@ -487,10 +486,10 @@ Figure~\ref{phase_voltage_sampling_corner_cases} provides a closer look at the c
 seen by the controller in certain operating modes, which are reviewed below.
 
 \begin{figure}[hbtp]
-    \centering
-    \includegraphics[width=\textwidth]{phase_voltages_braking_high_advance_angle}
-    \caption{Corner cases of BEMF sampling
-    \label{phase_voltage_sampling_corner_cases}}
+	\centering
+	\includegraphics[width=\textwidth]{phase_voltages_braking_high_advance_angle}
+	\caption{Corner cases of BEMF sampling
+		\label{phase_voltage_sampling_corner_cases}}
 \end{figure}
 
 In certain operating modes the induced BEMF of the floating phase may briefly exceed the
@@ -511,13 +510,13 @@ the BEMF is not sampled.
 The following configuration parameters are relevant to the reviewed concepts:
 
 \begin{itemize}
-\item \CfgRef{mot+bemf+range} - the voltage range around the neutral,
-in percent of the inverter supply voltage $V_\text{inv}$, where the BEMF samples
-will be considered valid and accepted for the regression problem.
-\item \CfgRef{mot+blank+usec} - the duration of the blanking time after the commutation, in microseconds.
-\item \CfgRef{mot+spup+blnk+pm} - the minimum blanking time during spin-up,
-permill of the current commutation period.
-This parameter is reviewed in more detail in a dedicated section.
+	\item \CfgRef{mot+bemf+range} - the voltage range around the neutral,
+	in percent of the inverter supply voltage $V_\text{inv}$, where the BEMF samples
+	will be considered valid and accepted for the regression problem.
+	\item \CfgRef{mot+blank+usec} - the duration of the blanking time after the commutation, in microseconds.
+	\item \CfgRef{mot+spup+blnk+pm} - the minimum blanking time during spin-up,
+	permill of the current commutation period.
+	This parameter is reviewed in more detail in a dedicated section.
 \end{itemize}
 
 Additional difficulties are posed by operation at very high power levels,
@@ -534,10 +533,10 @@ the induced BEMF is completely suppressed and, therefore,
 is unobservable, which does not allow the controller to evaluate the state of the rotor.
 
 \begin{figure}[hbtp]
-    \centering
-    \includegraphics[width=\textwidth]{phase_voltages_at_high_load}
-    \caption{Challenges of high power operation
-    \label{phase_voltages_at_high_load}}
+	\centering
+	\includegraphics[width=\textwidth]{phase_voltages_at_high_load}
+	\caption{Challenges of high power operation
+		\label{phase_voltages_at_high_load}}
 \end{figure}
 
 Sapog recognizes this condition and waits for the flyback current to cease.
@@ -574,10 +573,10 @@ It is recommended to keep the frequency as low as possible,
 as that would facilitate lower switching losses and therefore higher efficiency of the drive.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=\textwidth]{pwm_maximum_speed}
-    \caption{Dependency of the maximum speed on PWM frequency
-    \label{pwm_maximum_speed}}
+	\centering
+	\includegraphics[width=\textwidth]{pwm_maximum_speed}
+	\caption{Dependency of the maximum speed on PWM frequency
+		\label{pwm_maximum_speed}}
 \end{figure}
 
 \subsubsection{Field weakening restrictions}
@@ -644,11 +643,11 @@ the failure counter is reset back to zero.
 The following configuration parameters configure the behaviors pertaining to stall detection:
 
 \begin{itemize}
-\item \CfgRef{mot+zc+fails+max} - zero crossing detection failure threshold.
-If the failure counter exceeds this threshold, the rotor will be considered stalled.
-\item \CfgRef{mot+stop+thres} - lock-up threshold.
-If the rotor has stalled this number of times in a row,
-the controller will lock up until a zero setpoint is received.
+	\item \CfgRef{mot+zc+fails+max} - zero crossing detection failure threshold.
+	If the failure counter exceeds this threshold, the rotor will be considered stalled.
+	\item \CfgRef{mot+stop+thres} - lock-up threshold.
+	If the rotor has stalled this number of times in a row,
+	the controller will lock up until a zero setpoint is received.
 \end{itemize}
 
 \subsection{Spin-up}
@@ -676,10 +675,10 @@ in seconds.
 The ramp is graphically illustrated on figure~\ref{spinup_voltage_ramp}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.7\textwidth]{spinup_voltage_ramp}
-    \caption{Voltage ramp during spin-up
-    \label{spinup_voltage_ramp}}
+	\centering
+	\includegraphics[width=0.7\textwidth]{spinup_voltage_ramp}
+	\caption{Voltage ramp during spin-up
+		\label{spinup_voltage_ramp}}
 \end{figure}
 
 It should be noted that high initial voltages and/or steep voltage ramps need to be avoided,
@@ -705,9 +704,9 @@ more robust operation at low speeds.
 Immediately after a commutation Sapog inserts a blanking delay $T_\text{blank}$
 defined by the following equation:
 \begin{equation}
-T_{\text{blank}}=
-\max \left(\frac{\Pi_{\text{blankusec}}}{10^6},
-\frac{\Pi_{\text{spupblnkpm}} T_{\text{comm}}}{1000}\right)
+	T_{\text{blank}}=
+	\max \left(\frac{\Pi_{\text{blankusec}}}{10^6},
+	\frac{\Pi_{\text{spupblnkpm}} T_{\text{comm}}}{1000}\right)
 \end{equation}
 where $\Pi_{\text{spupblnkpm}}$ is the value of the configuration parameter \CfgRef{mot+spup+blnk+pm}
 (permill of the commutation period),
@@ -720,19 +719,19 @@ Afterwards, Sapog begins to integrate the sampled BEMF voltages relative to the 
 Once the integrated voltage changes the sign, Sapog switches to the next commutation period.
 A more formal definition of the commutation condition is shown below:
 \begin{equation}
-\begin{aligned}
-&\sum_{n} E_{s_n} - E_{\text{neutral}_n} > 0 \qquad\text{for rising BEMF}\\
-&\sum_{n} E_{s_n} - E_{\text{neutral}_n} < 0 \qquad\text{for falling BEMF}
-\end{aligned}
+	\begin{aligned}
+		&\sum_{n} E_{s_n} - E_{\text{neutral}_n} > 0 \qquad\text{for rising BEMF}\\
+		&\sum_{n} E_{s_n} - E_{\text{neutral}_n} < 0 \qquad\text{for falling BEMF}
+	\end{aligned}
 \end{equation}
 
 The principle is illustrated on the oscillogram~\ref{spinup_phase_voltages}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=\textwidth]{spinup_phase_voltages}
-    \caption{Spin-up sequence with a highly inertial load
-    \label{spinup_phase_voltages}}
+	\centering
+	\includegraphics[width=\textwidth]{spinup_phase_voltages}
+	\caption{Spin-up sequence with a highly inertial load
+		\label{spinup_phase_voltages}}
 \end{figure}
 
 \subsubsection{Termination conditions}
@@ -773,14 +772,14 @@ This section summarizes the information about the configuration parameters perta
 Read the preceding sections for a more detailed review.
 
 \begin{itemize}
-\item \CfgRef{mot+spup+blnk+pm} - the duration of the extended blanking time during spin-up in permill
-(i.e. one-thousands; $10\text{\space{}permill} = 1\% $) of the current commutation period.
-\item \CfgRef{mot+spup+to+ms} - the overall spin-up timeout, in milliseconds.
-If a spin-up attempt could not be completed in this amount of time, the rotor will be considered stalled.
-\item \CfgRef{mot+spup+st+cp} - the maximum commutation period for the spin-up mode, in microseconds.
-This is also the initial commutation period.
-\item \CfgRef{mot+spup+vramp+t} - the duration of the initial voltage ramp, in seconds.
-\item \CfgRef{mot+v+spinup} - the initial source voltage $E_s$ in the beginning of the voltage ramp, in volts.
+	\item \CfgRef{mot+spup+blnk+pm} - the duration of the extended blanking time during spin-up in permill
+	(i.e. one-thousands; $10\text{\space{}permill} = 1\% $) of the current commutation period.
+	\item \CfgRef{mot+spup+to+ms} - the overall spin-up timeout, in milliseconds.
+	If a spin-up attempt could not be completed in this amount of time, the rotor will be considered stalled.
+	\item \CfgRef{mot+spup+st+cp} - the maximum commutation period for the spin-up mode, in microseconds.
+	This is also the initial commutation period.
+	\item \CfgRef{mot+spup+vramp+t} - the duration of the initial voltage ramp, in seconds.
+	\item \CfgRef{mot+v+spinup} - the initial source voltage $E_s$ in the beginning of the voltage ramp, in volts.
 \end{itemize}
 
 \subsection{Open loop operation}\label{sec:open_loop}
@@ -789,8 +788,8 @@ While operating in the open loop mode, Sapog accepts setpoints in the range from
 and treats that as the fraction of the inverter supply voltage $V_\text{inv}$ to
 deliver to the motor $E_s$:
 \begin{equation}
-E_s = V_\text{inv}\cdot{}\mathrm{ramp}\left(\mathrm{limit}\left(S_\text{DC}\right)\right)
-\qquad\text{for open loop mode}, S_\text{DC} \in \left(0, 1\right]
+	E_s = V_\text{inv}\cdot{}\mathrm{ramp}\left(\mathrm{limit}\left(S_\text{DC}\right)\right)
+	\qquad\text{for open loop mode}, S_\text{DC} \in \left(0, 1\right]
 \end{equation}
 where $S_\text{DC}$ is the setpoint (DC stands for \emph{duty cycle}),
 $\mathrm{ramp}$ is the setpoint ramp function,
@@ -802,12 +801,12 @@ accepted by the controller directly, bypassing the ramp.
 The following configuration parameters govern operation of the open loop setpoint ramp:
 
 \begin{itemize}
-\item \CfgRef{mot+dc+slope} - the slope of the setpoint ramp, in full ranges per second.
-For example, the value of 1 allows the controller to sweep the setpoint from 0\% to 100\% in 1 second.
-The value of 10 allows the controller to sweep the setpoint from 0\% to 100\% in 0.1 seconds.
-\item \CfgRef{mot+dc+accel} - the maximum change of setpoint that will be accepted directly,
-bypassing the ramp.
-For example, the value of 0.1 allows the controller to apply step changes up to 10\% large directly.
+	\item \CfgRef{mot+dc+slope} - the slope of the setpoint ramp, in full ranges per second.
+	For example, the value of 1 allows the controller to sweep the setpoint from 0\% to 100\% in 1 second.
+	The value of 10 allows the controller to sweep the setpoint from 0\% to 100\% in 0.1 seconds.
+	\item \CfgRef{mot+dc+accel} - the maximum change of setpoint that will be accepted directly,
+	bypassing the ramp.
+	For example, the value of 0.1 allows the controller to apply step changes up to 10\% large directly.
 \end{itemize}
 
 Increase the parameters (either one or both) to improve the response characteristics of the drive.
@@ -838,7 +837,7 @@ produces the duty cycle setpoint at the output.
 
 The nominal update rate of the PID controller $T_{\text{RPMPID}}$ is defined as follows:
 \begin{equation}\label{eq:rpm_pid_control_loop_period}
-T_{\text{RPMPID}} \approx \max \left(10^{-3},T_{\text{comm}}\right)
+	T_{\text{RPMPID}} \approx \max \left(10^{-3},T_{\text{comm}}\right)
 \end{equation}
 where $T_\text{comm}$ is the current commutation period.
 Update of the RPM control loop is not a hard real time process, and the software is allowed to
@@ -861,9 +860,9 @@ While the motor is stopped, the VSI is disabled, allowing the shaft to rotate fr
 The RPM PID controller does not wind up the integral term if the output is constrained by external factors,
 such as:
 \begin{itemize}
-\item Duty cycle ramp.
-\item Current limiting controller.
-\item Maximum RPM limit.
+	\item Duty cycle ramp.
+	\item Current limiting controller.
+	\item Maximum RPM limit.
 \end{itemize}
 
 The configuration parameters listed below govern the operation of the RPM control loop.
@@ -871,43 +870,43 @@ The symbol $\text{DC}$ refers to the duty cycle unit ranging in $\left[-1, 1\rig
 where negative values correspond to negative inverter source voltages $E_s$.
 
 \begin{itemize}
-\item \CfgRef{mot+num+poles} - the number of magnetic poles on the rotor, always even, always $\geq 2$.
-This parameter is needed for the controller to convert the electrical speed $\text{RPM}_e$
-into mechanical $\text{RPM}_m$.
-\item \CfgRef{rpmctl+p} - proportional term of the RPM PID controller,
-in $\frac{\text{DC}}{\text{RPM}_m}$.
-\item \CfgRef{rpmctl+i} - integral term of the RPM PID controller,
-in $\frac{\text{DC}}{\text{second}\cdot{}\text{RPM}_m}$.
-\item \CfgRef{rpmctl+d} - derivative term of the RPM PID controller,
-in $\frac{\text{second}\cdot{}\text{DC}}{\text{RPM}_m}$.
-\item \CfgRef{mot+rpm+min} - the minimal mechanical RPM at which stable operation is guaranteed.
+	\item \CfgRef{mot+num+poles} - the number of magnetic poles on the rotor, always even, always $\geq 2$.
+	This parameter is needed for the controller to convert the electrical speed $\text{RPM}_e$
+	into mechanical $\text{RPM}_m$.
+	\item \CfgRef{rpmctl+p} - proportional term of the RPM PID controller,
+	in $\frac{\text{DC}}{\text{RPM}_m}$.
+	\item \CfgRef{rpmctl+i} - integral term of the RPM PID controller,
+	in $\frac{\text{DC}}{\text{second}\cdot{}\text{RPM}_m}$.
+	\item \CfgRef{rpmctl+d} - derivative term of the RPM PID controller,
+	in $\frac{\text{second}\cdot{}\text{DC}}{\text{RPM}_m}$.
+	\item \CfgRef{mot+rpm+min} - the minimal mechanical RPM at which stable operation is guaranteed.
 \end{itemize}
 
 The overall RPM control loop output for a time step $n$ can be approximated with the following equations:
 \begin{equation}
-e(n) = \omega_{m_{n}} - S_{\omega_{m_{n}}}
+	e(n) = \omega_{m_{n}} - S_{\omega_{m_{n}}}
 \end{equation}
 \begin{equation}
-E_{s_n} = V_{\text{inv}_n}\cdot\mathrm{ramp}
-\left[
-\underbrace{\frac{e\left(n\right) - e\left(n-1\right)}{T_{\text{RPMPID}}} \Pi_{\text{rpmctld}}}_\text{derivative} +
-\mathrm{clamp}\left(
-\underbrace{\sum_{i=0}^n e\left(i\right) T_{\text{RPMPID}} \Pi_{\text{rpmctli}}}_\text{integral}
-\right) +
-\underbrace{e\left(n\right) \Pi_{\text{rpmctlp}}}_\text{proportional}
-\right]
+	E_{s_n} = V_{\text{inv}_n}\cdot\mathrm{ramp}
+	\left[
+	\underbrace{\frac{e\left(n\right) - e\left(n-1\right)}{T_{\text{RPMPID}}} \Pi_{\text{rpmctld}}}_\text{derivative} +
+	\mathrm{clamp}\left(
+	\underbrace{\sum_{i=0}^n e\left(i\right) T_{\text{RPMPID}} \Pi_{\text{rpmctli}}}_\text{integral}
+	\right) +
+	\underbrace{e\left(n\right) \Pi_{\text{rpmctlp}}}_\text{proportional}
+	\right]
 \end{equation}
 where:
 \begin{itemize}
-\item $\mathrm{ramp}$ - the slope control function defined in section~\ref{sec:open_loop}.
-\item $\mathrm{clamp}$ - the integrator wind-up control function described in this section.
-\item $\omega_{m}$ - current speed, in mechanical RPM.
-\item $S_{\omega_{m}}$ - target speed setpoint, in mechanical RPM.
-\item $T_{\text{RPMPID}}$ - instant control loop update period.
-See equation~\ref{eq:rpm_pid_control_loop_period}.
-\item $\Pi_{\text{rpmctlp}}$ - proportional term of the PID controller.
-\item $\Pi_{\text{rpmctli}}$ - integral term of the PID controller.
-\item $\Pi_{\text{rpmctld}}$ - derivative term of the PID controller.
+	\item $\mathrm{ramp}$ - the slope control function defined in section~\ref{sec:open_loop}.
+	\item $\mathrm{clamp}$ - the integrator wind-up control function described in this section.
+	\item $\omega_{m}$ - current speed, in mechanical RPM.
+	\item $S_{\omega_{m}}$ - target speed setpoint, in mechanical RPM.
+	\item $T_{\text{RPMPID}}$ - instant control loop update period.
+	See equation~\ref{eq:rpm_pid_control_loop_period}.
+	\item $\Pi_{\text{rpmctlp}}$ - proportional term of the PID controller.
+	\item $\Pi_{\text{rpmctli}}$ - integral term of the PID controller.
+	\item $\Pi_{\text{rpmctld}}$ - derivative term of the PID controller.
 \end{itemize}
 
 \subsection{Command timeout}\label{sec:setpoint_ttl}
@@ -965,31 +964,31 @@ During the power stage test, Sapog modulates a voltage sequence shown on the tab
 and then validates the acquired BEMF samples.
 The following legend applies:
 \begin{itemize}
-\item L - low voltage level. The low side transistor is constantly turned on.
-\item H - high voltage level. A high duty cycle PWM is modulated on the phase.
-\item F - the phase is floating. Both high and low transistors are turned off.
+	\item L - low voltage level. The low side transistor is constantly turned on.
+	\item H - high voltage level. A high duty cycle PWM is modulated on the phase.
+	\item F - the phase is floating. Both high and low transistors are turned off.
 \end{itemize}
 
 \begin{ZubaxCompactTable}{|c|c c c|}
-    Step    & Phase A & Phase B & Phase C \\
-    1       & L       & F       & F       \\
-    2       & H       & F       & F       \\
-    3       & F       & L       & F       \\
-    4       & F       & H       & F       \\
-    5       & F       & F       & L       \\
-    6       & F       & F       & H       \\
+	Step    & Phase A & Phase B & Phase C \\
+	1       & L       & F       & F       \\
+	2       & H       & F       & F       \\
+	3       & F       & L       & F       \\
+	4       & F       & H       & F       \\
+	5       & F       & F       & L       \\
+	6       & F       & F       & H       \\
 \end{ZubaxCompactTable}
 
 The voltage at the output of the BEMF feedback circuits is sampled once for each non-floating phase;
 which produces six samples $Q_1 \ldots Q_6$.
 Then the following assertions are verified:
 \begin{equation}
-\begin{aligned}
-&Q_1 < L \\
-&Q_3 < L \\
-&Q_5 < L \\
-&Q_2 \approx Q_4 \approx Q_6
-\end{aligned}
+	\begin{aligned}
+		&Q_1 < L \\
+		&Q_3 < L \\
+		&Q_5 < L \\
+		&Q_2 \approx Q_4 \approx Q_6
+	\end{aligned}
 \end{equation}
 where $L$ is a specific lower threshold defined by the hardware implementation,
 typically at the level corresponding to 5\% of the dynamic range of BEMF.
@@ -999,11 +998,11 @@ It is easy to see that this test is invariant to the fact whether the motor is c
 
 Malfunctions in the following components may cause this test to fail:
 \begin{itemize}
-\item VSI transistors.
-\item VSI transistor drivers.
-\item PWM module of the microcontroller.
-\item BEMF feedback circuits.
-\item ADC module of the microcontroller.
+	\item VSI transistors.
+	\item VSI transistor drivers.
+	\item PWM module of the microcontroller.
+	\item BEMF feedback circuits.
+	\item ADC module of the microcontroller.
 \end{itemize}
 
 \subsection{Phase cross-conductivity test}
@@ -1013,15 +1012,15 @@ phases or their BEMF feedback circuits.
 During this test, the sequence shown in the table below is modulated at the output of the VSI.
 The following legend applies:
 \begin{itemize}
-\item H - high voltage level. A high duty cycle PWM is modulated on the phase.
-\item F - the phase is floating. Both high and low transistors are turned off.
+	\item H - high voltage level. A high duty cycle PWM is modulated on the phase.
+	\item F - the phase is floating. Both high and low transistors are turned off.
 \end{itemize}
 
 \begin{ZubaxCompactTable}{|c|c c c|}
-    Step    & Phase A & Phase B & Phase C \\
-    1       & H       & F       & F       \\
-    2       & F       & H       & F       \\
-    3       & F       & F       & H       \\
+	Step    & Phase A & Phase B & Phase C \\
+	1       & H       & F       & F       \\
+	2       & F       & H       & F       \\
+	3       & F       & F       & H       \\
 \end{ZubaxCompactTable}
 
 At each step, voltages of all three phases are sampled, which yields the set of samples shown in the next table.
@@ -1029,19 +1028,19 @@ It is assumed that the phases that are floating will be pulled down by the resis
 circuits.
 
 \begin{ZubaxCompactTable}{|c|c c c|}
-    Step    & Phase A & Phase B & Phase C \\
-    1       &$Q_{1A}$ &$Q_{1B}$ &$Q_{1C}$  \\
-    2       &$Q_{2A}$ &$Q_{2B}$ &$Q_{2C}$  \\
-    3       &$Q_{3A}$ &$Q_{3B}$ &$Q_{3C}$  \\
+	Step    & Phase A & Phase B & Phase C \\
+	1       &$Q_{1A}$ &$Q_{1B}$ &$Q_{1C}$  \\
+	2       &$Q_{2A}$ &$Q_{2B}$ &$Q_{2C}$  \\
+	3       &$Q_{3A}$ &$Q_{3B}$ &$Q_{3C}$  \\
 \end{ZubaxCompactTable}
 
 The following assertions are then validated:
 \begin{equation}
-\begin{aligned}
-&Q_{1A} > H \qquad{} Q_{1B} < L \qquad{} Q_{1C} < L \\
-&Q_{2A} < L \qquad{} Q_{2B} > H \qquad{} Q_{2C} < L \\
-&Q_{3A} < L \qquad{} Q_{3B} < L \qquad{} Q_{3C} > H \\
-\end{aligned}
+	\begin{aligned}
+		&Q_{1A} > H \qquad{} Q_{1B} < L \qquad{} Q_{1C} < L \\
+		&Q_{2A} < L \qquad{} Q_{2B} > H \qquad{} Q_{2C} < L \\
+		&Q_{3A} < L \qquad{} Q_{3B} < L \qquad{} Q_{3C} > H \\
+	\end{aligned}
 \end{equation}
 where $H$ and $L$ are arbitrary hardware-defined thresholds, high and low, respectively.
 
@@ -1081,14 +1080,14 @@ In the latter case, the status indication output is overridden in favor of the e
 received indication commands.
 
 \newcommand{\ShowSolidColor}[1]{%
-{\color{#1}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}}%
+	{\color{#1}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}\rule{0.4em}{0.8em}}%
 }
 \newcommand{\ShowBlinkingColor}[1]{{%
-\color{#1}\rule{0.4em}{0.8em}%
-\color{black}\rule{0.4em}{0.8em}%
-\color{#1}\rule{0.4em}{0.8em}%
-\color{black}\rule{0.4em}{0.8em}%
-\color{#1}\rule{0.4em}{0.8em}%
+		\color{#1}\rule{0.4em}{0.8em}%
+		\color{black}\rule{0.4em}{0.8em}%
+		\color{#1}\rule{0.4em}{0.8em}%
+		\color{black}\rule{0.4em}{0.8em}%
+		\color{#1}\rule{0.4em}{0.8em}%
 }}
 
 \subsection{Firmware status indication}
@@ -1096,14 +1095,14 @@ received indication commands.
 While the firmware is running, the following LED colors can be used to reflect its status.
 
 \begin{ZubaxSimpleTable}{Firmware status indication via RGB LED}{|l l|X|}
-    State            &                         & Meaning \\
-    Solid white      & \ShowSolidColor{lightgray}& Initialization is in progress, not ready to work yet. \\
-    Solid green      & \ShowSolidColor{green}  & Functioning normally. \\
-    Blinking cyan    & \ShowBlinkingColor{cyan}& UAVCAN auto-enumeration is in progress, awaiting user input. \\
-    Solid yellow     & \ShowSolidColor{yellow} & Controller is locked (see section~\ref{sec:stall_detection}),
-                                                 or the temperature sensor is malfunctioning. \\
-    Solid red        & \ShowSolidColor{red}    & Fatal error, or self test failure.
-                                                 Use CLI to obtain detailed info. \\
+	State            &                         & Meaning \\
+	Solid white      & \ShowSolidColor{lightgray}& Initialization is in progress, not ready to work yet. \\
+	Solid green      & \ShowSolidColor{green}  & Functioning normally. \\
+	Blinking cyan    & \ShowBlinkingColor{cyan}& UAVCAN auto-enumeration is in progress, awaiting user input. \\
+	Solid yellow     & \ShowSolidColor{yellow} & Controller is locked (see section~\ref{sec:stall_detection}),
+	or the temperature sensor is malfunctioning. \\
+	Solid red        & \ShowSolidColor{red}    & Fatal error, or self test failure.
+	Use CLI to obtain detailed info. \\
 \end{ZubaxSimpleTable}
 
 \subsection{Bootloader status indication}
@@ -1131,9 +1130,9 @@ At start up, Sapog generates two short beeps with the following parameters:
 frequency 1 kHz, duration 100 ms each, spacing 200 ms.
 
 \begin{ZubaxSimpleTable}{Sound modulation capabilities}{|X|c c|l|}
-    Parameter                            & Min & Max  & Unit \\
-    Audio frequency                      & 100 & 5000 & Hz \\
-    Duration of modulated sound          & 1   & 100  & ms \\
+	Parameter                            & Min & Max  & Unit \\
+	Audio frequency                      & 100 & 5000 & Hz \\
+	Duration of modulated sound          & 1   & 100  & ms \\
 \end{ZubaxSimpleTable}
 
 If the requested parameters fall outside of the limits specified in the table,
@@ -1282,13 +1281,13 @@ it is recommended to use the software listed in table~\ref{cli_software_recommen
 for accessing the CLI from the user's PC.
 
 \begin{ZubaxSimpleTable}{CLI terminal emulators}{|l l X|}\label{cli_software_recommendations}
-    PC OS            & Application         & Note \\
-    GNU/Linux        & \texttt{picocom}    & A simple and robust command-line tool.
-                                             It should be preferred over the popular
-                                             \texttt{minicom} and \texttt{screen}. \\
-    MS Windows       & PuTTY               & A simple multi-purpose GUI terminal emulator.
-                                             The HyperTerminal tool supplied by default with some versions
-                                             of Windows should be avoided. \\
+	PC OS            & Application         & Note \\
+	GNU/Linux        & \texttt{picocom}    & A simple and robust command-line tool.
+	It should be preferred over the popular
+	\texttt{minicom} and \texttt{screen}. \\
+	MS Windows       & PuTTY               & A simple multi-purpose GUI terminal emulator.
+	The HyperTerminal tool supplied by default with some versions
+	of Windows should be avoided. \\
 \end{ZubaxSimpleTable}
 
 \subsection{Boot logging}
@@ -1324,19 +1323,19 @@ The configuration parameters and their non-volatile storage are described in mor
 
 Syntax:
 \begin{itemize}
-    \item \verb|cfg list| - list all configuration parameters, their current values,
-          acceptable value intervals, and default values.
-
-    \item \verb|cfg save| - save the current configuration into the non-volatile storage.
-          This command is redundant and normally need not be used, because Sapog commits all configuration
-          into the non-volatile storage automatically upon modification.
-
-    \item \verb|cfg erase| - erase the current configuration and reset the non-volatile memory to
-          the factory defaults.
-
-    \item \verb|cfg set <name> <value>| - assign the configuration parameter named \verb|<name>| the value
-          \verb|<value>|. For example: \verb|cfg set foo 42|.
-          The non-volatile storage will be updated automatically.
+	\item \verb|cfg list| - list all configuration parameters, their current values,
+	acceptable value intervals, and default values.
+	
+	\item \verb|cfg save| - save the current configuration into the non-volatile storage.
+	This command is redundant and normally need not be used, because Sapog commits all configuration
+	into the non-volatile storage automatically upon modification.
+	
+	\item \verb|cfg erase| - erase the current configuration and reset the non-volatile memory to
+	the factory defaults.
+	
+	\item \verb|cfg set <name> <value>| - assign the configuration parameter named \verb|<name>| the value
+	\verb|<value>|. For example: \verb|cfg set foo 42|.
+	The non-volatile storage will be updated automatically.
 \end{itemize}
 
 The syntax \verb|cfg list| prints one parameter per line, where the line is formatted as follows:
@@ -1375,11 +1374,11 @@ Modulate sound as described in section~\ref{sec:audial_indication}.
 
 Syntax:
 \begin{itemize}
-\item \verb|beep| - emit sound of the default duration at the default frequency.
-\item \verb|beep <freq>| - modulate sound of the default duration at the frequency \verb|<freq>|
-specified in hertz. For example: \verb|beep 1000|.
-\item \verb|beep <freq> <dur>| - modulate sound of the specified duration \verb|<dur>| in milliseconds
-at the frequency \verb|<freq>| specified in hertz. For example: \verb|beep 5000 200|.
+	\item \verb|beep| - emit sound of the default duration at the default frequency.
+	\item \verb|beep <freq>| - modulate sound of the default duration at the frequency \verb|<freq>|
+	specified in hertz. For example: \verb|beep 1000|.
+	\item \verb|beep <freq> <dur>| - modulate sound of the specified duration \verb|<dur>| in milliseconds
+	at the frequency \verb|<freq>| specified in hertz. For example: \verb|beep 5000 200|.
 \end{itemize}
 
 \subsubsection{stat}
@@ -1387,11 +1386,11 @@ at the frequency \verb|<freq>| specified in hertz. For example: \verb|beep 5000 
 Print the current state of the motor controller in a human-readable form.
 At least the following information will be displayed:
 \begin{itemize}
-\item Inverter supply voltage.
-\item Inverter DC current.
-\item Mechanical RPM.
-\item Actual duty cycle (not the setpoint).
-\item The number of failures since the motor has started.
+	\item Inverter supply voltage.
+	\item Inverter DC current.
+	\item Mechanical RPM.
+	\item Actual duty cycle (not the setpoint).
+	\item The number of failures since the motor has started.
 \end{itemize}
 
 \subsubsection{test}
@@ -1413,11 +1412,11 @@ In order to unlock it, execute the command
 
 Syntax:
 \begin{itemize}
-\item \verb|dc| - assign a zero setpoint, which will stop the motor if it is running.
-\item \verb|dc arm| - unlock the command.
-\item \verb|dc <duty cycle>| - set the specified duty cycle setpoint.
-The setpoint is a real number in the interval $\left[0, 1\right]$.
-For example: \verb|dc 0.5| assigns the 50\% duty cycle.
+	\item \verb|dc| - assign a zero setpoint, which will stop the motor if it is running.
+	\item \verb|dc arm| - unlock the command.
+	\item \verb|dc <duty cycle>| - set the specified duty cycle setpoint.
+	The setpoint is a real number in the interval $\left[0, 1\right]$.
+	For example: \verb|dc 0.5| assigns the 50\% duty cycle.
 \end{itemize}
 
 \subsubsection{rpm}
@@ -1434,11 +1433,11 @@ In order to unlock it, execute the command
 
 Syntax:
 \begin{itemize}
-\item \verb|rpm| - assign a zero setpoint, which will stop the motor if it is running.
-\item \verb|rpm arm| - unlock the command.
-\item \verb|rpm <RPM>| - set the specified RPM setpoint.
-The setpoint is an integer number in the interval $\left[0, 65535\right]$.
-For example: \verb|rpm 5000| assigns the target setpoint of 5000 mechanical RPM.
+	\item \verb|rpm| - assign a zero setpoint, which will stop the motor if it is running.
+	\item \verb|rpm arm| - unlock the command.
+	\item \verb|rpm <RPM>| - set the specified RPM setpoint.
+	The setpoint is an integer number in the interval $\left[0, 65535\right]$.
+	For example: \verb|rpm 5000| assigns the target setpoint of 5000 mechanical RPM.
 \end{itemize}
 
 \subsubsection{md}
@@ -1459,47 +1458,47 @@ Fields that are not intended for production use are intentionally left undocumen
 Note that the number of fields and their ordering may vary.
 
 \begin{minted}{yaml}
-product_id   : 'io.px4.sapog'
-product_name : 'PX4 Sapog'
-sw_version   : '2.0'
-sw_vcs_commit: 7672820
-sw_build_date: Apr 29 2017
-hw_version   : '1.1'
-hw_unique_id : 'M//UBUdHNTZUVxlDAAAAAA=='
-hw_signature : 'NX3Y05Y1a/hDNajPyMF5dojuAB9r1HmUxZ3UVU8g39C9L5pjAZMVKdZ7yI1CetvumOJZHIjRYkHOBmMAEKvRU/3mpG\
-+KgUND6yGpoHQ5aa+OK+LIcOw2LC+BaUmAPS6Hy4bxOvuARb062QruQlrOXyVc/vs28JtcBzOZo/b/OxY='
-hw_info_url  : 'http://device.zubax.com/device_info?uid=33FFD405474735365457194300000000'
+	product_id   : 'io.px4.sapog'
+	product_name : 'PX4 Sapog'
+	sw_version   : '2.0'
+	sw_vcs_commit: 7672820
+	sw_build_date: Apr 29 2017
+	hw_version   : '1.1'
+	hw_unique_id : 'M//UBUdHNTZUVxlDAAAAAA=='
+	hw_signature : 'NX3Y05Y1a/hDNajPyMF5dojuAB9r1HmUxZ3UVU8g39C9L5pjAZMVKdZ7yI1CetvumOJZHIjRYkHOBmMAEKvRU/3mpG\
+	+KgUND6yGpoHQ5aa+OK+LIcOw2LC+BaUmAPS6Hy4bxOvuARb062QruQlrOXyVc/vs28JtcBzOZo/b/OxY='
+	hw_info_url  : 'http://device.zubax.com/device_info?uid=33FFD405474735365457194300000000'
 \end{minted}
 
 \begin{ZubaxSimpleTable}{Zubax ID fields}{|l X|}\label{zubax_id_fields_table}
-Field name              & Meaning \\
-
-\texttt{product\_id}    & Product type identifier string. It is always set to \texttt{io.px4.sapog}.
-The same string is reported via UAVCAN as the node name string. \\
-
-\texttt{sw\_version}    & Firmware version number in the form ``major.minor''. \\
-
-\texttt{sw\_vcs\_commit}& Firmware patch ID as the short git commit hash.
-The abbreviation VCS stands for ``version control system''.
-This number allows one to determine the exact revision of the firmware that is currently running. \\
-
-\texttt{sw\_build\_date}& Firmware build date in the form ``\texttt{mmm dd yyyy}''. \\
-
-\texttt{hw\_version}    & Hardware version number in the form ``major.minor''.
-Refer to the documentation provided with your hardware to learn what version number it reports to Sapog. \\
-
-\texttt{hw\_unique\_id} & The 128-bit unique ID of this specific hardware instance.
-The UID is represented either as a hexadecimal string, or as a Base64 encoded string.\\
-
-\texttt{hw\_signature}  & The certificate of authenticity (CoA) of this specific hardware instance
-encoded in a Base64 string.
-This field will not be present if the current hardware instance does not have any CoA installed.
-Refer to the documentation provided with your hardware to find out what CoA is used, if any. \\
-
-\texttt{hw\_info\_url}  & Link to the web page that contains the test report, origin information,
-traceability data, and other important information about this specific hardware instance provided by
-the vendor. This field may not be populated if the hardware does not have any CoA installed. \\
-
+	Field name              & Meaning \\
+	
+	\texttt{product\_id}    & Product type identifier string. It is always set to \texttt{io.px4.sapog}.
+	The same string is reported via UAVCAN as the node name string. \\
+	
+	\texttt{sw\_version}    & Firmware version number in the form ``major.minor''. \\
+	
+	\texttt{sw\_vcs\_commit}& Firmware patch ID as the short git commit hash.
+	The abbreviation VCS stands for ``version control system''.
+	This number allows one to determine the exact revision of the firmware that is currently running. \\
+	
+	\texttt{sw\_build\_date}& Firmware build date in the form ``\texttt{mmm dd yyyy}''. \\
+	
+	\texttt{hw\_version}    & Hardware version number in the form ``major.minor''.
+	Refer to the documentation provided with your hardware to learn what version number it reports to Sapog. \\
+	
+	\texttt{hw\_unique\_id} & The 128-bit unique ID of this specific hardware instance.
+	The UID is represented either as a hexadecimal string, or as a Base64 encoded string.\\
+	
+	\texttt{hw\_signature}  & The certificate of authenticity (CoA) of this specific hardware instance
+	encoded in a Base64 string.
+	This field will not be present if the current hardware instance does not have any CoA installed.
+	Refer to the documentation provided with your hardware to find out what CoA is used, if any. \\
+	
+	\texttt{hw\_info\_url}  & Link to the web page that contains the test report, origin information,
+	traceability data, and other important information about this specific hardware instance provided by
+	the vendor. This field may not be populated if the hardware does not have any CoA installed. \\
+	
 \end{ZubaxSimpleTable}
 
 Vendors that use Sapog for their own products can use this command to install their own CoA on the hardware.
@@ -1510,9 +1509,9 @@ More information about using Sapog in custom products is provided in the chapter
 
 Syntax:
 \begin{itemize}
-\item \verb|zubax_id| - print the Zubax ID YAML structure documented above.
-\item \verb|zubax_id <CoA>| - install the vendor's certificate of authenticity \verb|<CoA>| encoded in Base64.
-This command can be executed only once.
+	\item \verb|zubax_id| - print the Zubax ID YAML structure documented above.
+	\item \verb|zubax_id <CoA>| - install the vendor's certificate of authenticity \verb|<CoA>| encoded in Base64.
+	This command can be executed only once.
 \end{itemize}
 
 \subsubsection{uavcan}
@@ -1530,10 +1529,10 @@ whereas the spacing between the pulses and their interval do not carry any usefu
 The principle is illustrated on figure~\ref{rcpwm_signal_plot}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.7\textwidth]{rcpwm_signal_plot}
-    \caption{RCPWM signal
-    \label{rcpwm_signal_plot}}
+	\centering
+	\includegraphics[width=0.7\textwidth]{rcpwm_signal_plot}
+	\caption{RCPWM signal
+		\label{rcpwm_signal_plot}}
 \end{figure}
 
 The RCPWM interface is widely used in robotics and in flight control systems of small UAV.
@@ -1553,9 +1552,9 @@ In order to be understood by Sapog,
 the RCPWM signal should match the requirements listed in table~\ref{rcpwm_constraints}.
 
 \begin{ZubaxSimpleTable}{RCPWM interface constraints}{|c X|c c|c|}\label{rcpwm_constraints}
-Symbol                               & Parameter            & Min   & Max & Unit \\
-$\Delta{}t_{\text{HL}_\text{RCPWM}}$ & RCPWM pulse duration & 0.5   & 3   & millisecond \\
-$\Delta{}t_{\text{LH}_\text{RCPWM}}$ & RCPWM pulse spacing  & 0.01  & 50  & millisecond \\
+	Symbol                               & Parameter            & Min   & Max & Unit \\
+	$\Delta{}t_{\text{HL}_\text{RCPWM}}$ & RCPWM pulse duration & 0.5   & 3   & millisecond \\
+	$\Delta{}t_{\text{LH}_\text{RCPWM}}$ & RCPWM pulse spacing  & 0.01  & 50  & millisecond \\
 \end{ZubaxSimpleTable}
 
 If the RCPWM pulse duration $\Delta{}t_{\text{HL}_\text{RCPWM}}$ is not within the specified limits,
@@ -1587,10 +1586,10 @@ $\left(6\%, 40\%\right)$.
 The setpoint handling logic is illustrated on figure~\ref{rcpwm_setpoint_handling}.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[width=0.8\textwidth]{rcpwm_setpoint_handling}
-    \caption{RCPWM setpoint handling
-    \label{rcpwm_setpoint_handling}}
+	\centering
+	\includegraphics[width=0.8\textwidth]{rcpwm_setpoint_handling}
+	\caption{RCPWM setpoint handling
+		\label{rcpwm_setpoint_handling}}
 \end{figure}
 
 \chapter{Configuration parameters}\label{sec:configuration_parameters}
@@ -1644,83 +1643,83 @@ they can also depend on which particular hardware Sapog is running on.
 
 The following abbreviations are adopted for the tables below:
 \begin{description}
-\item[TEA] Short for ``takes effect at''. This field specifies when the newly specified parameter value will
-take effect.
-\item[Def.] Short for ``default value''.
+	\item[TEA] Short for ``takes effect at''. This field specifies when the newly specified parameter value will
+	take effect.
+	\item[Def.] Short for ``default value''.
 \end{description}
 
 % name, unit, takes effect at, min, max, default, note
 \newcommand\CfgParamIndexEntry[7]{%
-    \CfgDef{#1} & \footnotesize{#2} & \footnotesize{\CfgListReferences{#1}} & \footnotesize{#3} &
-    \footnotesize{#4} & \footnotesize{#5} & \footnotesize{#6} &
-    \footnotesize{#7} \tabularnewline
+	\CfgDef{#1} & \footnotesize{#2} & \footnotesize{\CfgListReferences{#1}} & \footnotesize{#3} &
+	\footnotesize{#4} & \footnotesize{#5} & \footnotesize{#6} &
+	\footnotesize{#7} \tabularnewline
 }%
 
 \newenvironment{CfgParamIndex}[1]{%
-    \begin{ZubaxTableWrapper}{#1}
-    \setlength\tabcolsep{2.5pt}
-    \begin{ZubaxWrappedTable}{@{} l l l l | c c c | X @{}}
-    Name & Unit & Pages & TEA & Min & Max & Def. & Description \\
-}{%
-    \end{ZubaxWrappedTable}
-    \end{ZubaxTableWrapper}
+	\begin{ZubaxTableWrapper}{#1}
+		\setlength\tabcolsep{2.5pt}
+		\begin{ZubaxWrappedTable}{@{} l l l l | c c c | X @{}}
+			Name & Unit & Pages & TEA & Min & Max & Def. & Description \\
+		}{%
+		\end{ZubaxWrappedTable}
+	\end{ZubaxTableWrapper}
 }
 
 \subsection{Motor control configuration parameters}
 
 \begin{CfgParamIndex}{Motor control configuration parameters}
-\CfgParamIndexEntry{mot+pwm+dt+ns}{nanosecond}{boot}{400}{800}{}{PWM dead time}
-\CfgParamIndexEntry{mot+pwm+hz}{hertz}{boot}{20000}{75000}{60000}{PWM carrier frequency}
-\CfgParamIndexEntry{mot+spup+blnk+pm}{permill}{boot}{1}{300}{100}{Min blanking time during spin-up}
-\CfgParamIndexEntry{mot+spup+to+ms}{millisecond}{boot}{100}{9000}{5000}{Spin-up timeout}
-\CfgParamIndexEntry{mot+spup+st+cp}{microsecond}{boot}{10000}{300000}{100000}{Spin-up max/initial comm. period}
-\CfgParamIndexEntry{mot+comm+per+max}{microsecond}{boot}{1000}{10000}{4000}{Max comm. period for normal mode}
-\CfgParamIndexEntry{mot+zc+fails+max}{}{boot}{6}{300}{20}{Stall detection threshold}
-\CfgParamIndexEntry{mot+bemf+range}{percent}{boot}{10}{100}{90}{Valid BEMF magnitude}
-\CfgParamIndexEntry{mot+bemf+win+den}{}{boot}{3}{8}{4}{BEMF sampling window length denominator}
-\CfgParamIndexEntry{mot+blank+usec}{microsecond}{boot}{10}{300}{40}{Comm. blanking time for normal mode}
-\CfgParamIndexEntry{mot+tim+cp+min}{microsecond}{boot}{100}{50000}{600}{Advance angle interpolation point X1}
-\CfgParamIndexEntry{mot+tim+cp+max}{microsecond}{boot}{100}{50000}{300}{Advance angle interpolation point X2}
-\CfgParamIndexEntry{mot+tim+adv+max}{angular degree}{boot}{0}{29}{15}{Advance angle interpolation point Y1}
-\CfgParamIndexEntry{mot+tim+adv+min}{angular degree}{boot}{0}{20}{5}{Advance angle interpolation point Y2}
-\CfgParamIndexEntry{rpmctl+p}{$\frac{\text{dutycycle}}{\text{RPM}_m}$}{boot}{0}{1}{0.0001}%
-{RPM loop PID proportional gain}
-\CfgParamIndexEntry{rpmctl+i}{$\frac{\text{dutycycle}}{\text{second}\cdot\text{RPM}_m}$}{boot}{0}{10}{0.001}%
-{RPM loop PID integral gain}
-\CfgParamIndexEntry{rpmctl+d}{$\frac{\text{second}\cdot\text{dutycycle}}{\text{RPM}_m}$}{boot}{0}{1}{0}%
-{RPM loop PID derivative gain}
-\CfgParamIndexEntry{mot+stop+thres}{}{boot}{1}{100}{7}{Lock-up threshold}
-\CfgParamIndexEntry{mot+lpf+freq}{hertz}{boot}{1}{200}{20}{Current/voltage low-pass filter corner frequency}
-\CfgParamIndexEntry{mot+i+max}{ampere}{boot}{1}{60}{20}{Maximum inverter current}
-\CfgParamIndexEntry{mot+i+max+p}{$\frac{\text{dutycycle}}{\text{ampere}}$}{boot}{0.01}{2}{0.2}%
-{Current limiter proportional gain}
-\CfgParamIndexEntry{mot+rpm+min}{RPM}{boot}{50}{5000}{1000}{Minimum setpoint for RPM control loop}
-\CfgParamIndexEntry{ctl+dir}{}{boot}{0}{1}{0}{Direction of rotation: 0 - forward, 1 - reverse}
-\CfgParamIndexEntry{mot+num+poles}{}{boot}{2}{100}{14}{Number of magnetic poles on the rotor}
-\CfgParamIndexEntry{mot+dc+slope}{$\frac{\text{dutycycle}}{\text{second}}$}{boot}{0.1}{20}{5}%
-{Duty cycle ramp steepness}
-\CfgParamIndexEntry{mot+dc+accel}{duty cycle}{boot}{0.001}{0.5}{0.09}{Duty cycle ramp bypass threshold}
-\CfgParamIndexEntry{mot+spup+vramp+t}{second}{boot}{0}{10}{3}{Duration of spin-up voltage ramp}
-\CfgParamIndexEntry{mot+v+spinup}{volt}{boot}{0.01}{10}{0.5}{Initial voltage of spin-up voltage ramp}
-\CfgParamIndexEntry{mot+v+min}{volt}{boot}{0.5}{10}{2.5}{Min inverter source voltage for normal mode}
+	\CfgParamIndexEntry{mot+pwm+dt+ns}{nanosecond}{boot}{400}{800}{}{PWM dead time}
+	\CfgParamIndexEntry{mot+pwm+hz}{hertz}{boot}{20000}{75000}{60000}{PWM carrier frequency}
+	\CfgParamIndexEntry{mot+spup+blnk+pm}{permill}{boot}{1}{300}{100}{Min blanking time during spin-up}
+	\CfgParamIndexEntry{mot+spup+to+ms}{millisecond}{boot}{100}{9000}{5000}{Spin-up timeout}
+	\CfgParamIndexEntry{mot+spup+st+cp}{microsecond}{boot}{10000}{300000}{100000}{Spin-up max/initial comm. period}
+	\CfgParamIndexEntry{mot+comm+per+max}{microsecond}{boot}{1000}{10000}{4000}{Max comm. period for normal mode}
+	\CfgParamIndexEntry{mot+zc+fails+max}{}{boot}{6}{300}{20}{Stall detection threshold}
+	\CfgParamIndexEntry{mot+bemf+range}{percent}{boot}{10}{100}{90}{Valid BEMF magnitude}
+	\CfgParamIndexEntry{mot+bemf+win+den}{}{boot}{3}{8}{4}{BEMF sampling window length denominator}
+	\CfgParamIndexEntry{mot+blank+usec}{microsecond}{boot}{10}{300}{40}{Comm. blanking time for normal mode}
+	\CfgParamIndexEntry{mot+tim+cp+min}{microsecond}{boot}{100}{50000}{600}{Advance angle interpolation point X1}
+	\CfgParamIndexEntry{mot+tim+cp+max}{microsecond}{boot}{100}{50000}{300}{Advance angle interpolation point X2}
+	\CfgParamIndexEntry{mot+tim+adv+max}{angular degree}{boot}{0}{29}{15}{Advance angle interpolation point Y1}
+	\CfgParamIndexEntry{mot+tim+adv+min}{angular degree}{boot}{0}{20}{5}{Advance angle interpolation point Y2}
+	\CfgParamIndexEntry{rpmctl+p}{$\frac{\text{dutycycle}}{\text{RPM}_m}$}{boot}{0}{1}{0.0001}%
+	{RPM loop PID proportional gain}
+	\CfgParamIndexEntry{rpmctl+i}{$\frac{\text{dutycycle}}{\text{second}\cdot\text{RPM}_m}$}{boot}{0}{10}{0.001}%
+	{RPM loop PID integral gain}
+	\CfgParamIndexEntry{rpmctl+d}{$\frac{\text{second}\cdot\text{dutycycle}}{\text{RPM}_m}$}{boot}{0}{1}{0}%
+	{RPM loop PID derivative gain}
+	\CfgParamIndexEntry{mot+stop+thres}{}{boot}{1}{100}{7}{Lock-up threshold}
+	\CfgParamIndexEntry{mot+lpf+freq}{hertz}{boot}{1}{200}{20}{Current/voltage low-pass filter corner frequency}
+	\CfgParamIndexEntry{mot+i+max}{ampere}{boot}{1}{60}{20}{Maximum inverter current}
+	\CfgParamIndexEntry{mot+i+max+p}{$\frac{\text{dutycycle}}{\text{ampere}}$}{boot}{0.01}{2}{0.2}%
+	{Current limiter proportional gain}
+	\CfgParamIndexEntry{mot+rpm+min}{RPM}{boot}{50}{5000}{1000}{Minimum setpoint for RPM control loop}
+	\CfgParamIndexEntry{ctl+dir}{}{boot}{0}{1}{0}{Direction of rotation: 0 - forward, 1 - reverse}
+	\CfgParamIndexEntry{mot+num+poles}{}{boot}{2}{100}{14}{Number of magnetic poles on the rotor}
+	\CfgParamIndexEntry{mot+dc+slope}{$\frac{\text{dutycycle}}{\text{second}}$}{boot}{0.1}{20}{5}%
+	{Duty cycle ramp steepness}
+	\CfgParamIndexEntry{mot+dc+accel}{duty cycle}{boot}{0.001}{0.5}{0.09}{Duty cycle ramp bypass threshold}
+	\CfgParamIndexEntry{mot+spup+vramp+t}{second}{boot}{0}{10}{3}{Duration of spin-up voltage ramp}
+	\CfgParamIndexEntry{mot+v+spinup}{volt}{boot}{0.01}{10}{0.5}{Initial voltage of spin-up voltage ramp}
+	\CfgParamIndexEntry{mot+v+min}{volt}{boot}{0.5}{10}{2.5}{Min inverter source voltage for normal mode}
 \end{CfgParamIndex}
 
 \subsection{UAVCAN interface configuration parameters}
 
 \begin{CfgParamIndex}{UAVCAN interface configuration parameters}
-\CfgParamIndexEntry{esc+index}{}{boot}{0}{15}{0}{UAVCAN index of this ESC}
-\CfgParamIndexEntry{cmd+ttl+ms}{millisecond}{boot}{100}{5000}{200}{Setpoint timeout}
-\CfgParamIndexEntry{cmd+start+dc}{duty cycle}{boot}{0.01}{1}{1}{Spin-up safety threshold}
-\CfgParamIndexEntry{uavcan+node+id}{}{boot}{0}{125}{0}{Node ID, zero for dynamic allocation}
-\CfgParamIndexEntry{light+index}{}{boot}{0}{255}{0}{UAVCAN index of the RGB LED}
+	\CfgParamIndexEntry{esc+index}{}{boot}{0}{15}{0}{UAVCAN index of this ESC}
+	\CfgParamIndexEntry{cmd+ttl+ms}{millisecond}{boot}{100}{5000}{200}{Setpoint timeout}
+	\CfgParamIndexEntry{cmd+start+dc}{duty cycle}{boot}{0.01}{1}{1}{Spin-up safety threshold}
+	\CfgParamIndexEntry{uavcan+node+id}{}{boot}{0}{125}{0}{Node ID, zero for dynamic allocation}
+	\CfgParamIndexEntry{light+index}{}{boot}{0}{255}{0}{UAVCAN index of the RGB LED}
 \end{CfgParamIndex}
 
 \subsection{RCPWM interface configuration parameters}
 
 \begin{CfgParamIndex}{RCPWM interface configuration parameters}
-\CfgParamIndexEntry{pwm+max+usec}{microsecond}{boot}{1800}{2200}{2000}{Full throttle pulse duration}
-\CfgParamIndexEntry{pwm+min+usec}{microsecond}{boot}{800}{1200}{1000}{Zero throttle pulse duration}
-\CfgParamIndexEntry{pwm+enable}{}{boot}{0}{1}{0}{Enable this interface}
+	\CfgParamIndexEntry{pwm+max+usec}{microsecond}{boot}{1800}{2200}{2000}{Full throttle pulse duration}
+	\CfgParamIndexEntry{pwm+min+usec}{microsecond}{boot}{800}{1200}{1000}{Zero throttle pulse duration}
+	\CfgParamIndexEntry{pwm+enable}{}{boot}{0}{1}{0}{Enable this interface}
 \end{CfgParamIndex}
 
 \subsection{Forced rotation detection configuration parameters}
@@ -1729,9 +1728,9 @@ The configuration parameters listed in this group are deprecated and scheduled f
 of the future revisions of the firmware.
 
 \begin{CfgParamIndex}{Forced rotation detection configuration parameters}
-\CfgParamIndexEntry{enum+max+step}{implementation defined}{undefined}{2000}{100000}{50000}{Not for production use}
-\CfgParamIndexEntry{enum+steps}{implementation defined}{undefined}{6}{200}{20}{Not for production use}
-\CfgParamIndexEntry{enum+bemf}{implementation defined}{undefined}{5}{500}{20}{Not for production use}
+	\CfgParamIndexEntry{enum+max+step}{implementation defined}{undefined}{2000}{100000}{50000}{Not for production use}
+	\CfgParamIndexEntry{enum+steps}{implementation defined}{undefined}{6}{200}{20}{Not for production use}
+	\CfgParamIndexEntry{enum+bemf}{implementation defined}{undefined}{5}{500}{20}{Not for production use}
 \end{CfgParamIndex}
 
 \chapter{Embedded bootloader}\label{sec:bootloader}
@@ -1757,20 +1756,20 @@ The procedure of firmware update over UAVCAN is defined in the UAVCAN specificat
 While the bootloader is running, the following RGB LED behaviors are defined.
 
 \begin{ZubaxSimpleTable}{Bootloader status indication via RGB LED}{|l l|X|}
-    State            &                         & Meaning \\
-    Solid red        & \ShowSolidColor{red}    & Error. Possible reasons: could not erase the old
-                                                 firmware image; the file server returned an invalid
-                                                 or unexpected response; file server response has timed
-                                                 out; the CRC of the firmware image is invalid. \\
-    Solid white      & \ShowSolidColor{lightgray}& Just started, initialization is in progress.
-                                                 This state is very transient. \\
-    Solid yellow     & \ShowSolidColor{yellow} & CAN auto bit rate detection. \\
-    Solid green      & \ShowSolidColor{green}  & CAN auto bit rate detection finished.
-                                                 This state is very transient. \\
-    Solid magenta    & \ShowSolidColor{magenta}& UAVCAN dynamic node ID allocation started. \\
-    Solid blue       & \ShowSolidColor{blue}   & UAVCAN dynamic node ID allocation finished. \\
-    Solid cyan       & \ShowSolidColor{cyan}   & Firmware image is being downloaded. \\
-    Off              & \ShowSolidColor{black}  & The application is being started. \\
+	State            &                         & Meaning \\
+	Solid red        & \ShowSolidColor{red}    & Error. Possible reasons: could not erase the old
+	firmware image; the file server returned an invalid
+	or unexpected response; file server response has timed
+	out; the CRC of the firmware image is invalid. \\
+	Solid white      & \ShowSolidColor{lightgray}& Just started, initialization is in progress.
+	This state is very transient. \\
+	Solid yellow     & \ShowSolidColor{yellow} & CAN auto bit rate detection. \\
+	Solid green      & \ShowSolidColor{green}  & CAN auto bit rate detection finished.
+	This state is very transient. \\
+	Solid magenta    & \ShowSolidColor{magenta}& UAVCAN dynamic node ID allocation started. \\
+	Solid blue       & \ShowSolidColor{blue}   & UAVCAN dynamic node ID allocation finished. \\
+	Solid cyan       & \ShowSolidColor{cyan}   & Firmware image is being downloaded. \\
+	Off              & \ShowSolidColor{black}  & The application is being started. \\
 \end{ZubaxSimpleTable}
 
 \section{UAVCAN interface description}
@@ -1791,10 +1790,10 @@ allowing it to skip the bit rate detection procedure.
 
 The bootloader can detect the following bit rates:
 \begin{itemize}
-\item 1 Mbit/s
-\item 500 kbit/s
-\item 250 kbit/s
-\item 125 kbit/s
+	\item 1 Mbit/s
+	\item 500 kbit/s
+	\item 250 kbit/s
+	\item 125 kbit/s
 \end{itemize}
 
 Having successfully detected the bit rate, the bootloader will attempt to obtain a UAVCAN node ID,
@@ -1865,51 +1864,51 @@ the second letter indicates the result of the action.
 The log source name is always set to the string ``\verb|Boot|''.
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader logging -- action codes}{|c X|}
-Code & Meaning \\
-\texttt{I} & Initialization. \\
-\texttt{G} & Invoking \texttt{uavcan.protocol.file.GetInfo}. \\
-\texttt{E} & Erasing ROM. \\
-\texttt{R} & Invoking \texttt{uavcan.protocol.file.Read}. \\
-\texttt{P} & Writing ROM. \\
-\texttt{V} & Verification of the downloaded image. \\
-\texttt{F} & Finalization. \\
+	Code & Meaning \\
+	\texttt{I} & Initialization. \\
+	\texttt{G} & Invoking \texttt{uavcan.protocol.file.GetInfo}. \\
+	\texttt{E} & Erasing ROM. \\
+	\texttt{R} & Invoking \texttt{uavcan.protocol.file.Read}. \\
+	\texttt{P} & Writing ROM. \\
+	\texttt{V} & Verification of the downloaded image. \\
+	\texttt{F} & Finalization. \\
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader logging -- status codes}{|c X|}
-Code & Meaning \\
-\texttt{s} & Started \\
-\texttt{f} & Failed \\
-\texttt{o} & OK \\
+	Code & Meaning \\
+	\texttt{s} & Started \\
+	\texttt{f} & Failed \\
+	\texttt{o} & OK \\
 \end{ZubaxSimpleTable}
 
 \subsection{Data type summary}
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader broadcast messages}{|l l l X|}
-    Data type name                                         & Frequency, Hz & Tr. priority & Note \\
-    \texttt{uavcan.protocol.NodeStatus}                    & 1          & 30 (low)     & \\
-    \texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Aperiodic  & 30 (low)     & Used only during the
-                                                                                         initialization. \\
-    \texttt{uavcan.protocol.debug.LogMessage}              & Aperiodic  & 30 (low)     & \\
+	Data type name                                         & Frequency, Hz & Tr. priority & Note \\
+	\texttt{uavcan.protocol.NodeStatus}                    & 1          & 30 (low)     & \\
+	\texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Aperiodic  & 30 (low)     & Used only during the
+	initialization. \\
+	\texttt{uavcan.protocol.debug.LogMessage}              & Aperiodic  & 30 (low)     & \\
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader subscribed messages}{|l X|}
-    Data type name                                         & Note \\
-    \texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Used only during the initialization. \\
+	Data type name                                         & Note \\
+	\texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Used only during the initialization. \\
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader provided services}{|l X|}
-    Data type name                                         & Note \\
-    \texttt{uavcan.protocol.GetNodeInfo}                   & Software version identification fields will be
-                                                             zeroed if there is no valid application image
-                                                             present.\\
-    \texttt{uavcan.protocol.file.BeginFirmwareUpdate}      & \\
+	Data type name                                         & Note \\
+	\texttt{uavcan.protocol.GetNodeInfo}                   & Software version identification fields will be
+	zeroed if there is no valid application image
+	present.\\
+	\texttt{uavcan.protocol.file.BeginFirmwareUpdate}      & \\
 \end{ZubaxSimpleTable}
 
 \begin{ZubaxSimpleTable}{UAVCAN bootloader invoked services}{|l l X|}
-    Data type name                                         & Tr. priority & Note \\
-    \texttt{uavcan.protocol.file.GetInfo}                  & 30 (low)     & Invoked once before downloading
-                                                                            the firmware file. \\
-    \texttt{uavcan.protocol.file.Read}                     & 30 (low)     & Used to download the firmware file. \\
+	Data type name                                         & Tr. priority & Note \\
+	\texttt{uavcan.protocol.file.GetInfo}                  & 30 (low)     & Invoked once before downloading
+	the firmware file. \\
+	\texttt{uavcan.protocol.file.Read}                     & 30 (low)     & Used to download the firmware file. \\
 \end{ZubaxSimpleTable}
 
 \chapter{Tuning guide}
@@ -1968,19 +1967,19 @@ For example, 90\textdegree{} of phase advance is equivalent to 30\textdegree{} o
 It is recommended to follow the algorithm described below to configure the advance angle settings:
 
 \begin{enumerate}
-    \item Find out the idle commutation period of your motor.
-          The commutation period (in seconds) can be derived from RPM using the following formula:
-          $20 / (\text{NumPoles}\times\text{RPM})$, where \textbf{NumPoles} is the number of magnetic poles
-          of the rotor, and \textbf{RPM} is the angular velocity of the rotor in revolutions per minute.
-
-    \item Assign \CfgRef{mot+tim+cp+min} the idle commutation period computed in the step 1.
-
-    \item Find out the commutation period when the motor is working at the nominal RPM.
-          Use the formula defined in the step 1 if necessary.
-
-    \item Assign \CfgRef{mot+tim+cp+max} the commutation period computed in the step 3.
-
-    \item Assign \CfgRef{mot+tim+adv+max} the desired advance angle at the nominal load.
+	\item Find out the idle commutation period of your motor.
+	The commutation period (in seconds) can be derived from RPM using the following formula:
+	$20 / (\text{NumPoles}\times\text{RPM})$, where \textbf{NumPoles} is the number of magnetic poles
+	of the rotor, and \textbf{RPM} is the angular velocity of the rotor in revolutions per minute.
+	
+	\item Assign \CfgRef{mot+tim+cp+min} the idle commutation period computed in the step 1.
+	
+	\item Find out the commutation period when the motor is working at the nominal RPM.
+	Use the formula defined in the step 1 if necessary.
+	
+	\item Assign \CfgRef{mot+tim+cp+max} the commutation period computed in the step 3.
+	
+	\item Assign \CfgRef{mot+tim+adv+max} the desired advance angle at the nominal load.
 \end{enumerate}
 
 \chapter{Porting guide}\label{sec:porting_guide}
@@ -2009,16 +2008,16 @@ Beware that the CoA can be written only once.
 \subsection{Requirements}
 
 \begin{enumerate}
-    \item The state estimation methods used in Sapog require a high-speed inverter.
-    When choosing the power transistors and their drivers, keep the dynamic characteristics in mind:
-    the total switching time should be under 200 nanoseconds.
-
-    \item The RC filters in the phase voltage feedback circuits should be designed so that their cutoff frequency
-    is around 19 kHz and the output impedance does not exceed 8 $\text{k}\Omega$.
-
-    \item Unless the maximum supply voltage exceeds 25 V (Li-ion $\text{LiCoO}_2$ 6S),
-    the DC link voltage measurement divider should not be changed from the default specified in
-    the reference schematic.
+	\item The state estimation methods used in Sapog require a high-speed inverter.
+	When choosing the power transistors and their drivers, keep the dynamic characteristics in mind:
+	the total switching time should be under 200 nanoseconds.
+	
+	\item The RC filters in the phase voltage feedback circuits should be designed so that their cutoff frequency
+	is at least 19 kHz and the output impedance does not exceed 8 $\text{k}\Omega$.
+	
+	\item Unless the maximum supply voltage exceeds 25 V (Li-ion $\text{LiCoO}_2$ 6S),
+	the DC link voltage measurement divider should not be changed from the default specified in
+	the reference schematic.
 \end{enumerate}
 
 \subsection{Reference schematic}
@@ -2032,15 +2031,14 @@ Note that the EEPROM memory chip is not currently used by the firmware,
 but it is required nevertheless because future versions of the firmware may need it.
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[page=1,angle=90,origin=c,width=1\textwidth]{sapog_reference_hardware.pdf}
-    \caption{Reference schematic, page 1}
+	\centering
+	\includegraphics[page=1,angle=90,origin=c,width=1\textwidth]{sapog_reference_hardware.pdf}
+	\caption{Reference schematic, page 1}
 \end{figure}
 
 \begin{figure}[hbt]
-    \centering
-    \includegraphics[page=2,angle=90,origin=c,width=1\textwidth]{sapog_reference_hardware.pdf}
-    \caption{Reference schematic, page 2}
+	\centering
+	\includegraphics[page=2,angle=90,origin=c,width=1\textwidth]{sapog_reference_hardware.pdf}
+	\caption{Reference schematic, page 2}
 \end{figure}
-
 \end{document}

@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <limits>
 #include <algorithm>
+#include <cstdio>
 
 namespace temperature_sensor
 {
@@ -154,7 +155,7 @@ class : public chibios_rt::BaseStaticThread<128>
 
 int init()
 {
-
+    printf("\nHardware minor version: %d\n", board::detect_hardware_version().minor);
     switch (board::detect_hardware_version().minor)
     {
         case 0:

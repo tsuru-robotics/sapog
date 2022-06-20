@@ -43,7 +43,7 @@ class TestRegisters:
         prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
         assert len(prepared_sapogs) > 0
         for node_info in prepared_sapogs:
-            response = await make_access_request("uavcan.node.description",
+            response = await make_access_request("uavcan.node.description2",
                                                  uavcan.register.Value_1_0(string=uavcan.primitive.String_1_0("named")),
                                                  node_info.node_id,
                                                  prepared_double_redundant_node)
@@ -56,6 +56,7 @@ class TestRegisters:
     async def test_write_supported_sapog_register_int(self, prepared_double_redundant_node):
         """Writes a non-default value and checks if it was successfully saved. Then writes back the default value and
         checks if that was saved."""
+        time.sleep(0.2)
         prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
         assert len(prepared_sapogs) > 0
         for node_info in prepared_sapogs:

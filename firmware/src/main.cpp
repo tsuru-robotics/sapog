@@ -45,8 +45,6 @@
 #include "node/uavcan_thread.hpp"
 #include <stdio.h>
 
-//#define TEMPERATURE_SENSORS_MISSING
-
 namespace
 {
 
@@ -61,20 +59,12 @@ os::watchdog::Timer init()
     led_ctl.set(board::LEDColor::PALE_WHITE);
 
     // Temperature sensor
-    int res =
-#ifndef TEMPERATURE_SENSORS_MISSING
-        temperature_sensor::init();
-#else
-    1
-#endif
-    ; //
-#ifndef TEMPERATURE_SENSORS_MISSING
+    int res = temperature_sensor::init();
     if (res < 0)
     {
         os::lowsyslog("Failed to init temperature sensor\n");
         board::die(res);
     }
-#endif
 
     // Motor control (must be initialized earlier than communicaton interfaces)
     res = motor_init(board::get_current_shunt_resistance());
@@ -194,7 +184,7 @@ int main()
     auto wdt = init();
     chThdSetPriority(NORMALPRIO);
 
-    //do_startup_beep();
+//    do_startup_beep();
 
     motor_confirm_initialization();
     printf("\n\n\n\nBooted\n");
@@ -210,13 +200,16 @@ int main()
     {
         wdt.reset();
 
-        if (motor_is_blocked()
-            #ifndef TEMPERATURE_SENSORS_MISSING
-            || !temperature_sensor::is_ok()
-#endif
-            )
+        if (motor_is_blocked() || !temperature_sensor::is_ok())
         {
             led_ctl.set(board::LEDColor::YELLOW);
+            if (temperature_sensor::is_ok())
+            {
+                printf("Temperature sensor is okay but motor is blocked!\n");
+            } else
+            {
+                printf("Temperature sensor is not okay and motor is not blocked.\n");
+            }
         } else
         {
             led_ctl.set(board::LEDColor::DARK_GREEN);

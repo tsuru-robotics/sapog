@@ -154,6 +154,9 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	# Removing temporary files
 	cd build && rm -f $(PROJECT).bin $(PROJECT).elf *.hex *.tmp.bin
 
+	# Printing the calculated values from the linker script settings file
+	arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_"
+
 $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH): ../linker_script_settings.ld.settings
 	@rm -f $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
@@ -168,6 +171,7 @@ $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH): ../linker_script_settings.ld.setti
 	@echo "\n\n">> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@cat $(SAPOG_SRC_DIR)/../../bootloader/ld.ld >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
 	@echo "Created a combined linker file for the bootloader"
+	#arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_"
 
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh

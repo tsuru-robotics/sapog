@@ -6,7 +6,7 @@ PX4 Sapog
 
 ## Documentation
 
-**[Sapog v2 Reference Manual](https://files.zubax.com/products/io.px4.sapog/Sapog_v2_Reference_Manual.pdf)**
+**[Sapog v3 Reference Manual](https://files.zubax.com/products/io.px4.sapog/Sapog_v3_Reference_Manual.pdf)**
 is the main piece of project documentation; make sure to read it.
 Additional documentation and related resources can be found at the
 **[Zubax Knowledge Base](https://kb.zubax.com/x/cYAh)**.
@@ -19,7 +19,7 @@ Additional documentation and related resources can be found at the
 * Implemented support in application for UAVCAN v1
 * Implemented use of interrupts to keep the 3 CAN message boxes from overflowing in case of full bandwidth
 * Replaced bootloader with a Kocherga-based bootloader which can handle UAVCAN v1 and v0 requests.
- The bootloader application update functionality is tested to not work. This is being fixed.
+ The functionality in bootloader that is responsible for updating the application was manually tested, it works with UAVCAN v1 but is also supposed to work with v0. This needs further testing.
 * Implemented integration tests and hardware-in-the-loop testing.
 
 ### v2.3

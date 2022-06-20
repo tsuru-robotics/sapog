@@ -84,7 +84,7 @@ class SpeedController:
             assert speed_difference < 100, "There is a problem with reporting RPM."
 
 
-class TestESC:
+class TestEscRpm:
     @staticmethod
     @pytest.mark.asyncio
     async def test_rpm_esc_control(prepared_double_redundant_node):
@@ -139,7 +139,7 @@ class TestESC:
             ]
 
         time.sleep(2)
-
+        assert (len(node_info_list) > 0)
         for index, node_info in enumerate(node_info_list):
             node_info.motor_index = index
             combined_registry = make_device_specific_registry() + common_registers
@@ -189,16 +189,16 @@ class TestESC:
                         register.actual_subscription.receive_in_background(receive_dynamics)
 
         async def run_first_motor():
-            speed_controller.change_speed(0, rpm_to_radians_per_second(200))
+            speed_controller.change_speed(0, rpm_to_radians_per_second(1400))
 
         async def run_second_motor():
             await asyncio.sleep(5)
-            speed_controller.change_speed(1, rpm_to_radians_per_second(200))
+            speed_controller.change_speed(1, rpm_to_radians_per_second(1400))
 
         asyncio.create_task(run_first_motor())
         asyncio.create_task(run_second_motor())
         try:
-            for i in range(4000):
+            for i in range(16):
 
                 rpm_message = reg.udral.service.actuator.common.sp.Vector2_0(value=speed_controller.speed_array)
                 await pub.publish(rpm_message)

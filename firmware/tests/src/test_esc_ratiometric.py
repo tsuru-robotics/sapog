@@ -84,7 +84,7 @@ class SpeedController:
             assert speed_difference < 100, "There is a problem with reporting RPM."
 
 
-class TestESC:
+class TestEscRatiometric:
     @staticmethod
     @pytest.mark.asyncio
     async def test_ratiometric_esc_control(prepared_double_redundant_node):
@@ -171,7 +171,7 @@ class TestESC:
         await readiness_pub.publish(readiness_message)
         pub = tester_node.make_publisher(reg.udral.service.actuator.common.sp.Vector2_0, "setpoint")
         # dynamics_sub = tester_node.make_subscriber(reg.udral.physics.dynamics.rotation.PlanarTs_0_1, "dynamics")
-        speed_controller = SpeedController(len(node_info_list))
+        speed_controller = SpeedController(2)
         assert len(node_info_list) >= 1, "Please restart" \
                                          " the nodes before continuing. This test was supposed" \
                                          "to allocate nodes and then keep the info about them. "
