@@ -100,7 +100,7 @@ class TestRegisterValues:
             for register_name in available_register_names:
                 response = await make_access_request(register_name,
                                                      uavcan.register.Value_1_0(empty=uavcan.primitive.Empty_1_0()),
-                                                     node_info,
+                                                     node_info.node_id,
                                                      tester_node)
                 if response and response[0]:
                     register[register_name] = get_any_value_out_of_value(response[0].value)
