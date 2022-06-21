@@ -12,11 +12,11 @@ from abc import ABC
 from asyncio import Event
 from typing import Optional
 
-import pyuavcan.dsdl
+import pycyphal.dsdl
 import typing
 
-from pyuavcan.application._node_factory import SimpleNode
-from pyuavcan.dsdl import FixedPortObject
+from pycyphal.application._node_factory import SimpleNode
+from pycyphal.dsdl import FixedPortObject
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -28,11 +28,11 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-from pyuavcan.application import make_node, NodeInfo, Node, register
-from pyuavcan.application.node_tracker import NodeTracker
-from pyuavcan.application.plug_and_play import CentralizedAllocator, Allocator
-from pyuavcan.transport import _tracer, Tracer, Transfer
-from pyuavcan.application.node_tracker import Entry
+from pycyphal.application import make_node, NodeInfo, Node, register
+from pycyphal.application.node_tracker import NodeTracker
+from pycyphal.application.plug_and_play import CentralizedAllocator, Allocator
+from pycyphal.transport import _tracer, Tracer, Transfer
+from pycyphal.application.node_tracker import Entry
 
 
 async def reset_node_id(sending_node: Node, current_target_node_id: int) -> bool:
@@ -57,7 +57,7 @@ class OneTimeAllocator(Allocator, ABC):
 
     def __init__(self, target_name: str):
         print("One time allocator constructed.")
-        registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+        registry01: register.Registry = pycyphal.application.make_registry(environment_variables={})
         registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
         registry01["uavcan.can.mtu"] = 8
         registry01["uavcan.node.id"] = 1
@@ -103,7 +103,7 @@ capture_handler_wrapper_type = Optional[
 async def run_continuous_allocator(time_out: Optional[int] = None, allocator_id: int = 1,
                                    name="com.zubax.sapog.tests.allocator"):
     event = asyncio.Event()
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01: register.Registry = pycyphal.application.make_registry(environment_variables={})
     registry01["uavcan.can.iface"] = "socketcan:slcan0 socketcan:slcan1"
     registry01["uavcan.can.mtu"] = 8
     registry01["uavcan.node.id"] = 1

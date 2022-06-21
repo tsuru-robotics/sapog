@@ -10,11 +10,11 @@ import re
 from typing import Optional
 from itertools import chain
 
-import pyuavcan.dsdl
+import pycyphal.dsdl
 import typing
 
-from pyuavcan.dsdl import FixedPortObject
-from pyuavcan.transport.can import CANErrorTrace
+from pycyphal.dsdl import FixedPortObject
+from pycyphal.transport.can import CANErrorTrace
 
 from conftest import add_deps
 
@@ -25,11 +25,11 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-from pyuavcan.application import make_node, NodeInfo, Node, register
-from pyuavcan.application.node_tracker import NodeTracker
-from pyuavcan.transport import _tracer, Trace, Tracer, TransferTrace
-from pyuavcan.application.node_tracker import Entry
-from pyuavcan.util import import_submodules, iter_descendants
+from pycyphal.application import make_node, NodeInfo, Node, register
+from pycyphal.application.node_tracker import NodeTracker
+from pycyphal.transport import _tracer, Trace, Tracer, TransferTrace
+from pycyphal.application.node_tracker import Entry
+from pycyphal.util import import_submodules, iter_descendants
 
 from make_registry import make_registry
 from datetime import datetime
@@ -78,8 +78,8 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
                f"to {trace.transfer.metadata.session_specifier.destination_node_id}" \
                f"\n{str(trace.transfer)}"
     try:
-        obj = pyuavcan.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
-        built_in_representation = pyuavcan.dsdl.to_builtin(obj)
+        obj = pycyphal.dsdl.deserialize(ids[subject_id], trace.transfer.fragmented_payload)
+        built_in_representation = pycyphal.dsdl.to_builtin(obj)
     except TypeError:
         built_in_representation = {}
     if "clients" in built_in_representation.keys():
@@ -120,11 +120,11 @@ def deserialize_trace(trace: Trace, ids: typing.Dict[int, FixedPortObject], subj
 def fill_ids():
     ids = {}
     filtered_types = ["ABCMeta"]
-    chained_descendants = chain(iter_descendants(pyuavcan.dsdl.FixedPortCompositeObject),
-                                iter_descendants(pyuavcan.dsdl.FixedPortServiceObject))
+    chained_descendants = chain(iter_descendants(pycyphal.dsdl.FixedPortCompositeObject),
+                                iter_descendants(pycyphal.dsdl.FixedPortServiceObject))
     filtered_generator = (type_ for type_ in chained_descendants if type_ not in filtered_types)
     for t in filtered_generator:
-        ids[pyuavcan.dsdl.get_fixed_port_id(t)] = t
+        ids[pycyphal.dsdl.get_fixed_port_id(t)] = t
     return ids
 
 

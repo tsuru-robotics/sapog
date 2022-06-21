@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
-import pyuavcan
-import pyuavcan.application.node_tracker
+import pycyphal
+import pycyphal.application.node_tracker
 import sys
 
 import uavcan
@@ -104,7 +104,7 @@ async def test_bootloader(prepared_double_redundant_node):
     else:
         node_info_list = prepared_sapogs
     tester_node = prepared_double_redundant_node
-    tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
+    tracker: pycyphal.application.node_tracker = pycyphal.application.node_tracker.NodeTracker(tester_node)
     loop = asyncio.get_event_loop()
     task = loop.create_task(run_yakut_file_server())
     for index, node_info in enumerate(node_info_list):

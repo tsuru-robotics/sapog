@@ -9,8 +9,8 @@ import uavcan.primitive.array.Bit_1_0
 import uavcan.register.Value_1_0
 from util.get_available_interfaces import get_available_slcan_interfaces
 
-import pyuavcan
-from pyuavcan.presentation._presentation import MessageClass
+import pycyphal
+from pycyphal.presentation._presentation import MessageClass
 import subprocess
 from utils import is_running_on_my_laptop
 from node_fixtures.drnf import prepared_double_redundant_node, prepared_node
@@ -41,7 +41,7 @@ async def test_double_redundancy(prepared_double_redundant_node):
         event = asyncio.Event()
 
         async def hb_handler(message_class: MessageClass,
-                             transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                             transfer_from: pycyphal.transport._transfer.TransferFrom):
             if transfer_from.source_node_id == node_info.node_id:
                 event.set()
 

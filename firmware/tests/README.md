@@ -4,9 +4,9 @@ This folder contains tests written in Python for testing Sapog.
 https://github.com/Zubax/sapog
 
 ## Resolving dependencies
-Pyuavcan and DSDL namespaces are needed to run the tests.
+Pycyphal and DSDL namespaces are needed to run the tests.
 
-Also, it is a good idea to create a virtual environment to store installed dependency pyuavcan in:
+Also, it is a good idea to create a virtual environment to store installed dependency pycyphal in:
 ```
 python -m venv venv
 . venv/bin/activate #  activating the virtual environment
@@ -32,9 +32,9 @@ Enter the directory you unpacked ```uavcan/``` and ```reg/``` to and then
 yakut compile -Ocompiled uavcan/ reg/
 ```
 The output folder is specified as ```compiled/```. Copy the resulting two folders from ```compiled/``` to ```deps/namespaces```.
-### Installing [pyuavcan](https://pyuavcan.readthedocs.io/en/stable/pages/installation.html)
+### Installing [pycyphal](https://pycyphal.readthedocs.io/en/stable/pages/installation.html)
 ```sh
-pip install pyuavcan[transport_can_pythoncan,transport_serial,transport_udp]
+pip install pycyphal[transport_can_pythoncan,transport_serial,transport_udp]
 ```
 ## Running tests
 From the ```src/``` folder, in terminals, run ```python node1.py``` and ```python node2.py```

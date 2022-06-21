@@ -6,7 +6,7 @@
 import logging
 import typing
 
-import pyuavcan
+import pycyphal
 
 from uavcan import register
 from util.get_available_interfaces import get_available_slcan_interfaces
@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 def make_registry(node_id: int, interfaces: typing.List[str] = [], use_all_interfaces: bool = False):
-    registry01: register.Registry = pyuavcan.application.make_registry(environment_variables={})
+    registry01: register.Registry = pycyphal.application.make_registry(environment_variables={})
     if use_all_interfaces:
         registry01["uavcan.can.iface"] = " ".join(get_available_slcan_interfaces())
     else:

@@ -16,7 +16,7 @@ def add_deps():
 
 
 add_deps()
-from pyuavcan.application import make_node, NodeInfo
+from pycyphal.application import make_node, NodeInfo
 from make_registry import make_registry
 import asyncio
 

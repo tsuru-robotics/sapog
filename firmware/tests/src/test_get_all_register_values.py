@@ -9,7 +9,7 @@ import typing
 
 import math
 import pytest
-import pyuavcan
+import pycyphal
 import time
 
 import reg.udral.physics.dynamics.rotation.PlanarTs_0_1

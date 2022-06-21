@@ -11,9 +11,9 @@ import asyncio
 from utils import restarted_sapogs
 from make_registry import make_registry
 
-import pyuavcan
-from pyuavcan.presentation._presentation import MessageClass
-from pyuavcan.application import Node, make_node, NodeInfo, register
+import pycyphal
+from pycyphal.presentation._presentation import MessageClass
+from pycyphal.application import Node, make_node, NodeInfo, register
 import uavcan.node.ID_1_0
 import uavcan.node.port
 
@@ -29,7 +29,7 @@ async def test_port_list(restarted_sapogs):
                 event = asyncio.Event()
 
                 def handler(message_class: MessageClass,
-                            transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                            transfer_from: pycyphal.transport._transfer.TransferFrom):
                     if transfer_from.source_node_id == node_id:
                         event.set()
 

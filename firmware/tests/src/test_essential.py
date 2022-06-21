@@ -21,8 +21,8 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo
+import pycyphal
+from pycyphal.application import Node, make_node, NodeInfo
 
 
 class TestEssential:
@@ -62,7 +62,7 @@ class TestEssential:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_responds_to_get_info(prepared_double_redundant_node: pyuavcan.application.Node):
+    async def test_responds_to_get_info(prepared_double_redundant_node: pycyphal.application.Node):
         pdrn = prepared_double_redundant_node
         prepared_sapogs = await get_prepared_sapogs(pdrn)
         for node_info in prepared_sapogs:

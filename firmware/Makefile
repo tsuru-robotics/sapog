@@ -194,15 +194,15 @@ public_regulated_data_types: public_regulated_data_types-master
 	rm -rf public_regulated_data_types-master
 
 generated/nunavut_out: public_regulated_data_types
-	@echo "Compiling C DSDL for UAVCAN, first for the reg folder, which includes uavcan"
+	@echo "Compiling C DSDL for Cyphal, first for the reg folder, which includes uavcan"
 	nnvg public_regulated_data_types/reg -e h -O generated/nunavut_out -I public_regulated_data_types/uavcan
-	@echo "Compiling C DSDL for UAVCAN, first for the uavcan folder, which includes reg"
+	@echo "Compiling C DSDL for Cyphal, first for the uavcan folder, which includes reg"
 	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
 
 dsdl: clean_previous_zip clean_previous_unpacked_folder generated/nunavut_out tests/deps/namespaces;
 
 tests/deps/namespaces: public_regulated_data_types
-	@echo "Compiling Python DSDL for UAVCAN"
+	@echo "Compiling Python DSDL for Cyphal"
 	yakut compile -Otests/src/deps/namespaces public_regulated_data_types/uavcan/ public_regulated_data_types/reg/
 
 include zubax_chibios/rules_stm32f105_107.mk

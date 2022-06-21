@@ -10,9 +10,9 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo
-import pyuavcan.application.file_server
+import pycyphal
+from pycyphal.application import Node, make_node, NodeInfo
+import pycyphal.application.file_server
 
 from node_fixtures.drnf import get_prepared_double_redundant_node
 from my_simple_test_allocator import make_simple_node_allocator
@@ -176,7 +176,7 @@ async def assert_repair_device_firmware(command_client):
 async def bootloader_test():
     _logger.info("Bootloader test started")
     tester_node = get_prepared_double_redundant_node()
-    tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
+    tracker: pycyphal.application.node_tracker = pycyphal.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
     # Gathering heartbeats from any online nodes
     await asyncio.sleep(1)
@@ -200,7 +200,7 @@ async def bootloader_test():
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
         file_server_root_path = "/"  # Path.cwd()
         # Launch the file server.
-        file_server = pyuavcan.application.file_server.FileServer(tester_node, [file_server_root_path], logger=_logger)
+        file_server = pycyphal.application.file_server.FileServer(tester_node, [file_server_root_path], logger=_logger)
         _logger.debug("File server started")
 
         await assert_installing_invalid_firmware_doesnt_brick_device(tester_node, node_info, command_client, tracker)

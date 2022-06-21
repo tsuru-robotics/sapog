@@ -11,9 +11,9 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo
-import pyuavcan.application.file
+import pycyphal
+from pycyphal.application import Node, make_node, NodeInfo
+import pycyphal.application.file
 
 # These are necessary pytest fixtures
 # IDE doesn't know that they are used because they are being passed as parameters
@@ -166,7 +166,7 @@ async def test_bootloader(prepared_double_redundant_node):
     _logger.info("Bootloader test started, it has 4 steps.")
     tester_node = prepared_double_redundant_node
     tester_node.start()
-    tracker: pyuavcan.application.node_tracker = pyuavcan.application.node_tracker.NodeTracker(tester_node)
+    tracker: pycyphal.application.node_tracker = pycyphal.application.node_tracker.NodeTracker(tester_node)
     tracker.get_info_timeout = 1.0
     prepared_sapogs = await get_prepared_sapogs(prepared_double_redundant_node)
     if len(prepared_sapogs) == 0:
@@ -189,7 +189,7 @@ async def test_bootloader(prepared_double_redundant_node):
         await assert_send_empty_parameter_install_request(tester_node, node_info, command_client)
         file_server_root_path = build_directory.parent.absolute()
         _logger.info(f"Created a file server in the background, the root path is {file_server_root_path}")
-        file_server = pyuavcan.application.file.FileServer(tester_node, [file_server_root_path])
+        file_server = pycyphal.application.file.FileServer(tester_node, [file_server_root_path])
         _logger.debug("File server started")
         _logger.info("Step 2, Installing invalid firmware and making sure that the device doesn't get bricked.")
         _logger.info("The device should be emitting a warning heartbeat.")

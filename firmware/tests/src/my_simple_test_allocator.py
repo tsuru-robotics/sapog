@@ -9,8 +9,8 @@ from typing import Optional, List
 
 import sys
 
-import pyuavcan
-from pyuavcan.application._node import MessageClass
+import pycyphal
+from pycyphal.application._node import MessageClass
 
 import my_nodes
 import uavcan.pnp.NodeIDAllocationData_1_0
@@ -24,14 +24,14 @@ dependency_path = source_path.parent / "deps"
 namespace_path = dependency_path / "namespaces"
 sys.path.insert(0, namespace_path)
 
-from pyuavcan.application import make_node, NodeInfo, register
+from pycyphal.application import make_node, NodeInfo, register
 
 
 def make_simple_node_allocator():
     internal_table = {}
 
     async def allocate_nr_of_nodes(nr: Optional[int] = None, continuous: bool = False,
-                                   node_to_use: Optional[pyuavcan.application.Node] = None,
+                                   node_to_use: Optional[pycyphal.application.Node] = None,
                                    interfaces: Optional[List[str]] = [], time_budget_seconds: Optional[int] = None) \
             -> List[my_nodes.NodeInfo]:
         if not node_to_use:

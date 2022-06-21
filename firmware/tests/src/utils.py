@@ -27,9 +27,9 @@ import uavcan.node.ID_1_0
 import uavcan.register.Access_1_0
 import uavcan.primitive.array
 
-import pyuavcan
-from pyuavcan.application import Node, make_node, NodeInfo, register
-from pyuavcan.presentation._presentation import MessageClass
+import pycyphal
+from pycyphal.application import Node, make_node, NodeInfo, register
+from pycyphal.presentation._presentation import MessageClass
 
 
 async def is_device_with_node_id_running(node_id):
@@ -40,7 +40,7 @@ async def is_device_with_node_id_running(node_id):
         event = asyncio.Event()
 
         async def hb_handler(message_class: MessageClass,
-                             transfer_from: pyuavcan.transport._transfer.TransferFrom):
+                             transfer_from: pycyphal.transport._transfer.TransferFrom):
             if transfer_from.source_node_id == node_id:
                 event.set()
 
@@ -75,7 +75,7 @@ async def get_prepared_sapogs(prepared_node) -> typing.List[my_nodes.NodeInfo]:
     listen_start_time = time.time()
     recorded_node_ids = {}
     node_info_list: typing.List[my_nodes.NodeInfo] = []
-    from pyuavcan.transport import TransferFrom
+    from pycyphal.transport import TransferFrom
 
     async def receive_heartbeat(heartbeat: uavcan.node.Heartbeat_1_0, sending_node: TransferFrom):
         if time.time() - listen_start_time <= allowed_listen_time and not recorded_node_ids.get(
@@ -110,7 +110,7 @@ def rpm_to_radians_per_second(rpm: int):
 
 
 async def make_access_request(reg_name, reg_value, node_id: int,
-                              node: pyuavcan.application.Node):
+                              node: pycyphal.application.Node):
     if not node_id or node_id == 0xFFFF:
         assert False, f"Device cannot be configured, it is missing a node_id, please allocate it first"
     service_client = node.make_client(uavcan.register.Access_1_0, node_id)
@@ -121,7 +121,7 @@ async def make_access_request(reg_name, reg_value, node_id: int,
     return await service_client.call(msg)
 
 
-def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pycyphal.application.Node,
                                     append_counter: bool = True):
     for pair in regs:
         assert isinstance(pair, RegisterPair)
@@ -137,7 +137,7 @@ def configure_tester_side_registers(regs: typing.List[RegisterPair], node: pyuav
                 node.registry[pair.tester_reg_name] = pair.value
 
 
-async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pyuavcan.application.Node,
+async def configure_embedded_registers(regs: typing.List[RegisterPair], node: pycyphal.application.Node,
                                        node_id: int):
     for pair in regs:
         assert isinstance(pair, RegisterPair)

@@ -7,9 +7,9 @@ import typing
 from dataclasses import dataclass
 from typing import Optional, List
 
-from pyuavcan.application._node import MessageClass
-from pyuavcan.dsdl import CompositeObject
-from pyuavcan.presentation import Subscriber
+from pycyphal.application._node import MessageClass
+from pycyphal.dsdl import CompositeObject
+from pycyphal.presentation import Subscriber
 
 from RegisterPair import RegisterPair
 

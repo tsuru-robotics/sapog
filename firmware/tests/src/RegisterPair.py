@@ -6,7 +6,7 @@
 import typing
 from typing import Optional
 import uavcan.register
-from pyuavcan.dsdl import CompositeObject
+from pycyphal.dsdl import CompositeObject
 
 
 class RegisterPair:
