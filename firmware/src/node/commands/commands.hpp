@@ -49,7 +49,7 @@ struct : IHandler
                 case uavcan_node_ExecuteCommand_Request_1_1_COMMAND_STORE_PERSISTENT_STATES:
                     if (motor_is_idle())
                     {
-                        state.is_save_requested = true;
+                        configSave();
                         response.status = uavcan_node_ExecuteCommand_Response_1_1_STATUS_SUCCESS;
                     } else
                     {

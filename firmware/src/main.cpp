@@ -43,6 +43,7 @@
 #include <cstring>
 #include <sys/unistd.h>
 #include "node/uavcan_thread.hpp"
+#include "node/BackgroundConfigManager.hpp"
 #include <stdio.h>
 
 namespace
@@ -107,64 +108,6 @@ os::watchdog::Timer init()
     motor_beep(1000, 100);
 }
 
-/**
- * Managing configuration parameters in the background from the main thread.
- * This code was borrowed from PX4ESC.
- */
-class BackgroundConfigManager
-{
-    static constexpr float SaveDelay = 1.0F;
-    static constexpr float SaveDelayAfterError = 10.0F;
-
-    os::Logger logger{"BackgroundConfigManager"};
-
-    unsigned modification_counter_ = os::config::getModificationCounter();
-    ::systime_t last_modification_ts_ = chVTGetSystemTimeX();
-    bool pending_save_ = false;
-    bool last_save_failed_ = false;
-
-    float getTimeSinceModification() const
-    {
-        return float(ST2MS(chVTTimeElapsedSinceX(last_modification_ts_))) / 1e3F;
-    }
-
-public:
-    void poll()
-    {
-        const auto new_mod_cnt = os::config::getModificationCounter();
-
-        if (new_mod_cnt != modification_counter_)
-        {
-            modification_counter_ = new_mod_cnt;
-            last_modification_ts_ = chVTGetSystemTimeX();
-            pending_save_ = true;
-        }
-
-        if (pending_save_)
-        {
-            if (getTimeSinceModification() > (last_save_failed_ ? SaveDelayAfterError : SaveDelay))
-            {
-                os::TemporaryPriorityChanger priority_changer(HIGHPRIO);
-                if (motor_is_idle())
-                {
-                    logger.println("Saving [modcnt=%u]", modification_counter_);
-
-                    const int res = os::config::save();
-                    if (res >= 0)
-                    {
-                        pending_save_ = false;
-                        last_save_failed_ = false;
-                    } else
-                    {
-                        last_save_failed_ = true;
-                        logger.println("SAVE ERROR %d '%s'",
-                                       res, std::strerror(std::abs(res)));
-                    }
-                }
-            }
-        }
-    }
-};
 
 }
 
@@ -194,7 +137,7 @@ int main()
      * TODO: Refactor.
      * TODO: Report status flags via vendor-specific status field.
      */
-    //BackgroundConfigManager bg_config_manager;
+    BackgroundConfigManager bg_config_manager;
     uavcan_node_1_0::init();
     while (!os::isRebootRequested())
     {

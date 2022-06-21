@@ -55,11 +55,6 @@ static THD_WORKING_AREA(_wa_uavcan_thread,
     while (true)
     {
         print_can_error_if_exists();
-        if (state.is_save_requested)
-        {
-            configSave();
-            state.is_save_requested = false;
-        }
         if (!state.is_save_requested && state.is_restart_required && !os::isRebootRequested())
         {
             printf("Sent %d remaining frames before restarting\n", transmit(state));
