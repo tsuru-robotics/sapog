@@ -199,9 +199,9 @@ generated/nunavut_out: public_regulated_data_types
 	@echo "Compiling C DSDL for Cyphal, first for the uavcan folder, which includes reg"
 	nnvg public_regulated_data_types/uavcan -e h -O generated/nunavut_out -I public_regulated_data_types/reg
 
-dsdl: clean_previous_zip clean_previous_unpacked_folder generated/nunavut_out tests/deps/namespaces;
+dsdl: clean_previous_zip clean_previous_unpacked_folder generated/nunavut_out tests/src/deps/namespaces;
 
-tests/deps/namespaces: public_regulated_data_types
+tests/src/deps/namespaces: public_regulated_data_types
 	@echo "Compiling Python DSDL for Cyphal"
 	yakut compile -Otests/src/deps/namespaces public_regulated_data_types/uavcan/ public_regulated_data_types/reg/
 
