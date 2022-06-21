@@ -52,7 +52,10 @@
 
 static void cmd_cfg(BaseSequentialStream *, int argc, char *argv[])
 {
-    // TODO: refuse to save/erase while the motor is running
+    if(motor_is_running() && (strcmp(argv[0], "save") == 0 || strcmp(argv[0], "erase") == 0)) {
+        std::printf("Motor is running, cannot save/erase config\n");
+        return;
+    }
     os::config::executeCLICommand(argc, argv);
 }
 
