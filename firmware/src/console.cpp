@@ -53,14 +53,7 @@
 static void cmd_cfg(BaseSequentialStream *, int argc, char *argv[])
 {
     // TODO: refuse to save/erase while the motor is running
-    /*for (int x = 0; x < argc; x++)
-    {
-      printf("%d %s\n", x, argv[x]);
-    }*/
-    if (!motor_is_running()) // This needs to check for the actual use of save/erase, motor controls should still work
-    {
-        os::config::executeCLICommand(argc, argv);
-    }
+    os::config::executeCLICommand(argc, argv);
 }
 
 static void cmd_reboot(BaseSequentialStream *chp, int argc, char *argv[])
@@ -70,25 +63,26 @@ static void cmd_reboot(BaseSequentialStream *chp, int argc, char *argv[])
 
 static void cmd_beep(BaseSequentialStream *chp, int argc, char *argv[])
 {
-    if (argc > 0 && !strcmp(argv[0], "help"))
-    {
+    if (argc > 0 && !strcmp(argv[0], "help")) {
         puts("beep [freq_hz [duration_msec]]");
         return;
     }
 
     int freq = 500;
-    if (argc > 0)
-    {
+    if (argc > 0) {
         freq = atoi(argv[0]);
     }
 
     int duration = 300;
-    if (argc > 1)
-    {
+    if (argc > 1) {
         duration = atoi(argv[1]);
     }
 
     motor_beep(freq, duration);
+}
+
+static void cmd_uavcan(BaseSequentialStream *, int, char**)
+{
 }
 
 static void cmd_stat(BaseSequentialStream *chp, int argc, char *argv[])
@@ -99,18 +93,16 @@ static void cmd_stat(BaseSequentialStream *chp, int argc, char *argv[])
     std::printf("Power V/A     %-9f %f\n", voltage, current);
     std::printf("RPM/DC        %-9u %f\n", motor_get_rpm(), motor_get_duty_cycle());
     std::printf("Active limits %i\n", motor_get_limit_mask());
-    std::printf("ZC failures   %lu\n", (unsigned long) motor_get_zc_failures_since_start());
+    std::printf("ZC failures   %lu\n", (unsigned long)motor_get_zc_failures_since_start());
 }
 
 static void cmd_test(BaseSequentialStream *chp, int argc, char *argv[])
 {
     puts("Hardware test...");
     int res = motor_test_hardware();
-    if (res)
-    {
+    if (res) {
         std::printf("FAILED %i\n", res);
-    } else
-    {
+    } else {
         puts("OK");
     }
 
@@ -123,8 +115,7 @@ static void cmd_dc(BaseSequentialStream *chp, int argc, char *argv[])
 {
     static const int TTL_MS = 30000;
 
-    if (argc == 0)
-    {
+    if (argc == 0) {
         motor_stop();
         puts("Usage:\n"
              "  dc <duty cycle>\n"
@@ -134,14 +125,12 @@ static void cmd_dc(BaseSequentialStream *chp, int argc, char *argv[])
 
     // Safety check
     static bool _armed = false;
-    if (!strcmp(argv[0], "arm"))
-    {
+    if (!strcmp(argv[0], "arm")) {
         _armed = true;
         puts("OK");
         return;
     }
-    if (!_armed)
-    {
+    if (!_armed) {
         puts("Error: Not armed");
         return;
     }
@@ -155,8 +144,7 @@ static void cmd_rpm(BaseSequentialStream *chp, int argc, char *argv[])
 {
     static const int TTL_MS = 30000;
 
-    if (argc == 0)
-    {
+    if (argc == 0) {
         motor_stop();
         puts("Usage:\n"
              "  rpm <RPM>\n"
@@ -166,31 +154,28 @@ static void cmd_rpm(BaseSequentialStream *chp, int argc, char *argv[])
 
     // Safety check
     static bool _armed = false;
-    if (!strcmp(argv[0], "arm"))
-    {
+    if (!strcmp(argv[0], "arm")) {
         _armed = true;
         puts("OK");
         return;
     }
-    if (!_armed)
-    {
+    if (!_armed) {
         puts("Error: Not armed");
         return;
     }
 
-    long value = (long) atoff(argv[0]);
+    long value = (long)atoff(argv[0]);
     value = (value < 0) ? 0 : value;
     value = (value > 65535) ? 65535 : value;
     std::printf("RPM %li\n", value);
-    motor_set_rpm((unsigned) value, TTL_MS);
+    motor_set_rpm((unsigned)value, TTL_MS);
 }
 
 static void cmd_startstop(BaseSequentialStream *chp, int argc, char *argv[])
 {
     static const int TTL_MS = 5000;
 
-    if (argc == 0)
-    {
+    if (argc == 0) {
         motor_stop();
         puts("Usage:\n"
              "  startstop <number of cycles> [duty cycle = 0.1]");
@@ -199,19 +184,17 @@ static void cmd_startstop(BaseSequentialStream *chp, int argc, char *argv[])
 
     motor_stop();
 
-    const int num_cycles = (int) atoff(argv[0]);
+    const int num_cycles = (int)atoff(argv[0]);
     const float dc = (argc > 1) ? atoff(argv[1]) : 0.1;
 
     int current_cycle = 0;
 
-    for (; current_cycle < num_cycles; current_cycle++)
-    {
+    for (; current_cycle < num_cycles; current_cycle++) {
         printf("Cycle %d of %d, dc %f...\n", current_cycle + 1, num_cycles, dc);
 
         // Waiting for the motor to spin down
         sleep(5);
-        if (!motor_is_idle())
-        {
+        if (!motor_is_idle()) {
             puts("NOT STOPPED");
             break;
         }
@@ -221,8 +204,7 @@ static void cmd_startstop(BaseSequentialStream *chp, int argc, char *argv[])
 
         // Checking if started and stopping
         sleep(3);
-        if (!motor_is_running())
-        {
+        if (!motor_is_running()) {
             puts("NOT RUNNING");
             break;
         }
@@ -240,13 +222,12 @@ static void cmd_md(BaseSequentialStream *chp, int argc, char *argv[])
 
 static void cmd_m(BaseSequentialStream *chp, int argc, char *argv[])
 {
-    motor_execute_cli_command(argc, (const char **) argv);
+    motor_execute_cli_command(argc, (const char**)argv);
 }
 
 static void cmd_zubax_id(BaseSequentialStream *chp, int argc, char *argv[])
 {
-    if (argc == 0)
-    {
+    if (argc == 0) {
         // Product identification
         printf("product_id   : '%s'\n", NODE_NAME);
         printf("product_name : 'PX4 Sapog'\n");
@@ -270,64 +251,60 @@ static void cmd_zubax_id(BaseSequentialStream *chp, int argc, char *argv[])
         }
         printf("hw_unique_id : '%s'\n", os::base64::encode(uid_128, base64_buf));
         board::DeviceSignature signature;
-        if (board::try_read_device_signature(signature))
-        {
+        if (board::try_read_device_signature(signature)) {
             printf("hw_signature : '%s'\n", os::base64::encode(signature, base64_buf));
 
             std::memset(&base64_buf[0], 0, sizeof(base64_buf));
-            for (unsigned i = 0; i < 16; i++)
-            {
+            for (unsigned i = 0; i < 16; i++) {
                 chsnprintf(&base64_buf[i * 2], 3, "%02x", uid_128[i]);
             }
             printf("hw_info_url  : http://device.zubax.com/device_info?uid=%s\n", &base64_buf[0]);
         }
-    } else if (argc == 1)
-    {
-        const char *const encoded = argv[0];
+    } else if (argc == 1) {
+        const char* const encoded = argv[0];
         board::DeviceSignature sign;
 
-        if (!os::base64::decode(sign, encoded))
-        {
+        if (!os::base64::decode(sign, encoded)) {
             std::puts("Error: Invalid base64");
             return;
         }
 
-        if (!board::try_write_device_signature(sign))
-        {
+        if (!board::try_write_device_signature(sign)) {
             std::puts("Error: Write failed");
             return;
         }
-    } else
-    {
+    } else {
         std::puts("Error: Invalid usage. Format: zubax_id [base64 signature]");
     }
 }
 
 #define COMMAND(cmd)    {#cmd, cmd_##cmd},
 static const ShellCommand _commands[] =
-    {
-        COMMAND(cfg)
-        COMMAND(reboot)
-        COMMAND(beep)
-        COMMAND(stat)
-        COMMAND(test)
-        COMMAND(dc)
-        COMMAND(rpm)
-        COMMAND(startstop)
-        COMMAND(md)
-        COMMAND(m)
-        COMMAND(zubax_id)
-        {NULL, NULL}
-    };
+        {
+                COMMAND(cfg)
+                COMMAND(reboot)
+                COMMAND(beep)
+                COMMAND(stat)
+                COMMAND(test)
+                COMMAND(dc)
+                COMMAND(rpm)
+                COMMAND(startstop)
+                COMMAND(md)
+                COMMAND(m)
+                COMMAND(zubax_id)
+                COMMAND(uavcan)
+                {NULL, NULL}
+        };
 
 // --------------------------
 
-static const ShellConfig _config = {(BaseSequentialStream *) &STDOUT_SD, _commands};
+static const ShellConfig _config = {(BaseSequentialStream*)&STDOUT_SD, _commands};
 
 static THD_WORKING_AREA(_wa_shell, 1024);
 
 void console_init(void)
 {
     shellInit();
+
     ASSERT_ALWAYS(shellCreateStatic(&_config, _wa_shell, sizeof(_wa_shell), LOWPRIO));
 }
