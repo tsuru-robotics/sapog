@@ -1,0 +1,4 @@
+nunavut==1.*
+pycyphal==1.*
+pydsdl==1.*
+pytest==7.*
