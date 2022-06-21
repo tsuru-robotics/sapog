@@ -58,7 +58,7 @@
 		\item Automatic firmware update over the CAN bus in the field.
 		\item Supported communication interfaces:
 		\begin{itemize}
-			\item UAVCAN interface with optional dual bus redundancy.
+			\item Cyphal interface with optional dual bus redundancy.
 			\item Command line interface over UART, suitable for M2M communications.
 			\item RCPWM (analog PWM interface widely used in robotics).
 		\end{itemize}
@@ -1098,7 +1098,7 @@ While the firmware is running, the following LED colors can be used to reflect i
 	State            &                         & Meaning \\
 	Solid white      & \ShowSolidColor{lightgray}& Initialization is in progress, not ready to work yet. \\
 	Solid green      & \ShowSolidColor{green}  & Functioning normally. \\
-	Blinking cyan    & \ShowBlinkingColor{cyan}& UAVCAN auto-enumeration is in progress, awaiting user input. \\
+	Blinking cyan    & \ShowBlinkingColor{cyan}& Cyphal auto-enumeration is in progress, awaiting user input. \\
 	Solid yellow     & \ShowSolidColor{yellow} & Controller is locked (see section~\ref{sec:stall_detection}),
 	or the temperature sensor is malfunctioning. \\
 	Solid red        & \ShowSolidColor{red}    & Fatal error, or self test failure.
@@ -1147,15 +1147,15 @@ Sapog is equipped with multiple communication interfaces.
 Not all communication interfaces can be disabled,
 and therefore, more than one interface can be active at the same time.
 
-\section{UAVCAN}
+\section{Cyphal}
 \subsection{Configuration for use}
-For use with UAVCAN v1, a person needs to configure the ESC into the final system in which it will be used. This will require communicating with the UAVCAN v1 node via CAN. Through the CAN communication, some registers need to be set.
+For use with Cyphal v1, a person needs to configure the ESC into the final system in which it will be used. This will require communicating with the Cyphal v1 node via CAN. Through the CAN communication, some registers need to be set.
 
 \begin{ZubaxSimpleTable}{Quick definitions / abbreviations}{|l l | X|}\label{definitions_uavcan}
 	Nr & We say & We mean \\
 	1 & Commander & The node which is going to be sending the ESC commands and listening to its status on different messages. \\
-	2 & Subject id & This is a number allocated to a topic. This and all the rest is further explained in the UAVCAN specification. Specifically this is explained in section "Subjects and services", 2.1.1.2 on page 5/143 as of 11.03.2022.\newline\newline \url{https://uavcan.org/specification/UAVCAN_Specification_v1.0-beta.pdf}\\
-	3 & Configurator / Integrator & The person who takes the steps needed to make the UAVCAN v1 ESC ready for use with the specific UAVCAN network that this ESC is being connected into. The need for this procedure is explained in the UAVCAN specification but can be summarized as trying to avoid conflicts of subject id's. Different manufacturers who are independently producing UAVCAN v1 compatible devices don't need to fix subject-ids for different messages, thus avoiding conflicts.\\
+	2 & Subject id & This is a number allocated to a topic. This and all the rest is further explained in the Cyphal specification. Specifically this is explained in section "Subjects and services", 2.1.1.2 on page 5/143 as of 11.03.2022.\newline\newline \url{https://uavcan.org/specification/UAVCAN_Specification_v1.0-beta.pdf}\\
+	3 & Configurator / Integrator & The person who takes the steps needed to make the Cyphal v1 ESC ready for use with the specific Cyphal network that this ESC is being connected into. The need for this procedure is explained in the Cyphal specification but can be summarized as trying to avoid conflicts of subject id's. Different manufacturers who are independently producing Cyphal v1 compatible devices don't need to fix subject-ids for different messages, thus avoiding conflicts.\\
 	4 & Dynamic subject id. & A subject-id that does not have a fixed port number. The port number that will be used for communication needs to be the same on both communicating devices and this is achieved through a configuration procedure carried out by the configurator. Then the devices know which port to publish or receive on.
 	
 \end{ZubaxSimpleTable}
@@ -1250,7 +1250,7 @@ If any of the following datatype links become unavailable due to a changed folde
 	Solid red        & \ShowSolidColor{red}    & Error.\\
 	Solid dim green      & \ShowSolidColor{green}  & Running normally after node ID allocation
 	This state is very transient. \\
-	Solid cyan    & \ShowSolidColor{cyan} & UAVCAN dynamic node ID allocation started. \\
+	Solid cyan    & \ShowSolidColor{cyan} & Cyphal dynamic node ID allocation started. \\
 	Off              & \ShowSolidColor{black}  & The application is being started. 
 \end{ZubaxSimpleTable}
 
@@ -1474,7 +1474,7 @@ Note that the number of fields and their ordering may vary.
 	Field name              & Meaning \\
 	
 	\texttt{product\_id}    & Product type identifier string. It is always set to \texttt{io.px4.sapog}.
-	The same string is reported via UAVCAN as the node name string. \\
+	The same string is reported via Cyphal as the node name string. \\
 	
 	\texttt{sw\_version}    & Firmware version number in the form ``major.minor''. \\
 	
@@ -1516,8 +1516,8 @@ Syntax:
 
 \subsubsection{uavcan}
 
-Print the status information of the local UAVCAN stack in a human-readable format.
-This command may take several seconds to execute, depending on the state of the UAVCAN stack.
+Print the status information of the local Cyphal stack in a human-readable format.
+This command may take several seconds to execute, depending on the state of the Cyphal stack.
 
 \section{RCPWM}
 
@@ -1704,14 +1704,14 @@ The following abbreviations are adopted for the tables below:
 	\CfgParamIndexEntry{mot+v+min}{volt}{boot}{0.5}{10}{2.5}{Min inverter source voltage for normal mode}
 \end{CfgParamIndex}
 
-\subsection{UAVCAN interface configuration parameters}
+\subsection{Cyphal interface configuration parameters}
 
-\begin{CfgParamIndex}{UAVCAN interface configuration parameters}
-	\CfgParamIndexEntry{esc+index}{}{boot}{0}{15}{0}{UAVCAN index of this ESC}
+\begin{CfgParamIndex}{Cyphal interface configuration parameters}
+	\CfgParamIndexEntry{esc+index}{}{boot}{0}{15}{0}{Cyphal index of this ESC}
 	\CfgParamIndexEntry{cmd+ttl+ms}{millisecond}{boot}{100}{5000}{200}{Setpoint timeout}
 	\CfgParamIndexEntry{cmd+start+dc}{duty cycle}{boot}{0.01}{1}{1}{Spin-up safety threshold}
 	\CfgParamIndexEntry{uavcan+node+id}{}{boot}{0}{125}{0}{Node ID, zero for dynamic allocation}
-	\CfgParamIndexEntry{light+index}{}{boot}{0}{255}{0}{UAVCAN index of the RGB LED}
+	\CfgParamIndexEntry{light+index}{}{boot}{0}{255}{0}{Cyphal index of the RGB LED}
 \end{CfgParamIndex}
 
 \subsection{RCPWM interface configuration parameters}
@@ -1737,7 +1737,7 @@ of the future revisions of the firmware.
 
 \section{Overview}
 
-Sapog employs the PX4 Brickproof Bootloader - an ultra compact open source UAVCAN bootloader
+Sapog employs the PX4 Brickproof Bootloader - an ultra compact open source Cyphal bootloader
 designed for ROM-limited embedded applications.
 
 The bootloader starts immediately after the device is powered on.
@@ -1748,7 +1748,7 @@ entity has requested the bootloader to download a new application image.
 If there is no valid application image found, the bootloader will wait forever for a request
 to download a new application image.
 
-The procedure of firmware update over UAVCAN is defined in the UAVCAN specification at the website
+The procedure of firmware update over Cyphal is defined in the Cyphal specification at the website
 \url{http://uavcan.org}.
 
 \section{Status indication}
@@ -1766,13 +1766,13 @@ While the bootloader is running, the following RGB LED behaviors are defined.
 	Solid yellow     & \ShowSolidColor{yellow} & CAN auto bit rate detection. \\
 	Solid green      & \ShowSolidColor{green}  & CAN auto bit rate detection finished.
 	This state is very transient. \\
-	Solid magenta    & \ShowSolidColor{magenta}& UAVCAN dynamic node ID allocation started. \\
-	Solid blue       & \ShowSolidColor{blue}   & UAVCAN dynamic node ID allocation finished. \\
+	Solid magenta    & \ShowSolidColor{magenta}& Cyphal dynamic node ID allocation started. \\
+	Solid blue       & \ShowSolidColor{blue}   & Cyphal dynamic node ID allocation finished. \\
 	Solid cyan       & \ShowSolidColor{cyan}   & Firmware image is being downloaded. \\
 	Off              & \ShowSolidColor{black}  & The application is being started. \\
 \end{ZubaxSimpleTable}
 
-\section{UAVCAN interface description}
+\section{Cyphal interface description}
 
 \subsection{Overview}
 
@@ -1796,7 +1796,7 @@ The bootloader can detect the following bit rates:
 	\item 125 kbit/s
 \end{itemize}
 
-Having successfully detected the bit rate, the bootloader will attempt to obtain a UAVCAN node ID,
+Having successfully detected the bit rate, the bootloader will attempt to obtain a Cyphal node ID,
 unless it was provided by the application.
 In the latter case, the bootloader will simply re-use the node ID provided by the application.
 
@@ -1863,7 +1863,7 @@ The first letter indicates the action,
 the second letter indicates the result of the action.
 The log source name is always set to the string ``\verb|Boot|''.
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader logging -- action codes}{|c X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader logging -- action codes}{|c X|}
 	Code & Meaning \\
 	\texttt{I} & Initialization. \\
 	\texttt{G} & Invoking \texttt{uavcan.protocol.file.GetInfo}. \\
@@ -1874,7 +1874,7 @@ The log source name is always set to the string ``\verb|Boot|''.
 	\texttt{F} & Finalization. \\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader logging -- status codes}{|c X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader logging -- status codes}{|c X|}
 	Code & Meaning \\
 	\texttt{s} & Started \\
 	\texttt{f} & Failed \\
@@ -1883,7 +1883,7 @@ The log source name is always set to the string ``\verb|Boot|''.
 
 \subsection{Data type summary}
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader broadcast messages}{|l l l X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader broadcast messages}{|l l l X|}
 	Data type name                                         & Frequency, Hz & Tr. priority & Note \\
 	\texttt{uavcan.protocol.NodeStatus}                    & 1          & 30 (low)     & \\
 	\texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Aperiodic  & 30 (low)     & Used only during the
@@ -1891,12 +1891,12 @@ The log source name is always set to the string ``\verb|Boot|''.
 	\texttt{uavcan.protocol.debug.LogMessage}              & Aperiodic  & 30 (low)     & \\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader subscribed messages}{|l X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader subscribed messages}{|l X|}
 	Data type name                                         & Note \\
 	\texttt{uavcan.protocol.dynamic\_node\_id.Allocation}  & Used only during the initialization. \\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader provided services}{|l X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader provided services}{|l X|}
 	Data type name                                         & Note \\
 	\texttt{uavcan.protocol.GetNodeInfo}                   & Software version identification fields will be
 	zeroed if there is no valid application image
@@ -1904,7 +1904,7 @@ The log source name is always set to the string ``\verb|Boot|''.
 	\texttt{uavcan.protocol.file.BeginFirmwareUpdate}      & \\
 \end{ZubaxSimpleTable}
 
-\begin{ZubaxSimpleTable}{UAVCAN bootloader invoked services}{|l l X|}
+\begin{ZubaxSimpleTable}{Cyphal bootloader invoked services}{|l l X|}
 	Data type name                                         & Tr. priority & Note \\
 	\texttt{uavcan.protocol.file.GetInfo}                  & 30 (low)     & Invoked once before downloading
 	the firmware file. \\
