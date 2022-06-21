@@ -1,7 +1,7 @@
 import pytest
 from pycyphal.application import make_node, NodeInfo
 
-from make_registry import make_registry
+from tests.src.make_registry import make_registry
 
 
 @pytest.fixture()

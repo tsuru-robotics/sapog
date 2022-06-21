@@ -29,7 +29,6 @@ import uavcan.primitive.array
 
 import pycyphal
 from pycyphal.application import Node, make_node, NodeInfo, register
-from pycyphal.presentation._presentation import MessageClass
 
 
 async def is_device_with_node_id_running(node_id):
@@ -39,7 +38,7 @@ async def is_device_with_node_id_running(node_id):
         subscriber = node.make_subscriber(uavcan.node.Heartbeat_1_0)
         event = asyncio.Event()
 
-        async def hb_handler(message_class: MessageClass,
+        async def hb_handler(message_class,
                              transfer_from: pycyphal.transport._transfer.TransferFrom):
             if transfer_from.source_node_id == node_id:
                 event.set()

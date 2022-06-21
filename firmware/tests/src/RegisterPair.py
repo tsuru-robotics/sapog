@@ -6,13 +6,12 @@
 import typing
 from typing import Optional
 import uavcan.register
-from pycyphal.dsdl import CompositeObject
 
 
 class RegisterPair:
     def __init__(self, _tester_reg_name: Optional[str], _embedded_device_reg_name: Optional[str],
                  _value: uavcan.register.Value_1_0, _tester_counter: Optional[int],
-                 type_communicated: Optional[typing.Type[CompositeObject]],
+                 type_communicated: Optional[typing.Type[typing.Any]],
                  is_subscription: bool = False):
         self.tester_reg_name = _tester_reg_name
         self.embedded_device_reg_name = _embedded_device_reg_name

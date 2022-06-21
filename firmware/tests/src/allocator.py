@@ -16,7 +16,6 @@ import pycyphal.dsdl
 import typing
 
 from pycyphal.application._node_factory import SimpleNode
-from pycyphal.dsdl import FixedPortObject
 
 source_path = pathlib.Path(__file__).parent.absolute()
 dependency_path = source_path.parent / "deps"
@@ -97,7 +96,7 @@ get_info_handler_type = typing.Callable[[int, Optional[Entry], Optional[Entry]],
 get_info_handler_wrapper_type = Optional[typing.Callable[[Allocator, Event], get_info_handler_type]]
 capture_handler_type = typing.Callable[[_tracer.Capture], None]
 capture_handler_wrapper_type = Optional[
-    typing.Callable[[Tracer, typing.Dict[int, FixedPortObject]], capture_handler_type]]
+    typing.Callable[[Tracer, typing.Dict[int, typing.Any]], capture_handler_type]]
 
 
 async def run_continuous_allocator(time_out: Optional[int] = None, allocator_id: int = 1,

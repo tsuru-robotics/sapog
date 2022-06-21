@@ -7,8 +7,6 @@ import typing
 from dataclasses import dataclass
 from typing import Optional, List
 
-from pycyphal.application._node import MessageClass
-from pycyphal.dsdl import CompositeObject
 from pycyphal.presentation import Subscriber
 
 from RegisterPair import RegisterPair
@@ -22,7 +20,7 @@ class NodeInfo:
     interfaces: List[str]
     motor_index: Optional[int]
     registers: List[RegisterPair]
-    subscription_store: typing.Mapping[typing.Tuple[int, str], Subscriber[MessageClass]]
+    subscription_store: typing.Mapping[typing.Tuple[int, str], Subscriber[typing.Any]]
     target_rpm: float = 200
 
     def __init__(self, hw_id, interfaces, node_id=0xFFFF):
@@ -32,8 +30,8 @@ class NodeInfo:
         self.motor_index = None
         self.registers = []
 
-    def store_subscription(self, sub: Subscriber[MessageClass], subject_id: int, name: str,
-                           data_type: typing.Type[CompositeObject]):
+    def store_subscription(self, sub: Subscriber[typing.Any], subject_id: int, name: str,
+                           data_type: typing.Type[typing.Any]):
         self.subscription_store[(data_type, name, subject_id)] = sub
 
     def get_subscription(self, what_to_look_for_in_key):

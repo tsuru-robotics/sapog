@@ -10,7 +10,6 @@ from typing import Optional, List
 import sys
 
 import pycyphal
-from pycyphal.application._node import MessageClass
 
 import my_nodes
 import uavcan.pnp.NodeIDAllocationData_1_0
