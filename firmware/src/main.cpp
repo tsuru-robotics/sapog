@@ -151,8 +151,7 @@ int main()
         {
             led_ctl.set(board::LEDColor::DARK_GREEN);
         }
-
-        //bg_config_manager.poll();
+        bg_config_manager.poll();
         chThdSleepMilliseconds(500);
     }
     chThdSleepMilliseconds(100);

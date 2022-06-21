@@ -1,6 +1,7 @@
 #include "BackgroundConfigManager.hpp"
 #include "zubax_chibios/sys/sys.hpp"
 #include "motor/motor.hpp"
+#include <stdio.h>
 
 void BackgroundConfigManager::poll() {
     const auto new_mod_cnt = os::config::getModificationCounter();
@@ -19,6 +20,7 @@ void BackgroundConfigManager::poll() {
             os::TemporaryPriorityChanger priority_changer(HIGHPRIO);
             if (motor_is_idle())
             {
+                printf("Saving config...\n");
                 const int res = configSave();
                 if (res >= 0)
                 {
