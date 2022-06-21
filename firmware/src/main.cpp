@@ -143,16 +143,10 @@ int main()
     {
         wdt.reset();
 
-        if (motor_is_blocked() || !temperature_sensor::is_ok())
+        if (motor_is_blocked())
         {
             led_ctl.set(board::LEDColor::YELLOW);
-            if (temperature_sensor::is_ok())
-            {
-                printf("Temperature sensor is okay but motor is blocked!\n");
-            } else
-            {
-                printf("Temperature sensor is not okay and motor is not blocked.\n");
-            }
+            printf("Motor is blocked!\n");
         } else
         {
             led_ctl.set(board::LEDColor::DARK_GREEN);
