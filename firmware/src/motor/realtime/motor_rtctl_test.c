@@ -98,7 +98,7 @@ static int test_sensors(void)
      * Validate the obtained sample
      */
     const bool valid_voltage = (sample.input_voltage > 0) && (sample.input_voltage < ADC_MAX);
-    const bool valid_current = (sample.input_current > 0) && (sample.input_current < ADC_MAX);
+    const bool valid_current = (sample.input_current >= 0) && (sample.input_current < ADC_MAX);
 
     if (!valid_voltage || !valid_current)
     {
