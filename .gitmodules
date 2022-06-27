@@ -7,13 +7,3 @@
 [submodule "tools/drwatson/pyuavcan"]
 	path = tools/drwatson/pyuavcan
 	url = https://github.com/UAVCAN/pyuavcan
-[submodule "firmware/-b"]
-	path = firmware/-b
-	url = https://github.com/UAVCAN/public_regulated_data_types
-[submodule "firmware/public_regulated_data_types"]
-	path = firmware/public_regulated_data_types
-	url = https://github.com/UAVCAN/public_regulated_data_types
-	branch = udral
-[submodule "firmware/etl"]
-	path = firmware/etl
-	url = git@github.com:ETLCPP/etl.git

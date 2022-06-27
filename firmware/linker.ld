@@ -1,3 +1,14 @@
+"flash_start_address" = 0x8000000;
+"flash_page_size" = 2048;
+"bootloader_size_pages" = 16;
+"bootloader_size_B" = bootloader_size_pages * flash_page_size;
+/* The app also starts on this page right after the 256 bytes */
+"DeviceSignatureStorage_start_address" = flash_start_address + bootloader_size_B;
+"DeviceSignatureStorage_size" = 256;
+/* Addresses of important locations */
+/* The Application starts on the next page after the page that the DeviceSignature happened to be on */
+/* The application needs its own page because erasing is done page by page */
+"Application_start_address" = (DeviceSignatureStorage_start_address / flash_page_size + 1) * flash_page_size;
 /*
  * Copyright (C) 2015  Zubax Robotics  <info@zubax.com>
  *

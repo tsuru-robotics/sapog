@@ -104,9 +104,9 @@ DDEFS += -DCORTEX_VTOR_INIT=$(BOOTLOADER_SIZE)            \
          -DBXCAN_MAX_IFACE_INDEX=1                        \
          -DBXCAN_BUSYWAIT_DELAY_SYSTEM_CORE_CLOCK=72000000
 
-COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../../bootloader/linker.tmp.ld
+COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../../bootloader/linker.ld
 
-COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../linker.tmp.ld
+COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH=$(SAPOG_SRC_DIR)/../linker.ld
 
 LDSCRIPT=$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 
@@ -157,22 +157,6 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	# Printing the calculated values from the linker script settings file
 	arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_"
 
-$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH): ../linker_script_settings.ld.settings
-	@rm -f $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@echo "\n\n">> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@cat $(SAPOG_SRC_DIR)/../linker.ld >> $(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
-	@echo "Created a combined linker file for the firmware"
-
-	@rm -f $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@echo "/* This file was created by the Makefile in the firmware folder */\n\n"> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@cat $(SAPOG_SRC_DIR)/../../linker_script_settings.ld.settings >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@echo "\n\n">> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@cat $(SAPOG_SRC_DIR)/../../bootloader/ld.ld >> $(COMMON_SETTINGS_INCLUDED_BOOTLOADER_LINKER_FILE_PATH)
-	@echo "Created a combined linker file for the bootloader"
-	#arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_"
-
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
 
@@ -183,6 +167,7 @@ clean_previous_zip:
 
 clean_previous_unpacked_folder:
 	rm -rf public_regulated_data_types-master
+
 public_regulated_data_types-master:
 	@wget https://github.com/UAVCAN/public_regulated_data_types/archive/refs/heads/master.zip -q && echo "Downloaded master.zip"
 	@unzip -n master.zip > /dev/null && echo "Unpacked master.zip into the firmware folder"

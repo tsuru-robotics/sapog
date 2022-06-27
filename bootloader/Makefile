@@ -31,7 +31,7 @@ USE_CPPOPT += -Wconversion -Wno-error=conversion -Wsign-promo -Wframe-larger-tha
 
 USE_LTO := no
 
-LDSCRIPT = linker.tmp.ld
+LDSCRIPT = linker.ld
 
 #UDEFS += -DCORTEX_ENABLE_WFI_IDLE=1
 
