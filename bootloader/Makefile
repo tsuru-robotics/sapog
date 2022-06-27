@@ -11,7 +11,7 @@ CSRC   = $(shell find src -name '*.c'   | sort) bxcan/bxcan.c
 UINCDIR = src src/os kocherga/kocherga bxcan
 
 UDEFS = -DHW_VERSION_MAJOR=$(HW_VERSION_MAJOR)               \
-        -DAPPLICATION_OFFSET=61440                           \
+        -DAPPLICATION_OFFSET=34816                           \
         -DBXCAN_MAX_IFACE_INDEX=0
 
 # ChibiOS
