@@ -112,7 +112,7 @@ LDSCRIPT=$(COMMON_SETTINGS_INCLUDED_LINKER_FILE_PATH)
 
 USE_LTO = no
 # Warning: GCC 4.9 with O3 and LTO breaks the code mysteriously! GCC 5.x segfaults during linking. Why GCC, why!?
-RELEASE_OPT = -O3 -fomit-frame-pointer -DNDEBUG=1 -D"CANARD_ASSERT(x)" -fno-strict-aliasing
+RELEASE_OPT = -Os -fomit-frame-pointer -DNDEBUG=1 -D"CANARD_ASSERT(x)" -fno-strict-aliasing
 DEBUG_OPT = -Os -g3 -DDISABLE_WATCHDOG=1 -fno-strict-aliasing #-DNDEBUG=1 -D"CANARD_ASSERT(x)" -D"O1HEAP_ASSERT(x)"
 # More warnings are enabled in the included makefile
 CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow #-Werror

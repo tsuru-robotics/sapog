@@ -1,3 +1,4 @@
+#include <optional>
 #include "zubax_chibios/zubax_chibios/platform/stm32/config_storage.hpp"
 #include "uavcan/_register/Value_1_0.h"
 

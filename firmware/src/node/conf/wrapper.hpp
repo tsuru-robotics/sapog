@@ -11,6 +11,7 @@
 #include <uavcan/_register/Value_1_0.h>
 #include <cstring>
 #include <zubax_chibios/config/config.h>
+#include <optional>
 
 namespace node::conf::wrapper
 {

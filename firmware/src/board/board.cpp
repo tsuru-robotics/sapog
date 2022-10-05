@@ -40,6 +40,7 @@
 #include <zubax_chibios/platform/stm32/config_storage.hpp>
 #include <board/unique_id.h>
 #include <cstdio>
+#include <optional>
 #include "o1heap/o1heap.h"
 #include "motor/realtime/adc.h"
 

@@ -25,7 +25,7 @@ uavcan_node_GetInfo_Response_1_0 process_request_node_get_info()
 
     resp.software_vcs_revision_id = GIT_HASH;
     // https://github.com/Zubax/sapog/blob/601f4580b71c3c4da65cc52237e62a163d6a6a16/firmware/src/uavcan_node/uavcan_node.cpp#L428
-    memcpy(resp.unique_id, board::read_unique_id().data(), sizeof(uint8_t[16]));
+    memcpy(resp.unique_id, board::read_unique_id().data(), 12);
     // The node name is the name of the product like a reversed Internet domain name (or like a Java package).
     resp.name.count = strlen(NODE_NAME); // QUESTION: Does this string include a null terminator? It mustn't include it.
     memcpy(&resp.name.elements, NODE_NAME, resp.name.count);

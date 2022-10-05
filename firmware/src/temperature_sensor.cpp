@@ -40,6 +40,7 @@
 #include <limits>
 #include <algorithm>
 #include <cstdio>
+#include <optional>
 
 namespace temperature_sensor
 {

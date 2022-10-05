@@ -164,6 +164,6 @@ int main()
 #define MATCH_GCC_VERSION(major, minor)  \
     ((__GNUC__ == (major)) && (__GNUC_MINOR__ == (minor)))
 
-#if !(MATCH_GCC_VERSION(10, 3))
+#if !(MATCH_GCC_VERSION(12, 2))
 # error "This compiler is not supported"
 #endif
