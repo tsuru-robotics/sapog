@@ -183,8 +183,8 @@ static void init_timers(const float pwm_dead_time)
     // Left-aligned PWM, direction up (will be enabled later)
     TIM2->CR1 = TIM1->CR1 = 0;
 
-    // Output idle state 0, unbuffered updates
-    TIM1->CR2 = 0;
+    // Output idle state 0
+    TIM1->CR2 = TIM_CR2_CCPC;
 
     /*
      * OC channels
@@ -429,6 +429,7 @@ void motor_pwm_manip(const enum motor_pwm_phase_manip command[MOTOR_NUM_PHASES])
         }
     }
 
+    TIM1->EGR = TIM_EGR_COMG;
     adjust_adc_sync(_pwm_half_top);  // Default for phase manip
 }
 
@@ -452,7 +453,7 @@ int motor_pwm_compute_pwm_val(float duty_cycle)
     /*
      * Normalize into [0; PWM_TOP] regardless of sign
      */
-    const float abs_duty_cycle = fabs(duty_cycle);
+    const float abs_duty_cycle = fabsf(duty_cycle);
     uint_fast16_t int_duty_cycle = 0;
     if (abs_duty_cycle > 0.999)
     {
@@ -496,9 +497,9 @@ __attribute__((optimize(3)))
 void motor_pwm_set_step_from_isr(const struct motor_pwm_commutation_step *step, int pwm_val)
 {
     phase_reset_i(step->floating);
-
     phase_set_i(step->positive, pwm_val, false);
     phase_set_i(step->negative, pwm_val, true);
+    TIM1->EGR = TIM_EGR_COMG;
 
     adjust_adc_sync(pwm_val);
 }
@@ -566,6 +567,7 @@ void motor_pwm_beep(int frequency, int duration_msec)
         phase_set_i(high_phase, 0, false);
         irq_primask_enable();
 
+        TIM1->EGR = TIM_EGR_COMG;
         chSysEnable();
 
         motor_timer_hndelay(idle_hnsec);

@@ -33,7 +33,7 @@ MEMORY
      *  32512      32768        256     Digital signature
      *  32768                           Application
      */
-    bootloader_flash : org = 0x08000000, len = 59136  /* 32512 32K for the bootloader minus 256 for the signature */
+    bootloader_flash : org = 0x08000000, len = 32512  /* 32512 32K for the bootloader minus 256 for the signature */
 
     /*
      * We use both SRAM1 and SRAM2 as a single contiguous memory region.

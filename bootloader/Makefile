@@ -90,7 +90,7 @@ USE_OPT += -nodefaultlibs -lc -lgcc -lm
 
 USE_OPT += -Os
 
-RELEASE ?= 0
+RELEASE ?= 1
 ifneq ($(RELEASE),0)
     DDEFS   += -DRELEASE_BUILD=1 -DNDEBUG=1
     DADEFS  += -DRELEASE_BUILD=1 -DNDEBUG=1

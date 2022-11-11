@@ -4,6 +4,7 @@ tools/testing_uavcan/.demo_dsdl_compiled/
 __pycache__/
 *.py[cod]
 *$py.class
+*.tmp
 
 # C extensions
 *.so
