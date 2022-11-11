@@ -102,7 +102,7 @@ constexpr unsigned ConfigStorageSize = 1024;
 extern void init_led();
 
 std::optional<os::stm32::ConfigStorageBackend> config_storage_backend;
-CONFIG_PARAM_INT("uavcan.node.id", 255, 0, 255)
+CONFIG_PARAM_INT("uavcan.node.id", 127, 0, 127)
 
 os::watchdog::Timer init(unsigned watchdog_timeout_ms)
 {
