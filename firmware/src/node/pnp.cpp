@@ -43,7 +43,7 @@ void plug_and_play_loop(State &state)
         printf("started pnp\n");
     }
     bool do_save = true; // for testing purposes, it is better to have the device allocate every time
-    bool needs_pnp = state.canard.node_id == CANARD_NODE_ID_UNSET;
+    bool needs_pnp = state.canard.node_id > 127;
     while (needs_pnp)
     {
         state.timing.current_time = get_monotonic_microseconds();
