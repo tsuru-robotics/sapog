@@ -4,7 +4,7 @@
  * Author: Silver Valdvee <silver.valdvee@zubax.com>
  */
 
-//#include <uavcan/node/port/List_0_1.h>
+#include <uavcan/node/port/List_0_1.h>
 #include <uavcan/node/Heartbeat_1_0.h>
 #include <node/units.hpp>
 #include "src/node/uavcan_thread.hpp"

@@ -115,7 +115,7 @@ USE_LTO = no
 RELEASE_OPT = -O3 -fomit-frame-pointer -DNDEBUG=1 -D"CANARD_ASSERT(x)" -fno-strict-aliasing
 DEBUG_OPT = -Os -g3 -DDISABLE_WATCHDOG=1 -fno-strict-aliasing #-DNDEBUG=1 -D"CANARD_ASSERT(x)" -D"O1HEAP_ASSERT(x)"
 # More warnings are enabled in the included makefile
-CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow #-Werror
+CWARN = -Wshadow -Wpointer-arith -Wno-packed -Wno-attributes -Wno-error=undef -Wno-error=shadow -Wno-error=array-bounds #-Werror
 CWARN += -Wno-error=implicit-fallthrough -Wno-deprecated
 CPPWARN = $(CWARN)
 
