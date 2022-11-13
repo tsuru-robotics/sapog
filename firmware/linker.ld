@@ -1,14 +1,3 @@
-"flash_start_address" = 0x8000000;
-"flash_page_size" = 2048;
-"bootloader_size_pages" = 16;
-"bootloader_size_B" = bootloader_size_pages * flash_page_size;
-/* The app also starts on this page right after the 256 bytes */
-"DeviceSignatureStorage_start_address" = flash_start_address + bootloader_size_B;
-"DeviceSignatureStorage_size" = 256;
-/* Addresses of important locations */
-/* The Application starts on the next page after the page that the DeviceSignature happened to be on */
-/* The application needs its own page because erasing is done page by page */
-"Application_start_address" = (DeviceSignatureStorage_start_address / flash_page_size + 1) * flash_page_size;
 /*
  * Copyright (C) 2015  Zubax Robotics  <info@zubax.com>
  *
@@ -37,7 +26,7 @@ __process_stack_size__  = 0x0800;
 
 MEMORY
 {
-    firmware_flash : org = "Application_start_address", len = 256k - bootloader_size_B  /* org 0x0800E800 223k 32K for bootloader, 1K for configs */
+    rom   : org = 0x08008000, len = 256k - 32768
     ram   : org = 0x20000000, len = 65265 /* 64K - 263 - 8 for AppShared */
 }
 
@@ -48,7 +37,7 @@ __ram_end__            = __ram_start__ + __ram_size__;
 
 ENTRY(Reset_Handler)
 
-PROVIDE(DeviceSignatureStorage = ORIGIN(firmware_flash) - 256);
+PROVIDE(DeviceSignatureStorage = ORIGIN(rom) - 256);
 PROVIDE(AppSharedStruct = 0x2000FEF0);
 
 SECTIONS
@@ -62,7 +51,7 @@ SECTIONS
         . = ALIGN(8);
         KEEP(*(.app_descriptor));
         . = ALIGN(8);
-    } > firmware_flash
+    } > rom
 
     constructors : ALIGN(4) SUBALIGN(4)
     {
@@ -70,7 +59,7 @@ SECTIONS
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE(__init_array_end = .);
-    } > firmware_flash
+    } > rom
 
     destructors : ALIGN(4) SUBALIGN(4)
     {
@@ -78,7 +67,7 @@ SECTIONS
         KEEP(*(.fini_array))
         KEEP(*(SORT(.fini_array.*)))
         PROVIDE(__fini_array_end = .);
-    } > firmware_flash
+    } > rom
 
     /*
      * This padding section must be inserted before every section with greater alignment.
@@ -97,7 +86,7 @@ SECTIONS
         . += 1;            /* This increment prevents moving location counter backwards if no alignment is needed */
         . = ALIGN(16) - 1;
         BYTE(0xFF)         /* Without this, the linker will ignore alignment */
-    } > firmware_flash
+    } > rom
 
     .text : ALIGN(16) SUBALIGN(16)
     {
@@ -111,34 +100,34 @@ SECTIONS
         *(.glue_7t)
         *(.glue_7)
         *(.gcc*)
-    } > firmware_flash
+    } > rom
 
     .ARM.extab : ALIGN(16) SUBALIGN(16)
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > firmware_flash
+    } > rom
 
     .ARM.exidx : ALIGN(16) SUBALIGN(16)
     {
         PROVIDE(__exidx_start = .);
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         PROVIDE(__exidx_end = .);
-     } > firmware_flash
+     } > rom
 
     .eh_frame_hdr : ALIGN(16) SUBALIGN(16)
     {
         *(.eh_frame_hdr)
-    } > firmware_flash
+    } > rom
 
     .eh_frame : ONLY_IF_RO
     {
         *(.eh_frame)
-    } > firmware_flash
+    } > rom
 
     .textalign : ONLY_IF_RO
     {
         . = ALIGN(8);
-    } > firmware_flash
+    } > rom
 
     . = ALIGN(4);
     _etext = .;
@@ -172,7 +161,7 @@ SECTIONS
         *(.ramtext)
         . = ALIGN(4);
         PROVIDE(_data_end = .);
-    } > ram AT > firmware_flash
+    } > ram AT > rom
 
     .bss : ALIGN(4)
     {
@@ -200,4 +189,3 @@ SECTIONS
     /* The bootloader shared struct may be occluded by heap by design. This is because it is not needed normally. */
     __bootloader_io = (__ram_end__ - 512);
 }
-

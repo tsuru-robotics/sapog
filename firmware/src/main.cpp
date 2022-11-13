@@ -127,7 +127,7 @@ int main()
     auto wdt = init();
     chThdSetPriority(NORMALPRIO);
 
-//    do_startup_beep();
+    do_startup_beep();
 
     motor_confirm_initialization();
     printf("\n\n\n\nBooted\n");

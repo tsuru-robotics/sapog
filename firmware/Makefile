@@ -91,7 +91,7 @@ BUILD_CHIBIOS_SHELL = 1
 
 SERIAL_CLI_PORT_NUMBER = 1
 
-BOOTLOADER_SIZE = 34816 # Including 256 bytes for DeviceSignatureStorage
+BOOTLOADER_SIZE = 32768 # Including 256 bytes for DeviceSignatureStorage
 
 
 # This firmware is compatible with all versions of hardware where the major number is 1 (i.e. 1.x),
@@ -155,7 +155,7 @@ POST_MAKE_ALL_RULE_HOOK: build/$(PROJECT).bin build/$(PROJECT).elf
 	cd build && rm -f $(PROJECT).bin $(PROJECT).elf *.hex *.tmp.bin
 
 	# Printing the calculated values from the linker script settings file
-	arm-none-eabi-readelf -all -W build/compound.elf | grep "Appl\|Device\|flash_\|bootloader_"
+	arm-none-eabi-size build/compound.elf
 
 upload: build/compound.elf
 	./zubax_chibios/tools/blackmagic_flash.sh
