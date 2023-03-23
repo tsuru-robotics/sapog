@@ -74,6 +74,7 @@ Prerequisites:
 ```bash
 git submodule update --init --recursive
 cd firmware
+make dsdl
 make RELEASE=1 # RELEASE is optional; omit to build the debug version
 ```
 
