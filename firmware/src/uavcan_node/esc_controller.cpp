@@ -39,6 +39,13 @@
 #include <zubax_chibios/os.hpp>
 #include <motor/motor.h>
 #include <temperature_sensor.hpp>
+#include <uavcan/protocol/node_status_monitor.hpp>
+#include <arming_status_monitor.hpp>
+#include "zubax_chibios/chibios/os/hal/include/serial.h"
+#include "mavlink/common/mavlink.h"
+
+#define MAVLINK_BUFFER_SIZE MAVLINK_MSG_ID_DEBUG_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES
+#define MAV_SYS_ID 10
 
 namespace uavcan_node
 {
@@ -46,10 +53,14 @@ namespace
 {
 
 uavcan::Publisher<uavcan::equipment::esc::Status>* pub_status;
+uavcan::Publisher<uavcan::equipment::esc::RawCommand>* pub_rawcommand;
 
 unsigned self_index;
 unsigned command_ttl_ms;
 float max_dc_to_start;
+uavcan::LazyConstructor<uavcan::NodeStatusMonitor> node_status_monitor;
+uavcan::LazyConstructor<uavcan::ArmingStatusMonitor> arming_status_monitor;
+
 
 os::config::Param<unsigned> param_esc_index("esc_index",           0,      0,    15);
 os::config::Param<unsigned> param_cmd_ttl_ms("cmd_ttl_ms",       200,    100,  5000);
@@ -62,6 +73,54 @@ void cb_raw_command(const uavcan::ReceivedDataStructure<uavcan::equipment::esc::
 		motor_stop();
 		return;
 	}
+
+    // Ignore RawCommand message from secondary FMU if primary FMU is healthy
+    if (msg.getSrcNodeID() == 2)
+    {
+        uavcan::NodeStatusMonitor::NodeStatus fmu1_status = node_status_monitor->getNodeStatus(1);
+        if (fmu1_status.health == uavcan::protocol::NodeStatus::HEALTH_OK &&
+                fmu1_status.mode == uavcan::protocol::NodeStatus::MODE_OPERATIONAL) {
+            //printf("Ignore RawCommand received from FMU2.\n");
+            return;
+        } else {
+            //printf("Accept RawCommand received from FMU2.\n");
+        }
+    } else {
+        //printf("RawCommand received from FMU1!\n");
+    }
+
+    // If system is DISARMED, output controls  to serial,
+    // else output controls to motor
+    if (arming_status_monitor->getArmingStatus() == uavcan::equipment::safety::ArmingStatus::STATUS_DISARMED) {
+        // Encode MAVLink message
+        mavlink_message_t mav_msg;
+        mavlink_msg_debug_pack(MAV_SYS_ID,
+                               self_index,
+                               &mav_msg,
+                               msg.getUtcTimestamp().toMSec(),
+                               self_index,
+                               (float)msg.cmd[self_index]);
+
+        // Convert encoded message to buffer
+        uint8_t msg_buff[MAVLINK_BUFFER_SIZE];
+        uint8_t n_bytes = mavlink_msg_to_send_buffer(msg_buff, &mav_msg);
+
+        // Send buffer to serial port
+        sdWrite(&STDOUT_SD, msg_buff, n_bytes);
+
+//        // Encode Dronecan message
+//        uavcan::StaticTransferBuffer<28> msg_buff;
+//        uavcan::BitStream bitstream(msg_buff);
+//        uavcan::ScalarCodec codec(bitstream);
+//        int encode_res = uavcan::equipment::esc::RawCommand::encode(msg, codec, uavcan::TailArrayOptEnabled);
+//        if (encode_res <= 0)
+//        {
+//            printf("Encode ERROR!\n");
+//        }
+//        const uint8_t *buf = (const uint8_t *) &msg_buff;
+
+        return;
+    }
 
 	const float scaled_dc =
 		msg.cmd[self_index] / float(uavcan::equipment::esc::RawCommand::FieldTypes::cmd::RawValueType::max());
@@ -149,8 +208,27 @@ int init_esc_controller(uavcan::INode& node)
 		return res;
 	}
 
+    pub_rawcommand = new uavcan::Publisher<uavcan::equipment::esc::RawCommand>(node);
+    res = pub_rawcommand->init();
+    if (res != 0) {
+        return res;
+    }
+
 	timer_10hz.setCallback(&cb_10Hz);
 	timer_10hz.startPeriodic(uavcan::MonotonicDuration::fromMSec(100));
+
+
+    node_status_monitor.construct<uavcan::INode&>(node);
+    res = node_status_monitor->start();
+    if (res < 0) {
+        return res;
+    }
+
+    arming_status_monitor.construct<uavcan::INode&>(node);
+    res = arming_status_monitor->start();
+    if (res < 0) {
+        return res;
+    }
 
 	return 0;
 }
