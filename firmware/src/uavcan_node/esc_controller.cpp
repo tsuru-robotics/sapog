@@ -58,8 +58,8 @@ uavcan::Publisher<uavcan::equipment::esc::RawCommand>* pub_rawcommand;
 unsigned self_index;
 unsigned command_ttl_ms;
 float max_dc_to_start;
-uavcan::LazyConstructor<uavcan::NodeStatusMonitor> node_status_monitor;
 uavcan::LazyConstructor<uavcan::ArmingStatusMonitor> arming_status_monitor;
+uint64_t time_fmu1_last_command_msec = 0;
 
 
 os::config::Param<unsigned> param_esc_index("esc_index",           0,      0,    15);
@@ -75,18 +75,16 @@ void cb_raw_command(const uavcan::ReceivedDataStructure<uavcan::equipment::esc::
 	}
 
     // Ignore RawCommand message from secondary FMU if primary FMU is healthy
-    if (msg.getSrcNodeID() == 2)
+    if (msg.getSrcNodeID() == 1)
     {
-        uavcan::NodeStatusMonitor::NodeStatus fmu1_status = node_status_monitor->getNodeStatus(1);
-        if (fmu1_status.health == uavcan::protocol::NodeStatus::HEALTH_OK &&
-                fmu1_status.mode == uavcan::protocol::NodeStatus::MODE_OPERATIONAL) {
-            //printf("Ignore RawCommand received from FMU2.\n");
+        time_fmu1_last_command_msec = msg.getMonotonicTimestamp().toMSec();
+    }
+    else if (msg.getSrcNodeID() == 2)
+    {
+        if (msg.getMonotonicTimestamp().toMSec() - time_fmu1_last_command_msec < 20)
+        {
             return;
-        } else {
-            //printf("Accept RawCommand received from FMU2.\n");
         }
-    } else {
-        //printf("RawCommand received from FMU1!\n");
     }
 
     // If system is DISARMED, output controls  to serial,
@@ -97,7 +95,7 @@ void cb_raw_command(const uavcan::ReceivedDataStructure<uavcan::equipment::esc::
         mavlink_msg_debug_pack(MAV_SYS_ID,
                                self_index,
                                &mav_msg,
-                               msg.getUtcTimestamp().toMSec(),
+                               msg.getMonotonicTimestamp().toMSec(),
                                self_index,
                                (float)msg.cmd[self_index]);
 
@@ -107,17 +105,6 @@ void cb_raw_command(const uavcan::ReceivedDataStructure<uavcan::equipment::esc::
 
         // Send buffer to serial port
         sdWrite(&STDOUT_SD, msg_buff, n_bytes);
-
-//        // Encode Dronecan message
-//        uavcan::StaticTransferBuffer<28> msg_buff;
-//        uavcan::BitStream bitstream(msg_buff);
-//        uavcan::ScalarCodec codec(bitstream);
-//        int encode_res = uavcan::equipment::esc::RawCommand::encode(msg, codec, uavcan::TailArrayOptEnabled);
-//        if (encode_res <= 0)
-//        {
-//            printf("Encode ERROR!\n");
-//        }
-//        const uint8_t *buf = (const uint8_t *) &msg_buff;
 
         return;
     }
@@ -217,12 +204,6 @@ int init_esc_controller(uavcan::INode& node)
 	timer_10hz.setCallback(&cb_10Hz);
 	timer_10hz.startPeriodic(uavcan::MonotonicDuration::fromMSec(100));
 
-
-    node_status_monitor.construct<uavcan::INode&>(node);
-    res = node_status_monitor->start();
-    if (res < 0) {
-        return res;
-    }
 
     arming_status_monitor.construct<uavcan::INode&>(node);
     res = arming_status_monitor->start();
